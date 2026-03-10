@@ -172,37 +172,4 @@ jobs:
         else
           echo "❌ Deployment to VPS failed!"
         fi
-    
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-    
-    - name: Build Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        push: false
-        tags: coms:latest
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
 
-  # Uncomment when ready to deploy
-  # deploy:
-  #   name: Deploy to Production
-  #   runs-on: ubuntu-latest
-  #   needs: build
-  #   if: github.ref == 'refs/heads/main'
-  #   
-  #   steps:
-  #   - name: Deploy to VPS
-  #     uses: appleboy/ssh-action@master
-  #     with:
-  #       host: ${{ secrets.VPS_HOST }}
-  #       username: ${{ secrets.VPS_USERNAME }}
-  #       key: ${{ secrets.VPS_SSH_KEY }}
-  #       script: |
-  #         cd /opt/coms
-  #         git pull origin main
-  #         docker-compose down
-  #         docker-compose up -d --build
-  #         docker-compose exec -T web python manage.py migrate
-  #         docker-compose exec -T web python manage.py collectstatic --noinput
