@@ -128,8 +128,8 @@ AUTH_USER_MODEL = 'authentication.User'
 
 # Authentication URLs
 LOGIN_REDIRECT_URL = 'dashboard'
-LOGIN_URL = 'login'
-LOGOUT_REDIRECT_URL = 'login'
+LOGIN_URL = '/login/'
+LOGOUT_REDIRECT_URL = '/login/'
 
 # Django REST Framework
 REST_FRAMEWORK = {
