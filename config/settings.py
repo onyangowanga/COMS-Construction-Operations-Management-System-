@@ -55,6 +55,11 @@ INSTALLED_APPS = [
     'apps.workers',
     'apps.consultants',
     'apps.clients',
+    'apps.suppliers',
+    'apps.bq',
+    'apps.documents',
+    'apps.media',
+    'apps.approvals',
 ]
 
 MIDDLEWARE = [
