@@ -126,6 +126,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom User Model
 AUTH_USER_MODEL = 'authentication.User'
 
+# Authentication URLs
+LOGIN_REDIRECT_URL = 'dashboard'
+LOGIN_URL = 'login'
+LOGOUT_REDIRECT_URL = 'login'
+
 # Django REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -167,13 +172,12 @@ CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[
 ])
 
 # Security Settings (Production)
-if not DEBUG:
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    X_FRAME_OPTIONS = 'DENY'
+SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=True if not DEBUG else False)
+SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=True if not DEBUG else False)
+CSRF_COOKIE_SECURE = env.bool('CSRF_COOKIE_SECURE', default=True if not DEBUG else False)
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = env('X_FRAME_OPTIONS', default='SAMEORIGIN')
 
 # Email Configuration
 EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
