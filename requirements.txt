@@ -1,0 +1,43 @@
+# Core Django
+Django>=4.2,<5.0
+djangorestframework>=3.14
+django-cors-headers>=4.0
+
+# Database
+psycopg2-binary>=2.9
+
+# Authentication & Security
+djangorestframework-simplejwt>=5.3
+django-environ>=0.11
+pillow>=10.0
+
+# Frontend (HTMX + Bootstrap approach)
+django-bootstrap5>=23.0
+django-htmx>=1.17
+
+# File Storage
+boto3>=1.28
+django-storages>=1.14
+
+# API Documentation
+drf-spectacular>=0.26
+
+# Development Tools
+black>=23.0
+pylint>=3.0
+pytest>=7.4
+pytest-django>=4.5
+ipython>=8.14
+
+# Production
+gunicorn>=21.0
+whitenoise>=6.5
+
+# Utilities
+python-dateutil>=2.8
+pytz>=2023.3
+celery>=5.3
+redis>=5.0
+
+# Monitoring & Logging
+sentry-sdk>=1.32
