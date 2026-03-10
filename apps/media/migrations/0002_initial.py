@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("projects", "0002_projectstage_and_more"),
+        ("projects", "0002_project_uuid_conversion"),
         ("media", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]

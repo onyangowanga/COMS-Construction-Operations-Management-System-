@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("projects", "0002_projectstage_and_more"),
+        ("projects", "0002_project_uuid_conversion"),
         (
             "authentication",
             "0003_alter_organization_logo_alter_organization_name_and_more",
