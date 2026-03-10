@@ -90,7 +90,9 @@ class Organization(models.Model):
         'User',
         on_delete=models.PROTECT,
         related_name='owned_organizations',
-        help_text=_("Organization owner/primary contact")
+        help_text=_("Organization owner/primary contact"),
+        null=True,
+        blank=True
     )
     
     # Contact information
@@ -264,13 +266,17 @@ class ProjectAccess(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='project_access'
+        related_name='project_access',
+        null=True,
+        blank=True
     )
     
     project = models.ForeignKey(
         'projects.Project',
         on_delete=models.CASCADE,
-        related_name='members'
+        related_name='members',
+        null=True,
+        blank=True
     )
     
     project_role = models.CharField(

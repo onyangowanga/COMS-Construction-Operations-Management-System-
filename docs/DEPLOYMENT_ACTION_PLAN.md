@@ -93,7 +93,7 @@ Coms@0722!
 **Copy and paste this entire command:**
 
 ```bash
-curl -o setup-vps.sh https://raw.githubusercontent.com/onyangowanga/COMS-Construction-Operations-Management-System-/master/setup-vps.sh && chmod +x setup-vps.sh && ./setup-vps.sh
+curl -o setup-vps.sh https://raw.githubusercontent.com/onyangowanga/COMS-Construction-Operations-Management-System-/main/setup-vps.sh && chmod +x setup-vps.sh && ./setup-vps.sh
 ```
 
 **What happens next:**
