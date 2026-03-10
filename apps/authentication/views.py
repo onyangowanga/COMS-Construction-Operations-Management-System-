@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login, logout
 from django.db import transaction
 from django.utils import timezone
 
@@ -131,6 +131,9 @@ class LoginView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
+        # Establish Django session (required for @login_required decorator)
+        login(request, user)
+        
         # Reset failed attempts on successful login
         SecurityService.reset_failed_attempts(user)
         
@@ -187,6 +190,9 @@ class LogoutView(APIView):
             ip_address=get_client_ip(request),
             user_agent=get_user_agent(request),
         )
+        
+        # Clear Django session
+        logout(request)
         
         # Clear cookies
         response = Response({
