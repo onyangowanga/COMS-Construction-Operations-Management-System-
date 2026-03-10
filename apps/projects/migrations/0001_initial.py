@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("authentication", "0003_alter_organization_logo_alter_organization_name_and_more"),
+        ("authentication", "0001_initial"),
     ]
 
     operations = [

@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         ("projects", "0001_initial"),
         (
             "authentication",
-            "0003_alter_organization_logo_alter_organization_name_and_more",
+            "0001_initial",
         ),
     ]
 
