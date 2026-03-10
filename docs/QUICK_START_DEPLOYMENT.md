@@ -64,11 +64,11 @@ Or use the superuser credentials you created.
 
 ### What happens next?
 
-Whenever you push code to the `master` branch:
+Whenever you push code to the `main` branch:
 ```bash
 git add .
 git commit -m "Update"
-git push origin master
+git push origin main
 ```
 
 GitHub Actions will automatically:

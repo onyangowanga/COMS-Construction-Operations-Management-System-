@@ -257,7 +257,7 @@ git add .
 git commit -m "Feature: Description"
 
 # 2. Push to GitHub
-git push origin master
+git push origin main
 
 # 3. GitHub Actions automatically:
 #    - Runs tests
@@ -297,8 +297,8 @@ git checkout <previous-commit-hash>
 # Redeploy
 ./deploy.sh
 
-# Or go back to master
-git checkout master
+# Or go back to main
+git checkout main
 ```
 
 ---

@@ -13,7 +13,7 @@ echo ""
 # Configuration
 PROJECT_DIR="/root/coms"
 REPO_URL="https://github.com/onyangowanga/COMS-Construction-Operations-Management-System-.git"
-BRANCH="master"
+BRANCH="main"
 
 # Colors for output
 RED='\033[0;31m'

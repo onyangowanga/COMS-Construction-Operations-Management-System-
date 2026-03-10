@@ -228,7 +228,7 @@ Add-Content -Path "README.md" -Value "`n<!-- Test deployment $(Get-Date) -->"
 # Commit and push
 git add README.md
 git commit -m "Test: Verify auto-deployment workflow"
-git push origin master
+git push origin main
 ```
 
 ### Step 8: Monitor Deployment
@@ -363,7 +363,7 @@ From now on, deploying updates is simple:
 # 2. Commit and push
 git add .
 git commit -m "Add new feature"
-git push origin master
+git push origin main
 
 # 3. GitHub Actions automatically:
 #    - Runs tests
@@ -421,7 +421,7 @@ git checkout <previous-commit-hash>
 ./deploy.sh
 
 # Or go back to latest
-git checkout master
+git checkout main
 ./deploy.sh
 ```
 

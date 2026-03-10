@@ -237,7 +237,7 @@ Add:
 
 **3. Push to Deploy:**
 ```bash
-git push origin master
+git push origin main
 # Automatically deploys via GitHub Actions!
 ```
 

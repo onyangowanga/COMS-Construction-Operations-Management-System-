@@ -48,7 +48,7 @@ VNC: 156.232.88.18:5937 (Password: 1eSVlnTJ)
 ```
 Owner: onyangowanga
 Repository: COMS-Construction-Operations-Management-System-
-Branch: master
+Branch: main
 ```
 
 ---
@@ -280,7 +280,7 @@ git push origin master
 ### Workflow Triggers
 
 The CI/CD workflow runs on:
-- **Push to `master`**: Runs tests + deployment
+- **Push to `main`**: Runs tests + deployment
 - **Push to `develop`**: Runs tests only (no deployment)
 - **Pull Requests**: Runs tests only
 
