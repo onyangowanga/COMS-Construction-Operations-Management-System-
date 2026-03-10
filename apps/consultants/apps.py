@@ -2,4 +2,6 @@ from django.apps import AppConfig
 
 
 class ConsultantsConfig(AppConfig):
-    name = 'consultants'
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'apps.consultants'
+    verbose_name = 'Consultants & Documents'

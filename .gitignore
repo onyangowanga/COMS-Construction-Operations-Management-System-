@@ -31,6 +31,8 @@ db.sqlite3-journal
 
 # Environment
 .env
+.env.production
+!.env.production  # Track template version
 .venv
 env/
 venv/
@@ -48,6 +50,23 @@ venv.bak/
 
 # Testing
 .coverage
+htmlcov/
+.pytest_cache/
+
+# Deployment
+*.sql
+*.dump
+backups/
+nginx/ssl/*.pem
+nginx/ssl/*.key
+!nginx/ssl/.gitkeep
+/var/
+*.pid
+
+# Logs
+*.log
+logs/*.log
+!logs/.gitkeep
 .pytest_cache/
 htmlcov/
 .tox/

@@ -40,19 +40,21 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',  # JWT token blacklist
     'corsheaders',
     'django_bootstrap5',
     'django_htmx',
     'drf_spectacular',
+    'axes',  # Login attempt tracking
     
-    # Local apps (add after running init-project script)
-    # 'apps.core',
-    # 'apps.authentication',
-    # 'apps.projects',
-    # 'apps.ledger',
-    # 'apps.workers',
-    # 'apps.consultants',
-    # 'apps.clients',
+    # Local apps
+    'apps.core',
+    'apps.authentication',
+    'apps.projects',
+    'apps.ledger',
+    'apps.workers',
+    'apps.consultants',
+    'apps.clients',
 ]
 
 MIDDLEWARE = [
@@ -63,6 +65,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'axes.middleware.AxesMiddleware',  # Login attempt tracking (must be after AuthenticationMiddleware)
     'django_htmx.middleware.HtmxMiddleware',  # HTMX support
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -120,13 +123,14 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Custom User Model (to be created)
-# AUTH_USER_MODEL = 'authentication.User'
+# Custom User Model
+AUTH_USER_MODEL = 'authentication.User'
 
 # Django REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'apps.authentication.authentication.JWTCookieAuthentication',  # Custom cookie-based JWT
+        'rest_framework_simplejwt.authentication.JWTAuthentication',  # Fallback to header
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
@@ -138,15 +142,22 @@ REST_FRAMEWORK = {
 }
 
 # JWT Settings
+from apps.authentication.constants import JWT_ACCESS_MINUTES, JWT_REFRESH_DAYS
+
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=env.int('JWT_ACCESS_TOKEN_LIFETIME', default=60)),
-    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=env.int('JWT_REFRESH_TOKEN_LIFETIME', default=1440)),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=JWT_ACCESS_MINUTES),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=JWT_REFRESH_DAYS),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
     'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_COOKIE': 'access_token',  # Cookie name for access token
+    'AUTH_COOKIE_REFRESH': 'refresh_token',  # Cookie name for refresh token
+    'AUTH_COOKIE_SECURE': not DEBUG,  # Set True in production
+    'AUTH_COOKIE_HTTP_ONLY': True,  # Protect against XSS
+    'AUTH_COOKIE_SAMESITE': 'Lax',  # CSRF protection
 }
 
 # CORS Settings
@@ -212,3 +223,25 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
+
+# Django Axes Configuration (Login Attack Detection)
+# Import constants from authentication app
+from apps.authentication.constants import (
+    AXES_FAILURE_LIMIT,
+    AXES_COOLOFF_TIME,
+)
+
+AXES_FAILURE_LIMIT = AXES_FAILURE_LIMIT  # Maximum failed login attempts
+AXES_COOLOFF_TIME = AXES_COOLOFF_TIME  # Lockout time in minutes
+AXES_RESET_ON_SUCCESS = True  # Reset attempts counter on successful login
+AXES_LOCKOUT_TEMPLATE = None  # Use default or create custom template
+AXES_ENABLE_ACCESS_FAILURE_LOG = True  # Log access failures
+AXES_RESET_COOL_OFF_ON_FAILURE_DURING_LOCKOUT = False
+AXES_VERBOSE = True  # Detailed logging
+AXES_LOCKOUT_PARAMETERS = [['username', 'ip_address'], ['username'], ['ip_address']]  # Lock by combination
+
+# Authentication backend with Axes
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',  # AxesStandaloneBackend should be first
+    'django.contrib.auth.backends.ModelBackend',
+]

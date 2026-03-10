@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - COMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="mb-1">Welcome back, {{ user.get_full_name|default:user.username }}!</h1>
+                            <p class="text-muted mb-0">
+                                <i class="bi bi-shield-check"></i> {{ user.get_system_role_display }}
+                                {% if user.organization %}
+                                | <i class="bi bi-building"></i> {{ user.organization.name }}
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            <p class="text-muted mb-0">
+                                <i class="bi bi-calendar"></i> {{ current_date|date:"l, F j, Y" }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3">
+                        <i class="bi bi-diagram-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-0">Active Projects</h6>
+                        <h3 class="mb-0">{{ stats.active_projects|default:0 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-success bg-opacity-10 text-success me-3">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-0">Team Members</h6>
+                        <h3 class="mb-0">{{ stats.team_members|default:0 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-warning bg-opacity-10 text-warning me-3">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-0">Pending Tasks</h6>
+                        <h3 class="mb-0">{{ stats.pending_tasks|default:0 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-info bg-opacity-10 text-info me-3">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-0">Total Budget</h6>
+                        <h3 class="mb-0">${{ stats.total_budget|default:0|floatformat:0 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning-charge"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% if user.system_role == 'super_admin' or user.system_role == 'contractor' %}
+                        <div class="col-md-3">
+                            <a href="#" class="text-decoration-none">
+                                <div class="dashboard-card text-center p-4">
+                                    <i class="bi bi-plus-circle text-primary" style="font-size: 2.5rem;"></i>
+                                    <h6 class="mt-3 mb-0 text-dark">New Project</h6>
+                                </div>
+                            </a>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="col-md-3">
+                            <a href="#" class="text-decoration-none">
+                                <div class="dashboard-card text-center p-4">
+                                    <i class="bi bi-person-plus text-success" style="font-size: 2.5rem;"></i>
+                                    <h6 class="mt-3 mb-0 text-dark">Add Team Member</h6>
+                                </div>
+                            </a>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <a href="#" class="text-decoration-none">
+                                <div class="dashboard-card text-center p-4">
+                                    <i class="bi bi-file-earmark-text text-warning" style="font-size: 2.5rem;"></i>
+                                    <h6 class="mt-3 mb-0 text-dark">Generate Report</h6>
+                                </div>
+                            </a>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <a href="#" class="text-decoration-none">
+                                <div class="dashboard-card text-center p-4">
+                                    <i class="bi bi-calendar-check text-info" style="font-size: 2.5rem;"></i>
+                                    <h6 class="mt-3 mb-0 text-dark">Schedule Meeting</h6>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity & Projects -->
+    <div class="row g-4">
+        <!-- Recent Projects -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-diagram-3"></i> Recent Projects
+                    </h5>
+                    <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if projects %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Project Name</th>
+                                        <th>Status</th>
+                                        <th>Progress</th>
+                                        <th>Due Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for project in projects %}
+                                    <tr>
+                                        <td>
+                                            <a href="#" class="text-decoration-none fw-semibold">
+                                                {{ project.name }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ project.status_color }}">
+                                                {{ project.status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="progress" style="height: 8px;">
+                                                <div class="progress-bar" 
+                                                     role="progressbar" 
+                                                     style="width: {{ project.progress }}%"
+                                                     aria-valuenow="{{ project.progress }}" 
+                                                     aria-valuemin="0" 
+                                                     aria-valuemax="100">
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">{{ project.progress }}%</small>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                <i class="bi bi-calendar"></i> {{ project.due_date|date:"M d, Y" }}
+                                            </small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-3">No projects yet. Create your first project!</p>
+                            {% if user.system_role == 'super_admin' or user.system_role == 'contractor' %}
+                            <a href="#" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Create Project
+                            </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% if activities %}
+                        <div class="list-group list-group-flush">
+                            {% for activity in activities %}
+                            <div class="list-group-item px-0">
+                                <div class="d-flex align-items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-{{ activity.type_color }} bg-opacity-10 text-{{ activity.type_color }} rounded-circle p-2">
+                                            <i class="bi bi-{{ activity.icon }}"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <p class="mb-1">{{ activity.description }}</p>
+                                        <small class="text-muted">
+                                            <i class="bi bi-clock"></i> {{ activity.timestamp|timesince }} ago
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-bell-slash text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2 mb-0">No recent activity</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

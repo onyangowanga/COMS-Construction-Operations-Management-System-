@@ -216,22 +216,72 @@ Once the server is running, access Swagger documentation at:
 
 ## 🚀 Deployment
 
+### Quick Deployment to VPS
+
+**1. Quick Start (15 minutes):**
+```bash
+# On your VPS
+ssh root@156.232.88.156
+curl -o setup-vps.sh https://raw.githubusercontent.com/onyangowanga/COMS-Construction-Operations-Management-System-/master/setup-vps.sh
+chmod +x setup-vps.sh
+./setup-vps.sh
+```
+
+**2. Configure GitHub Secrets:**
+Go to: https://github.com/YOUR_USERNAME/COMS/settings/secrets/actions
+
+Add:
+- `VPS_HOST`: `156.232.88.156`
+- `VPS_USERNAME`: `root`
+- `VPS_PASSWORD`: `Your-VPS-Password`
+
+**3. Push to Deploy:**
+```bash
+git push origin master
+# Automatically deploys via GitHub Actions!
+```
+
+### Documentation
+
+- 📘 [Complete Deployment Guide](docs/VPS_DEPLOYMENT_GUIDE.md)
+- 🚀 [Quick Start Guide](docs/QUICK_START_DEPLOYMENT.md)
+- 📋 [Deployment Summary](docs/DEPLOYMENT_SUMMARY.md)
+
+### Production Stack
+
+- **Web Server:** Nginx (reverse proxy, static files, SSL)
+- **App Server:** Gunicorn (4 workers)
+- **Database:** PostgreSQL 15 (persistent volumes)
+- **Cache:** Redis 7
+- **Containers:** Docker + Docker Compose
+- **CI/CD:** GitHub Actions (auto-deploy on push)
+
 ### Production Checklist
-- [ ] Set `DEBUG=False`
-- [ ] Update `SECRET_KEY`
-- [ ] Configure proper `ALLOWED_HOSTS`
-- [ ] Set up managed PostgreSQL
-- [ ] Configure S3 storage
-- [ ] Enable HTTPS
-- [ ] Set up monitoring
-- [ ] Configure automated backups
+- [x] Docker production configuration (`docker-compose.prod.yml`)
+- [x] Nginx reverse proxy with SSL support
+- [x] Production Dockerfile (`Dockerfile.prod`)
+- [x] Environment configuration (`.env.production`)
+- [x] Deployment scripts (`setup-vps.sh`, `deploy.sh`)
+- [x] GitHub Actions CI/CD pipeline
+- [x] Health checks and monitoring
+- [ ] SSL certificate (enable after domain setup)
+- [ ] Email notifications configured
+- [ ] Database backups automated
 
 ## 📖 Documentation
 
+### General Documentation
 - [System Architecture](docs/ARCHITECTURE.md) (To be created)
 - [API Documentation](docs/API.md) (To be created)
 - [Database Schema](docs/DATABASE.md) (To be created)
 - [User Manual](docs/USER_MANUAL.md) (To be created)
+
+### Deployment Documentation
+- [VPS Deployment Guide](docs/VPS_DEPLOYMENT_GUIDE.md) - Complete deployment guide
+- [Quick Start Deployment](docs/QUICK_START_DEPLOYMENT.md) - 15-minute setup
+- [Deployment Summary](docs/DEPLOYMENT_SUMMARY.md) - Files and checklist
+- [Frontend Implementation](docs/FRONTEND_IMPLEMENTATION.md) - UI documentation
+- [Client Demo Guide](docs/CLIENT_DEMO_GUIDE.md) - Demo walkthrough
 
 ## 🤝 Contributing
 

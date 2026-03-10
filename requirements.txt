@@ -9,6 +9,7 @@ psycopg2-binary>=2.9
 # Authentication & Security
 djangorestframework-simplejwt>=5.3
 django-environ>=0.11
+django-axes>=6.1  # Login attempt tracking and throttling
 pillow>=10.0
 
 # Frontend (HTMX + Bootstrap approach)

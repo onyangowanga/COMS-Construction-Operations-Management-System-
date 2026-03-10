@@ -1,0 +1,29 @@
+# SSL Certificate Directory
+
+This directory will contain SSL certificates for HTTPS.
+
+## For Production:
+
+Place your SSL certificate files here:
+- `cert.pem` - SSL certificate
+- `key.pem` - Private key
+
+## Using Let's Encrypt:
+
+```bash
+certbot certonly --standalone -d yourdomain.com
+
+# Copy certificates
+cp /etc/letsencrypt/live/yourdomain.com/fullchain.pem /root/coms/nginx/ssl/cert.pem
+cp /etc/letsencrypt/live/yourdomain.com/privkey.pem /root/coms/nginx/ssl/key.pem
+```
+
+## Self-Signed Certificate (Testing):
+
+```bash
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout key.pem -out cert.pem \
+  -subj "/C=KE/ST=Nairobi/L=Nairobi/O=COMS/CN=156.232.88.156"
+```
+
+**Note:** Certificate files (*.pem, *.key) are excluded from git for security.

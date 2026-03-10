@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - COMS{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <div class="auth-header">
+        <i class="bi bi-building" style="font-size: 3rem;"></i>
+        <h2 class="mt-2 mb-0">Welcome Back</h2>
+        <p class="mb-0">Construction Operations Management System</p>
+    </div>
+    
+    <div class="auth-body">
+        <!-- Alert Container for HTMX Responses -->
+        <div id="alert-container"></div>
+        
+        <form hx-post="/api/auth/login/" 
+              hx-target="#alert-container"
+              hx-swap="innerHTML"
+              hx-indicator=".loading-spinner">
+            
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">
+                    <i class="bi bi-envelope"></i> Email Address
+                </label>
+                <input type="email" 
+                       class="form-control form-control-lg" 
+                       id="email" 
+                       name="email" 
+                       placeholder="your.email@example.com"
+                       required
+                       autocomplete="email">
+            </div>
+            
+            <div class="mb-3">
+                <label for="password" class="form-label">
+                    <i class="bi bi-lock"></i> Password
+                </label>
+                <input type="password" 
+                       class="form-control form-control-lg" 
+                       id="password" 
+                       name="password" 
+                       placeholder="Enter your password"
+                       required
+                       autocomplete="current-password">
+            </div>
+            
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                <label class="form-check-label" for="remember">
+                    Remember me
+                </label>
+            </div>
+            
+            <div class="d-grid gap-2 mb-3">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <span class="btn-text">
+                        <i class="bi bi-box-arrow-in-right"></i> Sign In
+                    </span>
+                    <span class="loading-spinner spinner-border spinner-border-sm" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </span>
+                </button>
+            </div>
+            
+            <div class="text-center">
+                <a href="#" class="text-decoration-none">Forgot Password?</a>
+            </div>
+        </form>
+        
+        <hr class="my-4">
+        
+        <div class="text-center">
+            <p class="mb-0">Don't have an account? 
+                <a href="{% url 'register' %}" class="text-decoration-none fw-bold">Register here</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Handle HTMX success and error responses
+    document.body.addEventListener('htmx:afterRequest', function(event) {
+        const xhr = event.detail.xhr;
+        const alertContainer = document.getElementById('alert-container');
+        
+        if (xhr.status === 200) {
+            // Success - redirect to dashboard
+            const response = JSON.parse(xhr.responseText);
+            
+            // Show success message
+            alertContainer.innerHTML = `
+                <div class="alert alert-success alert-htmx" role="alert">
+                    <i class="bi bi-check-circle"></i> ${response.message}
+                    <br><small>Redirecting to dashboard...</small>
+                </div>
+            `;
+            
+            // Redirect after 1 second
+            setTimeout(() => {
+                window.location.href = '/dashboard/';
+            }, 1000);
+            
+        } else if (xhr.status === 401 || xhr.status === 403) {
+            // Unauthorized or Forbidden
+            const response = JSON.parse(xhr.responseText);
+            alertContainer.innerHTML = `
+                <div class="alert alert-danger alert-htmx" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> ${response.detail || 'Invalid credentials. Please try again.'}
+                </div>
+            `;
+            
+        } else if (xhr.status === 400) {
+            // Bad Request - Validation errors
+            const response = JSON.parse(xhr.responseText);
+            let errorMessages = '';
+            
+            if (typeof response === 'object') {
+                for (let field in response) {
+                    if (Array.isArray(response[field])) {
+                        errorMessages += `<li><strong>${field}:</strong> ${response[field].join(', ')}</li>`;
+                    } else {
+                        errorMessages += `<li>${response[field]}</li>`;
+                    }
+                }
+            }
+            
+            alertContainer.innerHTML = `
+                <div class="alert alert-danger alert-htmx" role="alert">
+                    <i class="bi bi-exclamation-circle"></i> <strong>Validation Error:</strong>
+                    <ul class="mb-0 mt-2">${errorMessages}</ul>
+                </div>
+            `;
+            
+        } else if (xhr.status >= 500) {
+            // Server Error
+            alertContainer.innerHTML = `
+                <div class="alert alert-danger alert-htmx" role="alert">
+                    <i class="bi bi-x-circle"></i> <strong>Server Error:</strong> 
+                    Something went wrong. Please try again later.
+                </div>
+            `;
+        }
+    });
+    
+    // Clear alerts on form input
+    const formInputs = document.querySelectorAll('input');
+    formInputs.forEach(input => {
+        input.addEventListener('input', () => {
+            document.getElementById('alert-container').innerHTML = '';
+        });
+    });
+</script>
+{% endblock %}

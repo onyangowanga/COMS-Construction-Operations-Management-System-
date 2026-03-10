@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Register - COMS{% endblock %}
+
+{% block content %}
+<div class="auth-card" style="max-width: 550px;">
+    <div class="auth-header">
+        <i class="bi bi-person-plus-fill" style="font-size: 3rem;"></i>
+        <h2 class="mt-2 mb-0">Create Account</h2>
+        <p class="mb-0">Join COMS Platform</p>
+    </div>
+    
+    <div class="auth-body">
+        <!-- Alert Container for HTMX Responses -->
+        <div id="alert-container"></div>
+        
+        <form hx-post="/api/auth/register/" 
+              hx-target="#alert-container"
+              hx-swap="innerHTML"
+              hx-indicator=".loading-spinner">
+            
+            {% csrf_token %}
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="first_name" class="form-label">
+                        <i class="bi bi-person"></i> First Name
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="first_name" 
+                           name="first_name" 
+                           placeholder="John"
+                           required>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="last_name" class="form-label">
+                        Last Name
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="last_name" 
+                           name="last_name" 
+                           placeholder="Doe"
+                           required>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="username" class="form-label">
+                    <i class="bi bi-at"></i> Username
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       id="username" 
+                       name="username" 
+                       placeholder="johndoe"
+                       required
+                       autocomplete="username">
+            </div>
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">
+                    <i class="bi bi-envelope"></i> Email Address
+                </label>
+                <input type="email" 
+                       class="form-control" 
+                       id="email" 
+                       name="email" 
+                       placeholder="john.doe@example.com"
+                       required
+                       autocomplete="email">
+            </div>
+            
+            <div class="mb-3">
+                <label for="phone" class="form-label">
+                    <i class="bi bi-phone"></i> Phone Number (Optional)
+                </label>
+                <input type="tel" 
+                       class="form-control" 
+                       id="phone" 
+                       name="phone" 
+                       placeholder="+1234567890"
+                       autocomplete="tel">
+                <small class="form-text text-muted">Format: +1234567890</small>
+            </div>
+            
+            <div class="mb-3">
+                <label for="job_title" class="form-label">
+                    <i class="bi bi-briefcase"></i> Job Title (Optional)
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       id="job_title" 
+                       name="job_title" 
+                       placeholder="Project Manager">
+            </div>
+            
+            <div class="mb-3">
+                <label for="system_role" class="form-label">
+                    <i class="bi bi-shield-check"></i> Role
+                </label>
+                <select class="form-select" id="system_role" name="system_role" required>
+                    <option value="">Select your role...</option>
+                    <option value="client">Client</option>
+                    <option value="contractor">Contractor</option>
+                    <option value="site_manager">Site Manager</option>
+                    <option value="qs">Quantity Surveyor</option>
+                    <option value="architect">Architect</option>
+                    <option value="staff">Staff Member</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label for="password" class="form-label">
+                    <i class="bi bi-lock"></i> Password
+                </label>
+                <input type="password" 
+                       class="form-control" 
+                       id="password" 
+                       name="password" 
+                       placeholder="Create a strong password"
+                       required
+                       autocomplete="new-password">
+                <small class="form-text text-muted">
+                    Min 8 characters, include uppercase, lowercase, number, and special character
+                </small>
+            </div>
+            
+            <div class="mb-3">
+                <label for="password_confirm" class="form-label">
+                    <i class="bi bi-lock-fill"></i> Confirm Password
+                </label>
+                <input type="password" 
+                       class="form-control" 
+                       id="password_confirm" 
+                       name="password_confirm" 
+                       placeholder="Re-enter your password"
+                       required
+                       autocomplete="new-password">
+            </div>
+            
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="agree_terms" required>
+                <label class="form-check-label" for="agree_terms">
+                    I agree to the <a href="#" class="text-decoration-none">Terms & Conditions</a>
+                </label>
+            </div>
+            
+            <div class="d-grid gap-2 mb-3">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <span class="btn-text">
+                        <i class="bi bi-person-check"></i> Create Account
+                    </span>
+                    <span class="loading-spinner spinner-border spinner-border-sm" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </span>
+                </button>
+            </div>
+        </form>
+        
+        <hr class="my-4">
+        
+        <div class="text-center">
+            <p class="mb-0">Already have an account? 
+                <a href="{% url 'login' %}" class="text-decoration-none fw-bold">Sign in here</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Handle HTMX success and error responses
+    document.body.addEventListener('htmx:afterRequest', function(event) {
+        const xhr = event.detail.xhr;
+        const alertContainer = document.getElementById('alert-container');
+        
+        if (xhr.status === 200 || xhr.status === 201) {
+            // Success - redirect to login
+            const response = JSON.parse(xhr.responseText);
+            
+            // Show success message
+            alertContainer.innerHTML = `
+                <div class="alert alert-success alert-htmx" role="alert">
+                    <i class="bi bi-check-circle"></i> ${response.message || 'Account created successfully!'}
+                    <br><small>Redirecting to login...</small>
+                </div>
+            `;
+            
+            // Redirect after 2 seconds
+            setTimeout(() => {
+                window.location.href = '/login/';
+            }, 2000);
+            
+        } else if (xhr.status === 400) {
+            // Bad Request - Validation errors
+            const response = JSON.parse(xhr.responseText);
+            let errorMessages = '';
+            
+            if (typeof response === 'object') {
+                for (let field in response) {
+                    if (Array.isArray(response[field])) {
+                        const fieldName = field.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        errorMessages += `<li><strong>${fieldName}:</strong> ${response[field].join(', ')}</li>`;
+                    } else if (typeof response[field] === 'string') {
+                        errorMessages += `<li>${response[field]}</li>`;
+                    }
+                }
+            }
+            
+            alertContainer.innerHTML = `
+                <div class="alert alert-danger alert-htmx" role="alert">
+                    <i class="bi bi-exclamation-circle"></i> <strong>Please fix the following errors:</strong>
+                    <ul class="mb-0 mt-2">${errorMessages}</ul>
+                </div>
+            `;
+            
+            // Scroll to alert
+            alertContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+        } else if (xhr.status >= 500) {
+            // Server Error
+            alertContainer.innerHTML = `
+                <div class="alert alert-danger alert-htmx" role="alert">
+                    <i class="bi bi-x-circle"></i> <strong>Server Error:</strong> 
+                    Something went wrong. Please try again later.
+                </div>
+            `;
+        }
+    });
+    
+    // Clear alerts on form input
+    const formInputs = document.querySelectorAll('input, select');
+    formInputs.forEach(input => {
+        input.addEventListener('input', () => {
+            document.getElementById('alert-container').innerHTML = '';
+        });
+    });
+    
+    // Password confirmation validation
+    const password = document.getElementById('password');
+    const passwordConfirm = document.getElementById('password_confirm');
+    
+    passwordConfirm.addEventListener('input', () => {
+        if (password.value !== passwordConfirm.value) {
+            passwordConfirm.setCustomValidity('Passwords do not match');
+        } else {
+            passwordConfirm.setCustomValidity('');
+        }
+    });
+</script>
+{% endblock %}
