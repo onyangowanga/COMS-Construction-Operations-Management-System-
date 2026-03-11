@@ -8,7 +8,8 @@ from django.utils import timezone
 from datetime import timedelta
 
 from apps.projects.models import Project
-from apps.ledger.models import Expense, ClientPayment
+from apps.ledger.models import Expense
+from apps.clients.models import ClientPayment
 from apps.suppliers.models import LocalPurchaseOrder, SupplierPayment
 from apps.workers.models import Worker
 from apps.workflows.models import Approval, ProjectActivity
