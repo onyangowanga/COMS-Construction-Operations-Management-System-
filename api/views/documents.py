@@ -27,6 +27,8 @@ from api.serializers.documents import (
     DocumentVersionSerializer,
     DocumentUpdateSerializer,
     DocumentStatsSerializer,
+    DocumentSignSerializer,
+    DocumentVisibilitySerializer,
 )
 
 
@@ -354,6 +356,240 @@ class DocumentViewSet(viewsets.ModelViewSet):
         
         documents = DocumentSelector.get_expiring_documents(
             days_ahead=days_ahead,
+            project=project,
+            organization=request.user.organization
+        )
+        
+        serializer = DocumentListSerializer(
+            documents,
+            many=True,
+            context={'request': request}
+        )
+        return Response(serializer.data)
+    
+    @extend_schema(
+        summary="Sign document digitally",
+        description="Create a digital signature for the document",
+        request=DocumentSignSerializer,
+        responses={200: DocumentSerializer}
+    )
+    @action(detail=True, methods=['post'], url_path='sign')
+    def sign(self, request, pk=None):
+        """
+        POST /api/documents/{id}/sign/
+        
+        Digitally sign a document.
+        
+        Body:
+        {
+            "signature_text": "Optional text to include in signature hash"
+        }
+        
+        Response:
+        {
+            "id": "...",
+            "title": "Contract Document",
+            "signed_by": "...",
+            "signed_by_data": {
+                "username": "john_doe",
+                "full_name": "John Doe"
+            },
+            "signed_at": "2026-01-18T11:00:00Z",
+            "signature_hash": "abc123def456...",
+            "is_signed": true
+        }
+        """
+        document = self.get_object()
+        
+        # Check if already signed
+        if document.is_signed:
+            return Response(
+                {"detail": "Document is already signed"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        serializer = DocumentSignSerializer(
+            document,
+            data=request.data,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        signed_document = serializer.save()
+        
+        # Return full document data
+        output_serializer = DocumentSerializer(
+            signed_document,
+            context={'request': request}
+        )
+        return Response(output_serializer.data)
+    
+    @extend_schema(
+        summary="Update document visibility",
+        description="Change document access control level",
+        request=DocumentVisibilitySerializer,
+        responses={200: DocumentSerializer}
+    )
+    @action(detail=True, methods=['post'], url_path='visibility')
+    def update_visibility(self, request, pk=None):
+        """
+        POST /api/documents/{id}/visibility/
+        
+        Update document visibility/access control.
+        
+        Body:
+        {
+            "visibility": "FINANCE_ONLY"
+        }
+        
+        Available visibility levels:
+        - PUBLIC: All authenticated users
+        - PROJECT_TEAM: Project team members only
+        - FINANCE_ONLY: Finance team members only
+        - ADMIN_ONLY: Admins only
+        - CONFIDENTIAL: Admins and document owner only
+        
+        Response:
+        {
+            "id": "...",
+            "title": "Financial Report",
+            "visibility": "FINANCE_ONLY",
+            "visibility_display": "Finance Team Only",
+            "is_restricted": true
+        }
+        """
+        document = self.get_object()
+        
+        serializer = DocumentVisibilitySerializer(
+            document,
+            data=request.data,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        updated_document = serializer.save()
+        
+        # Return full document data
+        output_serializer = DocumentSerializer(
+            updated_document,
+            context={'request': request}
+        )
+        return Response(output_serializer.data)
+    
+    @extend_schema(
+        summary="Get signed documents",
+        description="Get all signed documents",
+        parameters=[
+            OpenApiParameter(
+                name='project',
+                type=str,
+                description='Filter by project ID'
+            ),
+            OpenApiParameter(
+                name='signed_by',
+                type=str,
+                description='Filter by user who signed (user ID)'
+            ),
+        ],
+        responses={200: DocumentListSerializer(many=True)}
+    )
+    @action(detail=False, methods=['get'], url_path='signed')
+    def signed_documents(self, request):
+        """
+        GET /api/documents/signed/
+        
+        Get all signed documents.
+        
+        Query params:
+        - project: Filter by project ID
+        - signed_by: Filter by user ID who signed
+        """
+        project_id = request.query_params.get('project')
+        signed_by_id = request.query_params.get('signed_by')
+        
+        project = None
+        signed_by = None
+        
+        if project_id:
+            from apps.projects.models import Project
+            try:
+                project = Project.objects.get(id=project_id)
+            except Project.DoesNotExist:
+                pass
+        
+        if signed_by_id:
+            from apps.authentication.models import User
+            try:
+                signed_by = User.objects.get(id=signed_by_id)
+            except User.DoesNotExist:
+                pass
+        
+        documents = DocumentSelector.get_signed_documents(
+            project=project,
+            organization=request.user.organization,
+            signed_by=signed_by
+        )
+        
+        serializer = DocumentListSerializer(
+            documents,
+            many=True,
+            context={'request': request}
+        )
+        return Response(serializer.data)
+    
+    @extend_schema(
+        summary="Get documents by visibility",
+        description="Get documents filtered by visibility level",
+        parameters=[
+            OpenApiParameter(
+                name='visibility',
+                type=str,
+                required=True,
+                description='Visibility level (PUBLIC, PROJECT_TEAM, FINANCE_ONLY, ADMIN_ONLY, CONFIDENTIAL)'
+            ),
+            OpenApiParameter(
+                name='project',
+                type=str,
+                description='Filter by project ID'
+            ),
+        ],
+        responses={200: DocumentListSerializer(many=True)}
+    )
+    @action(detail=False, methods=['get'], url_path='by-visibility')
+    def by_visibility(self, request):
+        """
+        GET /api/documents/by-visibility/?visibility=FINANCE_ONLY
+        
+        Get documents by visibility level.
+        
+        Query params:
+        - visibility: Visibility level (required)
+        - project: Filter by project ID (optional)
+        """
+        visibility = request.query_params.get('visibility')
+        
+        if not visibility:
+            return Response(
+                {"detail": "visibility parameter is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if visibility not in Document.Visibility.values:
+            return Response(
+                {"detail": f"Invalid visibility level: {visibility}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        project_id = request.query_params.get('project')
+        project = None
+        
+        if project_id:
+            from apps.projects.models import Project
+            try:
+                project = Project.objects.get(id=project_id)
+            except Project.DoesNotExist:
+                pass
+        
+        documents = DocumentSelector.get_documents_by_visibility(
+            visibility=visibility,
             project=project,
             organization=request.user.organization
         )

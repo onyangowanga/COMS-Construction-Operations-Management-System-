@@ -383,3 +383,180 @@ class DocumentSelector:
             queryset = queryset.filter(organization=organization)
         
         return queryset.order_by('-uploaded_at')
+    
+    @staticmethod
+    def get_signed_documents(
+        project=None,
+        organization=None,
+        signed_by=None
+    ) -> QuerySet:
+        """
+        Get all digitally signed documents.
+        
+        Args:
+            project: Filter by project (optional)
+            organization: Filter by organization (optional)
+            signed_by: Filter by user who signed (optional)
+        
+        Returns:
+            QuerySet of signed documents
+        
+        Example:
+            # Get all contracts signed by a specific user
+            signed_contracts = DocumentSelector.get_signed_documents(
+                signed_by=user,
+                project=my_project
+            ).filter(document_type=Document.DocumentType.CONTRACT)
+        """
+        queryset = DocumentSelector.get_base_queryset().filter(
+            is_latest=True,
+            signed_by__isnull=False,
+            signed_at__isnull=False
+        ).select_related('signed_by')
+        
+        if project:
+            queryset = queryset.filter(project=project)
+        
+        if organization:
+            queryset = queryset.filter(organization=organization)
+        
+        if signed_by:
+            queryset = queryset.filter(signed_by=signed_by)
+        
+        return queryset.order_by('-signed_at')
+    
+    @staticmethod
+    def get_unsigned_documents(
+        document_type: Optional[str] = None,
+        project=None,
+        organization=None
+    ) -> QuerySet:
+        """
+        Get documents that require signature but are not yet signed.
+        
+        Args:
+            document_type: Filter by document type (optional)
+            project: Filter by project (optional)
+            organization: Filter by organization (optional)
+        
+        Returns:
+            QuerySet of unsigned documents
+        """
+        queryset = DocumentSelector.get_base_queryset().filter(
+            is_latest=True,
+            signed_by__isnull=True
+        )
+        
+        if document_type:
+            queryset = queryset.filter(document_type=document_type)
+        
+        if project:
+            queryset = queryset.filter(project=project)
+        
+        if organization:
+            queryset = queryset.filter(organization=organization)
+        
+        return queryset.order_by('-uploaded_at')
+    
+    @staticmethod
+    def get_documents_by_visibility(
+        visibility: str,
+        project=None,
+        organization=None
+    ) -> QuerySet:
+        """
+        Get documents filtered by visibility/access level.
+        
+        Args:
+            visibility: Visibility level (from Document.Visibility choices)
+            project: Filter by project (optional)
+            organization: Filter by organization (optional)
+        
+        Returns:
+            QuerySet of documents with specified visibility
+        
+        Example:
+            # Get all finance-only documents
+            finance_docs = DocumentSelector.get_documents_by_visibility(
+                visibility=Document.Visibility.FINANCE_ONLY,
+                organization=my_org
+            )
+        """
+        queryset = DocumentSelector.get_base_queryset().filter(
+            is_latest=True,
+            visibility=visibility
+        )
+        
+        if project:
+            queryset = queryset.filter(project=project)
+        
+        if organization:
+            queryset = queryset.filter(organization=organization)
+        
+        return queryset.order_by('-uploaded_at')
+    
+    @staticmethod
+    def get_accessible_documents(
+        user,
+        project=None,
+        organization=None,
+        document_type: Optional[str] = None
+    ) -> QuerySet:
+        """
+        Get documents that a user has access to based on visibility rules.
+        
+        This applies the access control logic defined in the Document model.
+        
+        Args:
+            user: User to check access for
+            project: Filter by project (optional)
+            organization: Filter by organization (optional)
+            document_type: Filter by document type (optional)
+        
+        Returns:
+            QuerySet of accessible documents
+        
+        Example:
+            # Get all documents accessible to current user
+            my_docs = DocumentSelector.get_accessible_documents(
+                user=request.user,
+                project=current_project
+            )
+        """
+        queryset = DocumentSelector.get_base_queryset().filter(is_latest=True)
+        
+        if project:
+            queryset = queryset.filter(project=project)
+        
+        if organization:
+            queryset = queryset.filter(organization=organization)
+        
+        if document_type:
+            queryset = queryset.filter(document_type=document_type)
+        
+        # Apply visibility filtering
+        if not user.is_authenticated:
+            return queryset.none()
+        
+        # Admins see everything
+        if user.is_superuser or user.is_staff:
+            return queryset.order_by('-uploaded_at')
+        
+        # Filter by visibility levels
+        # Start with documents uploaded by the user
+        user_filter = Q(uploaded_by=user)
+        
+        # Add public documents
+        user_filter |= Q(visibility=Document.Visibility.PUBLIC)
+        
+        # Add project team documents
+        user_filter |= Q(visibility=Document.Visibility.PROJECT_TEAM)
+        
+        # Add finance documents if user is in finance team
+        if user.groups.filter(name__icontains='finance').exists():
+            user_filter |= Q(visibility=Document.Visibility.FINANCE_ONLY)
+        
+        queryset = queryset.filter(user_filter)
+        
+        return queryset.order_by('-uploaded_at')
+

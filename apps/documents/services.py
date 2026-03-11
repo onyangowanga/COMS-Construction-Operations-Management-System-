@@ -40,7 +40,8 @@ class DocumentService:
         is_confidential: bool = False,
         reference_number: str = '',
         expiry_date=None,
-        related_object=None
+        related_object=None,
+        visibility: str = None
     ) -> Document:
         """
         Upload a new document.
@@ -58,6 +59,7 @@ class DocumentService:
             reference_number: External reference number
             expiry_date: Expiry date for permits/licenses
             related_object: Generic foreign key to any model instance
+            visibility: Access control level (defaults to PROJECT_TEAM)
         
         Returns:
             Document instance
@@ -69,7 +71,8 @@ class DocumentService:
                 file=request.FILES['file'],
                 uploaded_by=request.user,
                 project=project,
-                related_object=lpo_instance
+                related_object=lpo_instance,
+                visibility=Document.Visibility.PROJECT_TEAM
             )
         """
         # Validate document type
@@ -88,7 +91,8 @@ class DocumentService:
             tags=tags,
             is_confidential=is_confidential,
             reference_number=reference_number,
-            expiry_date=expiry_date,
+            expiry_date=ex,
+            visibility=visibility or Document.Visibility.PROJECT_TEAMpiry_date,
             version=1,
             is_latest=True
         )
@@ -371,3 +375,108 @@ class DocumentService:
             'counts_by_type': type_counts,
             'confidential_count': queryset.filter(is_confidential=True).count(),
         }
+    
+    @staticmethod
+    @transaction.atomic
+    def sign_document(
+        document: Document,
+        signed_by: User,
+        signature_text: Optional[str] = None
+    ) -> Document:
+        """
+        Digitally sign a document.
+        
+        Creates a cryptographic hash of the signature for verification.
+        
+        Args:
+            document: Document to sign
+            signed_by: User signing the document
+            signature_text: Optional text to include in signature hash
+        
+        Returns:
+            Signed document
+        
+        Example:
+            signed_doc = DocumentService.sign_document(
+                document=contract,
+                signed_by=request.user,
+                signature_text=f"{request.user.get_full_name()} - Approved"
+            )
+        """
+        from django.utils import timezone
+        
+        # Generate signature text if not provided
+        if signature_text is None:
+            signature_text = f"{signed_by.id}:{signed_by.username}:{timezone.now().isoformat()}"
+        
+        # Generate signature hash
+        signature_hash = document.generate_signature_hash(signature_text)
+        
+        # Update document
+        document.signed_by = signed_by
+        document.signed_at = timezone.now()
+        document.signature_hash = signature_hash
+        
+        document.save(update_fields=['signed_by', 'signed_at', 'signature_hash'])
+        
+        return document
+    
+    @staticmethod
+    @transaction.atomic
+    def update_visibility(
+        document: Document,
+        visibility: str,
+        updated_by: User
+    ) -> Document:
+        """
+        Update document visibility/access control level.
+        
+        Args:
+            document: Document to update
+            visibility: New visibility level (from Document.Visibility choices)
+            updated_by: User making the change
+        
+        Returns:
+            Updated document
+        
+        Raises:
+            ValidationError: If visibility level is invalid
+        
+        Example:
+            DocumentService.update_visibility(
+                document=contract,
+                visibility=Document.Visibility.FINANCE_ONLY,
+                updated_by=request.user
+            )
+        """
+        if visibility not in Document.Visibility.values:
+            raise ValidationError(f"Invalid visibility level: {visibility}")
+        
+        document.visibility = visibility
+        document.save(update_fields=['visibility'])
+        
+        return document
+    
+    @staticmethod
+    def verify_document_signature(
+        document: Document,
+        signature_text: str
+    ) -> bool:
+        """
+        Verify the integrity of a document signature.
+        
+        Args:
+            document: Document with signature to verify
+            signature_text: Original signature text used during signing
+        
+        Returns:
+            True if signature is valid and matches
+        
+        Example:
+            is_valid = DocumentService.verify_document_signature(
+                document=signed_doc,
+                signature_text=original_signature_text
+            )
+        """
+        return document.verify_signature(signature_text)
+

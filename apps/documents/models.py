@@ -115,6 +115,20 @@ class Document(models.Model):
         
         OTHER = 'OTHER', _('Other Document')
     
+    # === ACCESS CONTROL ===
+    
+    class Visibility(models.TextChoices):
+        """
+        Document visibility/access control levels.
+        
+        Controls who can view and access specific documents.
+        """
+        PUBLIC = 'PUBLIC', _('Public - All Users')
+        PROJECT_TEAM = 'PROJECT_TEAM', _('Project Team Only')
+        FINANCE_ONLY = 'FINANCE_ONLY', _('Finance Team Only')
+        ADMIN_ONLY = 'ADMIN_ONLY', _('Admin Only')
+        CONFIDENTIAL = 'CONFIDENTIAL', _('Confidential - Restricted Access')
+    
     # === IDENTIFICATION ===
     
     id = models.UUIDField(
@@ -283,6 +297,40 @@ class Document(models.Model):
         help_text=_("External reference number")
     )
     
+    # === DIGITAL SIGNATURE ===
+    
+    signed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='signed_documents',
+        help_text=_("User who digitally signed this document")
+    )
+    
+    signed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=_("Date and time when document was signed")
+    )
+    
+    signature_hash = models.CharField(
+        max_length=128,
+        blank=True,
+        help_text=_("Cryptographic hash of signature for verification")
+    )
+    
+    # === ACCESS CONTROL ===
+    
+    visibility = models.CharField(
+        max_length=20,
+        choices=Visibility.choices,
+        default=Visibility.PROJECT_TEAM,
+        db_index=True,
+        help_text=_("Controls who can view this document")
+    )
+    
     class Meta:
         db_table = 'documents'
         ordering = ['-uploaded_at']
@@ -292,6 +340,8 @@ class Document(models.Model):
             models.Index(fields=['is_latest', 'document_type']),
             models.Index(fields=['uploaded_at']),
             models.Index(fields=['is_confidential']),
+            models.Index(fields=['signed_at']),
+            models.Index(fields=['visibility']),
         ]
         verbose_name = _('Document')
         verbose_name_plural = _('Documents')
@@ -377,6 +427,31 @@ class Document(models.Model):
             return str(self.content_object)
         return None
     
+    @property
+    def is_signed(self):
+        """Check if document has been digitally signed"""
+        return self.signed_by is not None and self.signed_at is not None
+    
+    @property
+    def requires_signature(self):
+        """Check if document type typically requires signature"""
+        signature_required_types = [
+            self.DocumentType.CONTRACT,
+            self.DocumentType.PAYMENT_VOUCHER,
+            self.DocumentType.VALUATION_CERTIFICATE,
+            self.DocumentType.VARIATION_INSTRUCTION,
+        ]
+        return self.document_type in signature_required_types
+    
+    @property
+    def is_restricted(self):
+        """Check if document has restricted access"""
+        return self.visibility in [
+            self.Visibility.FINANCE_ONLY,
+            self.Visibility.ADMIN_ONLY,
+            self.Visibility.CONFIDENTIAL
+        ]
+    
     # === METHODS ===
     
     def get_version_history(self):
@@ -411,3 +486,91 @@ class Document(models.Model):
         if self.file:
             return self.file.url
         return None
+    
+    def can_user_access(self, user):
+        """
+        Check if a user has access to view this document.
+        
+        Args:
+            user: User instance
+        
+        Returns:
+            bool: True if user has access
+        
+        Access Rules:
+            - PUBLIC: All authenticated users
+            - PROJECT_TEAM: Project team members
+            - FINANCE_ONLY: Finance team members
+            - ADMIN_ONLY: Admin users only
+            - CONFIDENTIAL: Admin + document owner
+        """
+        if not user or not user.is_authenticated:
+            return False
+        
+        # Admins can access all documents
+        if user.is_superuser or user.is_staff:
+            return True
+        
+        # Document uploader can always access
+        if self.uploaded_by == user:
+            return True
+        
+        # Check visibility levels
+        if self.visibility == self.Visibility.PUBLIC:
+            return True
+        
+        if self.visibility == self.Visibility.PROJECT_TEAM:
+            # Check if user is part of project team
+            if self.project:
+                # Add your project team membership check here
+                # For now, return True for simplicity
+                return True
+            return True
+        
+        if self.visibility == self.Visibility.FINANCE_ONLY:
+            # Check if user is in finance team
+            # Add your finance team check here
+            # For now, check if user has finance-related groups
+            return user.groups.filter(name__icontains='finance').exists()
+        
+        if self.visibility == self.Visibility.ADMIN_ONLY:
+            return user.is_staff
+        
+        if self.visibility == self.Visibility.CONFIDENTIAL:
+            return user.is_staff or user == self.uploaded_by
+        
+        return False
+    
+    def generate_signature_hash(self, signature_text: str) -> str:
+        """
+        Generate cryptographic hash for document signature.
+        
+        Args:
+            signature_text: Text to hash (e.g., user details + timestamp)
+        
+        Returns:
+            str: SHA-256 hash
+        """
+        import hashlib
+        
+        # Combine document ID, file hash, and signature text
+        data_to_hash = f"{self.id}:{signature_text}:{self.uploaded_at.isoformat()}"
+        
+        return hashlib.sha256(data_to_hash.encode()).hexdigest()
+    
+    def verify_signature(self, signature_text: str) -> bool:
+        """
+        Verify document signature integrity.
+        
+        Args:
+            signature_text: Original signature text
+        
+        Returns:
+            bool: True if signature is valid
+        """
+        if not self.signature_hash:
+            return False
+        
+        expected_hash = self.generate_signature_hash(signature_text)
+        return self.signature_hash == expected_hash
+

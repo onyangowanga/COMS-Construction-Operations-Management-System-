@@ -59,6 +59,18 @@ class DocumentSerializer(serializers.ModelSerializer):
     is_office_document = serializers.BooleanField(read_only=True)
     has_versions = serializers.BooleanField(read_only=True)
     
+    # Digital signature
+    is_signed = serializers.BooleanField(read_only=True)
+    requires_signature = serializers.BooleanField(read_only=True)
+    signed_by_data = UserBasicSerializer(source='signed_by', read_only=True)
+    
+    # Access control
+    visibility_display = serializers.CharField(
+        source='get_visibility_display',
+        read_only=True
+    )
+    is_restricted = serializers.BooleanField(read_only=True)
+    
     # Generic relation
     related_object_type = serializers.SerializerMethodField()
     related_object_display = serializers.CharField(read_only=True)
@@ -115,6 +127,19 @@ class DocumentSerializer(serializers.ModelSerializer):
             'is_confidential',
             'expiry_date',
             'reference_number',
+            
+            # Digital signature
+            'signed_by',
+            'signed_by_data',
+            'signed_at',
+            'signature_hash',
+            'is_signed',
+            'requires_signature',
+            
+            # Access control
+            'visibility',
+            'visibility_display',
+            'is_restricted',
         ]
         read_only_fields = [
             'id',
@@ -123,6 +148,8 @@ class DocumentSerializer(serializers.ModelSerializer):
             'uploaded_at',
             'updated_at',
             'version',
+            'signed_at',
+            'signature_hash',
         ]
     
     def get_file_url(self, obj):
@@ -198,6 +225,11 @@ class DocumentUploadSerializer(serializers.Serializer):
         default=''
     )
     expiry_date = serializers.DateField(required=False, allow_null=True)
+    visibility = serializers.ChoiceField(
+        choices=Document.Visibility.choices,
+        default=Document.Visibility.PROJECT_TEAM,
+        required=False
+    )
     
     # Generic relation fields
     related_object_type = serializers.CharField(required=False, allow_blank=True)
@@ -246,7 +278,8 @@ class DocumentUploadSerializer(serializers.Serializer):
             is_confidential=validated_data.get('is_confidential', False),
             reference_number=validated_data.get('reference_number', ''),
             expiry_date=validated_data.get('expiry_date'),
-            related_object=related_object
+            related_object=related_object,
+            visibility=validated_data.get('visibility', Document.Visibility.PROJECT_TEAM)
         )
         
         return document
@@ -322,4 +355,57 @@ class DocumentStatsSerializer(serializers.Serializer):
     total_size_mb = serializers.FloatField()
     counts_by_type = serializers.DictField()
     confidential_count = serializers.IntegerField()
+
+
+class DocumentSignSerializer(serializers.Serializer):
+    """
+    Serializer for digitally signing a document.
+    
+    Creates a cryptographic signature hash.
+    """
+    signature_text = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="Optional signature text to include in hash"
+    )
+    
+    def update(self, instance, validated_data):
+        """Sign document using service layer"""
+        user = self.context.get('request').user
+        
+        signed_document = DocumentService.sign_document(
+            document=instance,
+            signed_by=user,
+            signature_text=validated_data.get('signature_text')
+        )
+        
+        return signed_document
+
+
+class DocumentVisibilitySerializer(serializers.Serializer):
+    """
+    Serializer for updating document visibility/access control.
+    """
+    visibility = serializers.ChoiceField(
+        choices=Document.Visibility.choices,
+        help_text="Document visibility level"
+    )
+    
+    def validate_visibility(self, value):
+        """Validate visibility choice"""
+        if value not in Document.Visibility.values:
+            raise serializers.ValidationError(f"Invalid visibility level: {value}")
+        return value
+    
+    def update(self, instance, validated_data):
+        """Update visibility using service layer"""
+        user = self.context.get('request').user
+        
+        updated_document = DocumentService.update_visibility(
+            document=instance,
+            visibility=validated_data['visibility'],
+            updated_by=user
+        )
+        
+        return updated_document
 

@@ -39,6 +39,8 @@ class DocumentAdmin(admin.ModelAdmin):
         'project_link',
         'file_info',
         'version_display',
+        'signature_badge',
+        'visibility_badge',
         'confidential_badge',
         'uploaded_by_name',
         'uploaded_at',
@@ -48,8 +50,10 @@ class DocumentAdmin(admin.ModelAdmin):
         'document_type',
         'is_latest',
         'is_confidential',
+        'visibility',
         'file_extension',
         'uploaded_at',
+        'signed_at',
         'project',
         'organization',
     ]
@@ -118,6 +122,19 @@ class DocumentAdmin(admin.ModelAdmin):
                 'expiry_date',
             )
         }),
+        (_('Digital Signature'), {
+            'fields': (
+                'signed_by',
+                'signed_at',
+                'signature_hash',
+            ),
+            'classes': ('collapse',)
+        }),
+        (_('Access Control'), {
+            'fields': (
+                'visibility',
+            )
+        }),
         (_('Metadata'), {
             'fields': (
                 'uploaded_by',
@@ -136,6 +153,8 @@ class DocumentAdmin(admin.ModelAdmin):
         'updated_at',
         'related_object_display',
         'version',
+        'signed_at',
+        'signature_hash',
     ]
     
     # === CUSTOM DISPLAY METHODS ===
@@ -241,6 +260,55 @@ class DocumentAdmin(admin.ModelAdmin):
     version_display.short_description = _('Version')
     version_display.admin_order_field = 'version'
     
+    def signature_badge(self, obj):
+        """Display signature badge if document is signed"""
+        if obj.is_signed:
+            return format_html(
+                '<span style="background: #27ae60; color: white; padding: 2px 6px; '
+                'border-radius: 3px; font-size: 0.75em;">✓ SIGNED</span><br>'
+                '<span style="color: #666; font-size: 0.75em;">{}</span>',
+                obj.signed_by.get_full_name() if obj.signed_by else ''
+            )
+        elif obj.requires_signature:
+            return format_html(
+                '<span style="background: #f39c12; color: white; padding: 2px 6px; '
+                'border-radius: 3px; font-size: 0.75em;">⚠ NOT SIGNED</span>'
+            )
+        return ''
+    signature_badge.short_description = _('Signature')
+    signature_badge.admin_order_field = 'signed_at'
+    
+    def visibility_badge(self, obj):
+        """Display visibility/access level badge"""
+        colors = {
+            Document.Visibility.PUBLIC: '#3498db',
+            Document.Visibility.PROJECT_TEAM: '#16a085',
+            Document.Visibility.FINANCE_ONLY: '#e67e22',
+            Document.Visibility.ADMIN_ONLY: '#9b59b6',
+            Document.Visibility.CONFIDENTIAL: '#e74c3c',
+        }
+        
+        icons = {
+            Document.Visibility.PUBLIC: '🌐',
+            Document.Visibility.PROJECT_TEAM: '👷',
+            Document.Visibility.FINANCE_ONLY: '💰',
+            Document.Visibility.ADMIN_ONLY: '👤',
+            Document.Visibility.CONFIDENTIAL: '🔐',
+        }
+        
+        color = colors.get(obj.visibility, '#95a5a6')
+        icon = icons.get(obj.visibility, '📄')
+        
+        return format_html(
+            '<span style="background: {}; color: white; padding: 2px 6px; '
+            'border-radius: 3px; font-size: 0.75em;">{} {}</span>',
+            color,
+            icon,
+            obj.get_visibility_display()
+        )
+    visibility_badge.short_description = _('Visibility')
+    visibility_badge.admin_order_field = 'visibility'
+    
     def confidential_badge(self, obj):
         """Display confidential badge if applicable"""
         if obj.is_confidential:
@@ -270,6 +338,60 @@ class DocumentAdmin(admin.ModelAdmin):
             request,
             _('%(count)d document(s) marked as confidential.') % {'count': updated}
         )
+    
+    @admin.action(description=_('Remove confidential marking'))
+    def unmark_confidential(self, request, queryset):
+        """Remove confidential marking"""
+        updated = queryset.update(is_confidential=False)
+        self.message_user(
+            request,
+            _('%(count)d document(s) unmarked as confidential.') % {'count': updated}
+        )
+    
+    @admin.action(description=_('Mark as latest version'))
+    def mark_as_latest(self, request, queryset):
+        """Mark selected documents as latest version"""
+        updated = queryset.update(is_latest=True)
+        self.message_user(
+            request,
+            _('%(count)d document(s) marked as latest version.') % {'count': updated}
+        )
+    
+    @admin.action(description=_('Set visibility to PUBLIC'))
+    def update_visibility_public(self, request, queryset):
+        """Update visibility to PUBLIC"""
+        updated = queryset.update(visibility=Document.Visibility.PUBLIC)
+        self.message_user(
+            request,
+            _('%(count)d document(s) visibility updated to PUBLIC.') % {'count': updated}
+        )
+    
+    @admin.action(description=_('Set visibility to PROJECT_TEAM'))
+    def update_visibility_project_team(self, request, queryset):
+        """Update visibility to PROJECT_TEAM"""
+        updated = queryset.update(visibility=Document.Visibility.PROJECT_TEAM)
+        self.message_user(
+            request,
+            _('%(count)d document(s) visibility updated to PROJECT_TEAM.') % {'count': updated}
+        )
+    
+    @admin.action(description=_('Set visibility to FINANCE_ONLY'))
+    def update_visibility_finance_only(self, request, queryset):
+        """Update visibility to FINANCE_ONLY"""
+        updated = queryset.update(visibility=Document.Visibility.FINANCE_ONLY)
+        self.message_user(
+            request,
+            _('%(count)d document(s) visibility updated to FINANCE_ONLY.') % {'count': updated}
+        )
+    
+    actions = [
+        'mark_confidential',
+        'unmark_confidential',
+        'mark_as_latest',
+        'update_visibility_public',
+        'update_visibility_project_team',
+        'update_visibility_finance_only',
+    ]
     
     @admin.action(description=_('Remove confidential marking'))
     def unmark_confidential(self, request, queryset):
