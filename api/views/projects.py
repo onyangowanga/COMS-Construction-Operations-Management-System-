@@ -10,7 +10,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from apps.projects.models import Project, ProjectStage
 from api.serializers.projects import (
     ProjectSerializer, ProjectListSerializer, ProjectStageSerializer
-)from api.selectors.project_selectors import (
+)
+from api.selectors.project_selectors import (
     get_project_financial_data,
     get_project_budget_variance,
     get_project_health_data,
