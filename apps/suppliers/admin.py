@@ -10,7 +10,7 @@ class LPOItemInline(admin.TabularInline):
     """Inline for LPO items"""
     model = LPOItem
     extra = 1
-    fields = ['description', 'quantity', 'unit_price', 'total_display']
+    fields = ['item_name', 'quantity', 'unit', 'unit_price', 'total_display']
     readonly_fields = ['total_display']
     
     def total_display(self, obj):
@@ -90,9 +90,9 @@ class LocalPurchaseOrderAdmin(admin.ModelAdmin):
 
 @admin.register(LPOItem)
 class LPOItemAdmin(admin.ModelAdmin):
-    list_display = ['description', 'lpo', 'quantity', 'unit_price', 'total_display']
+    list_display = ['item_name', 'lpo', 'quantity', 'unit', 'unit_price', 'total_display']
     list_filter = ['lpo__status']
-    search_fields = ['description', 'lpo__lpo_number', 'lpo__supplier__name']
+    search_fields = ['item_name', 'lpo__lpo_number', 'lpo__supplier__name']
     autocomplete_fields = ['lpo']
     
     def total_display(self, obj):
@@ -102,19 +102,22 @@ class LPOItemAdmin(admin.ModelAdmin):
 
 @admin.register(SupplierInvoice)
 class SupplierInvoiceAdmin(admin.ModelAdmin):
-    list_display = ['invoice_number', 'supplier', 'lpo', 'invoice_date', 'total_display', 'payment_status']
-    list_filter = ['payment_status', 'invoice_date']
+    list_display = ['invoice_number', 'supplier', 'project', 'lpo', 'invoice_date', 'total_display', 'status']
+    list_filter = ['status', 'invoice_date']
     search_fields = ['invoice_number', 'supplier__name', 'lpo__lpo_number']
-    autocomplete_fields = ['supplier', 'lpo']
+    autocomplete_fields = ['supplier', 'project', 'lpo']
     date_hierarchy = 'invoice_date'
     inlines = [SupplierPaymentInline]
     
     fieldsets = (
         (_('Invoice Information'), {
-            'fields': ('invoice_number', 'supplier', 'lpo')
+            'fields': ('invoice_number', 'supplier', 'project', 'lpo')
         }),
         (_('Amount & Status'), {
-            'fields': ('invoice_date', 'total_amount', 'payment_status')
+            'fields': ('invoice_date', 'due_date', 'total_amount', 'status')
+        }),
+        (_('Description'), {
+            'fields': ('description',)
         }),
         (_('Timestamps'), {
             'fields': ('created_at', 'updated_at'),
@@ -132,10 +135,10 @@ class SupplierInvoiceAdmin(admin.ModelAdmin):
 
 @admin.register(SupplierPayment)
 class SupplierPaymentAdmin(admin.ModelAdmin):
-    list_display = ['invoice', 'amount_display', 'payment_date', 'payment_method', 'reference_number']
+    list_display = ['supplier_invoice', 'amount_display', 'payment_date', 'payment_method', 'reference_number']
     list_filter = ['payment_method', 'payment_date']
-    search_fields = ['invoice__invoice_number', 'invoice__supplier__name', 'reference_number']
-    autocomplete_fields = ['invoice']
+    search_fields = ['supplier_invoice__invoice_number', 'supplier_invoice__supplier__name', 'reference_number']
+    autocomplete_fields = ['supplier_invoice']
     date_hierarchy = 'payment_date'
     ordering = ['-payment_date']
     

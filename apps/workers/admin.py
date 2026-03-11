@@ -10,16 +10,9 @@ class DailyLabourRecordInline(admin.TabularInline):
     """Inline for daily labour records"""
     model = DailyLabourRecord
     extra = 0
-    fields = ['project', 'date', 'hours_worked', 'wage_per_day', 'total_display']
+    fields = ['project', 'date', 'hours_worked', 'daily_wage', 'paid', 'payment_date']
     autocomplete_fields = ['project']
-    readonly_fields = ['total_display']
     ordering = ['-date']
-    
-    def total_display(self, obj):
-        if obj.pk:
-            return f"KES {obj.total_wage:,.2f}"
-        return "-"
-    total_display.short_description = _('Total')
 
 
 @admin.register(Worker)
@@ -62,8 +55,8 @@ class WorkerAdmin(admin.ModelAdmin):
 
 @admin.register(DailyLabourRecord)
 class DailyLabourRecordAdmin(admin.ModelAdmin):
-    list_display = ['worker', 'project', 'date', 'hours_worked', 'wage_display', 'total_display', 'payment_status']
-    list_filter = ['payment_status', 'date', 'project']
+    list_display = ['worker', 'project', 'date', 'hours_worked', 'wage_display', 'paid', 'payment_date']
+    list_filter = ['paid', 'date', 'project']
     search_fields = ['worker__name', 'project__name', 'project__code', 'notes']
     autocomplete_fields = ['worker', 'project']
     date_hierarchy = 'date'
@@ -74,10 +67,10 @@ class DailyLabourRecordAdmin(admin.ModelAdmin):
             'fields': ('worker', 'project', 'date')
         }),
         (_('Work Details'), {
-            'fields': ('hours_worked', 'wage_per_day')
+            'fields': ('hours_worked', 'daily_wage')
         }),
         (_('Payment'), {
-            'fields': ('payment_status', 'payment_date', 'payment_method')
+            'fields': ('paid', 'payment_date')
         }),
         (_('Notes'), {
             'fields': ('notes',)
@@ -91,10 +84,6 @@ class DailyLabourRecordAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at']
     
     def wage_display(self, obj):
-        return f"KES {obj.wage_per_day:,.2f}"
-    wage_display.short_description = _('Wage/Day')
-    wage_display.admin_order_field = 'wage_per_day'
-    
-    def total_display(self, obj):
-        return f"KES {obj.total_wage:,.2f}"
-    total_display.short_description = _('Total')
+        return f"KES {obj.daily_wage:,.2f}"
+    wage_display.short_description = _('Daily Wage')
+    wage_display.admin_order_field = 'daily_wage'

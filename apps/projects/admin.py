@@ -11,7 +11,7 @@ class ProjectStageInline(admin.TabularInline):
     """Inline for project construction stages"""
     model = ProjectStage
     extra = 0
-    fields = ['name', 'order', 'status', 'target_completion_date', 'budget_amount']
+    fields = ['name', 'order', 'is_completed', 'start_date', 'end_date', 'description']
     ordering = ['order']
 
 
@@ -69,7 +69,7 @@ class ProjectAdmin(admin.ModelAdmin):
         if not stages:
             return "-"
         total = stages.count()
-        completed = stages.filter(status='COMPLETED').count()
+        completed = stages.filter(is_completed=True).count()
         percent = (completed / total * 100) if total > 0 else 0
         
         if percent >= 80:
@@ -93,9 +93,9 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(ProjectStage)
 class ProjectStageAdmin(admin.ModelAdmin):
-    list_display = ['name', 'project', 'order', 'status', 'budget_display', 'target_completion_date']
-    list_filter = ['status', 'target_completion_date']
-    search_fields = ['name', 'project__name', 'project__code']
+    list_display = ['name', 'project', 'order', 'is_completed', 'start_date', 'end_date']
+    list_filter = ['is_completed', 'name']
+    search_fields = ['name', 'project__name', 'project__code', 'description']
     autocomplete_fields = ['project']
     ordering = ['project', 'order']
     
@@ -103,11 +103,8 @@ class ProjectStageAdmin(admin.ModelAdmin):
         (_('Stage Information'), {
             'fields': ('project', 'name', 'order', 'description')
         }),
-        (_('Budget & Schedule'), {
-            'fields': ('budget_amount', 'target_completion_date', 'actual_completion_date')
-        }),
-        (_('Status'), {
-            'fields': ('status',)
+        (_('Schedule'), {
+            'fields': ('start_date', 'end_date', 'is_completed')
         }),
         (_('Timestamps'), {
             'fields': ('created_at', 'updated_at'),
@@ -116,11 +113,3 @@ class ProjectStageAdmin(admin.ModelAdmin):
     )
     
     readonly_fields = ['created_at', 'updated_at']
-    
-    def budget_display(self, obj):
-        """Display formatted budget"""
-        if obj.budget_amount:
-            return f"KES {obj.budget_amount:,.2f}"
-        return "-"
-    budget_display.short_description = _('Budget')
-    budget_display.admin_order_field = 'budget_amount'

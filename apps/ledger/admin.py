@@ -75,12 +75,12 @@ class ExpenseAllocationAdmin(admin.ModelAdmin):
             'fields': ('notes',)
         }),
         (_('Timestamps'), {
-            'fields': ('created_at', 'updated_at'),
+            'fields': ('created_at',),
             'classes': ('collapse',)
         }),
     )
     
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ['created_at']
     
     def amount_display(self, obj):
         return f"KES {obj.allocated_amount:,.2f}"

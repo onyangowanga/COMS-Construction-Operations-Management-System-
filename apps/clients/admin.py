@@ -10,8 +10,7 @@ class ClientReceiptInline(admin.StackedInline):
     """Inline for client receipts"""
     model = ClientReceipt
     extra = 0
-    fields = ['receipt_number', 'receipt_date', 'issued_by']
-    autocomplete_fields = ['issued_by']
+    fields = ['receipt_number', 'document_path', 'notes']
 
 
 @admin.register(ClientPayment)
@@ -55,27 +54,27 @@ class ClientPaymentAdmin(admin.ModelAdmin):
 
 @admin.register(ClientReceipt)
 class ClientReceiptAdmin(admin.ModelAdmin):
-    list_display = ['receipt_number', 'payment', 'receipt_date', 'amount_display', 'issued_by']
-    list_filter = ['receipt_date']
+    list_display = ['receipt_number', 'payment', 'issued_date', 'amount_display', 'created_at']
+    list_filter = ['issued_date']
     search_fields = ['receipt_number', 'payment__project__name', 'payment__reference_number']
-    autocomplete_fields = ['payment', 'issued_by']
-    date_hierarchy = 'receipt_date'
-    ordering = ['-receipt_date']
+    autocomplete_fields = ['payment']
+    date_hierarchy = 'issued_date'
+    ordering = ['-issued_date']
     
     fieldsets = (
         (_('Receipt Information'), {
-            'fields': ('receipt_number', 'payment', 'receipt_date')
+            'fields': ('receipt_number', 'payment', 'issued_date', 'document_path')
         }),
-        (_('Issued By'), {
-            'fields': ('issued_by',)
+        (_('Notes'), {
+            'fields': ('notes',)
         }),
         (_('Timestamps'), {
-            'fields': ('created_at', 'updated_at'),
+            'fields': ('issued_date', 'created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
     
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ['issued_date', 'created_at', 'updated_at']
     
     def amount_display(self, obj):
         return f"KES {obj.payment.amount:,.2f}"

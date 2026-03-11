@@ -10,7 +10,7 @@ class ConsultantFeeInline(admin.TabularInline):
     """Inline for consultant fees"""
     model = ConsultantFee
     extra = 0
-    fields = ['project', 'fee_type', 'amount', 'payment_status']
+    fields = ['project', 'fee_type', 'contract_amount']
     autocomplete_fields = ['project']
 
 
@@ -60,22 +60,19 @@ class ProjectConsultantAdmin(admin.ModelAdmin):
 
 @admin.register(ConsultantFee)
 class ConsultantFeeAdmin(admin.ModelAdmin):
-    list_display = ['consultant', 'project', 'fee_type', 'amount_display', 'payment_status', 'due_date']
-    list_filter = ['fee_type', 'payment_status', 'due_date', 'created_at']
-    search_fields = ['consultant__name', 'project__name', 'project__code', 'description']
+    list_display = ['consultant', 'project', 'fee_type', 'contract_amount_display', 'created_at']
+    list_filter = ['fee_type', 'created_at']
+    search_fields = ['consultant__name', 'project__name', 'project__code']
     autocomplete_fields = ['consultant', 'project']
-    date_hierarchy = 'due_date'
+    date_hierarchy = 'created_at'
     inlines = [ConsultantPaymentInline]
     
     fieldsets = (
         (_('Fee Information'), {
             'fields': ('consultant', 'project', 'fee_type')
         }),
-        (_('Amount & Status'), {
-            'fields': ('amount', 'payment_status', 'due_date')
-        }),
-        (_('Details'), {
-            'fields': ('description',)
+        (_('Amount & Schedule'), {
+            'fields': ('contract_amount', 'payment_schedule')
         }),
         (_('Timestamps'), {
             'fields': ('created_at', 'updated_at'),
@@ -85,10 +82,10 @@ class ConsultantFeeAdmin(admin.ModelAdmin):
     
     readonly_fields = ['created_at', 'updated_at']
     
-    def amount_display(self, obj):
-        return f"KES {obj.amount:,.2f}"
-    amount_display.short_description = _('Amount')
-    amount_display.admin_order_field = 'amount'
+    def contract_amount_display(self, obj):
+        return f"KES {obj.contract_amount:,.2f}"
+    contract_amount_display.short_description = _('Contract Amount')
+    contract_amount_display.admin_order_field = 'contract_amount'
 
 
 @admin.register(ConsultantPayment)
