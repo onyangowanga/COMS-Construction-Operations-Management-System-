@@ -25,6 +25,9 @@ from api.views.site_operations import (
 from api.views.portfolio import PortfolioViewSet, ProjectMetricsViewSet
 from api.views.cashflow import ProjectCashFlowViewSet, PortfolioCashFlowViewSet
 from api.views.variations import VariationOrderViewSet, ProjectVariationViewSet
+from api.views.subcontracts import (
+    SubcontractorViewSet, SubcontractViewSet, SubcontractClaimViewSet
+)
 
 
 # Create a router and register all viewsets
@@ -94,3 +97,8 @@ router.register(r'cashflow/portfolio', PortfolioCashFlowViewSet, basename='cashf
 # Variation Orders (Change Management)
 router.register(r'variations', VariationOrderViewSet, basename='variation')
 router.register(r'projects', ProjectVariationViewSet, basename='project-variations')
+
+# Subcontractor Management
+router.register(r'subcontractors', SubcontractorViewSet, basename='subcontractor')
+router.register(r'subcontracts', SubcontractViewSet, basename='subcontract')
+router.register(r'subcontract-claims', SubcontractClaimViewSet, basename='subcontractclaim')

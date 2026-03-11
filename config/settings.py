@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'apps.portfolio',
     'apps.cashflow',
     'apps.variations',
+    'apps.subcontracts',
 ]
 
 MIDDLEWARE = [
