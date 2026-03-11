@@ -197,9 +197,7 @@
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <a class="dropdown-item" href="#" 
-                                   hx-post="{% url 'logout' %}" 
-                                   hx-swap="none"
-                                   onclick="return confirm('Are you sure you want to logout?');">
+                                   id="logout-btn">
                                     <i class="bi bi-box-arrow-right"></i> Logout
                                 </a>
                             </li>
@@ -238,6 +236,118 @@
         document.body.addEventListener('htmx:configRequest', (event) => {
             event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
         });
+        
+        {% if user.is_authenticated %}
+        // Manual Logout Handler
+        document.addEventListener('DOMContentLoaded', () => {
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    if (confirm('Are you sure you want to logout?')) {
+                        performLogout();
+                    }
+                });
+            }
+        });
+        
+        function performLogout() {
+            fetch('/api/auth/logout/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                window.location.href = data.redirect || '/login/';
+            })
+            .catch(error => {
+                console.error('Logout error:', error);
+                window.location.href = '/login/';
+            });
+        }
+        
+        // Auto-logout on idle (2 minutes)
+        let idleTime = 0;
+        let idleInterval;
+        const maxIdleTime = 120; // 2 minutes in seconds
+        
+        function resetIdleTimer() {
+            idleTime = 0;
+        }
+        
+        function startIdleTimer() {
+            idleInterval = setInterval(() => {
+                idleTime++;
+                
+                // Show warning at 1:30 (90 seconds)
+                if (idleTime === 90) {
+                    showIdleWarning();
+                }
+                
+                // Auto-logout at 2:00 (120 seconds)
+                if (idleTime >= maxIdleTime) {
+                    clearInterval(idleInterval);
+                    performAutoLogout();
+                }
+            }, 1000); // Check every second
+        }
+        
+        function showIdleWarning() {
+            const warningDiv = document.createElement('div');
+            warningDiv.className = 'alert alert-warning alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+            warningDiv.style.zIndex = '9999';
+            warningDiv.innerHTML = `
+                <strong>Session Timeout Warning!</strong> 
+                You will be automatically logged out in 30 seconds due to inactivity.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(warningDiv);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                if (warningDiv.parentNode) {
+                    warningDiv.remove();
+                }
+            }, 5000);
+        }
+        
+        function performAutoLogout() {
+            console.log('Auto-logout triggered due to inactivity');
+            
+            // Call logout API
+            fetch('/api/auth/logout/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('You have been logged out due to inactivity.');
+                window.location.href = data.redirect || '/login/';
+            })
+            .catch(error => {
+                console.error('Logout error:', error);
+                window.location.href = '/login/';
+            });
+        }
+        
+        // Track user activity
+        const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+        activityEvents.forEach(event => {
+            document.addEventListener(event, resetIdleTimer, true);
+        });
+        
+        // Start the idle timer when page loads
+        startIdleTimer();
+        {% endif %}
     </script>
     
     {% block extra_js %}{% endblock %}

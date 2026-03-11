@@ -60,7 +60,7 @@ MAX_USERS_PER_ORGANIZATION = 1000
 MAX_PROJECTS_PER_USER = 100
 
 # Verification & Activation
-REQUIRE_EMAIL_VERIFICATION = False  # Changed: Allow login without email verification
+REQUIRE_EMAIL_VERIFICATION = True  # Re-enabled for security with SMTP configured
 AUTO_ACTIVATE_USERS = False
 
 # Password Reset

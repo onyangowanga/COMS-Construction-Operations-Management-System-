@@ -194,9 +194,10 @@ class LogoutView(APIView):
         # Clear Django session
         logout(request)
         
-        # Clear cookies
+        # Clear cookies and redirect
         response = Response({
-            'message': 'Logout successful'
+            'message': 'Logout successful',
+            'redirect': '/login/'
         }, status=status.HTTP_200_OK)
         
         clear_jwt_cookies(response)
