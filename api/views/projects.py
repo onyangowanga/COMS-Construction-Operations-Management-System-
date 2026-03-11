@@ -10,8 +10,16 @@ from django_filters.rest_framework import DjangoFilterBackend
 from apps.projects.models import Project, ProjectStage
 from api.serializers.projects import (
     ProjectSerializer, ProjectListSerializer, ProjectStageSerializer
+)from api.selectors.project_selectors import (
+    get_project_financial_data,
+    get_project_budget_variance,
+    get_project_health_data,
 )
-
+from api.services.project_analytics import (
+    calculate_project_financial_summary,
+    calculate_budget_variance,
+    calculate_project_health,
+)
 
 class ProjectViewSet(viewsets.ModelViewSet):
     """
@@ -71,27 +79,79 @@ class ProjectViewSet(viewsets.ModelViewSet):
         serializer = ProjectPhotoListSerializer(photos, many=True)
         return Response(serializer.data)
     
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=['get'], url_path='financial-summary')
     def financial_summary(self, request, pk=None):
-        """Get financial summary for a project"""
-        project = self.get_object()
+        """
+        Get comprehensive financial summary for a project
         
-        # Calculate totals
-        total_expenses = sum(
-            expense.amount for expense in project.expenses.all()
-        )
-        total_payments = sum(
-            payment.amount for payment in project.client_payments.all()
-        )
-        outstanding_balance = project.project_value - total_payments if project.project_value else 0
+        Returns:
+            - Contract value
+            - Total client payments
+            - Total expenses (categorized by type)
+            - Remaining budget
+            - Profit and profit margin
+        """
+        project = get_project_financial_data(pk)
+        if not project:
+            return Response(
+                {'error': 'Project not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        summary = calculate_project_financial_summary(project)
+        return Response(summary)
+    
+    @action(detail=True, methods=['get'], url_path='budget-variance')
+    def budget_variance(self, request, pk=None):
+        """
+        Get budget variance analysis for all BQ items
+        
+        Returns:
+            - Budgeted amount per BQ item
+            - Actual expenses allocated
+            - Variance (positive = under budget, negative = over budget)
+            - Status (UNDER_BUDGET, OVER_BUDGET, etc.)
+        """
+        bq_items = get_project_budget_variance(pk)
+        variance_analysis = calculate_budget_variance(bq_items)
+        
+        total_budget = sum(item['budgeted_amount'] for item in variance_analysis)
+        total_actual = sum(item['actual_expenses'] for item in variance_analysis)
+        total_variance = total_budget - total_actual
         
         return Response({
-            'project_value': project.project_value,
-            'total_expenses': total_expenses,
-            'total_payments': total_payments,
-            'outstanding_balance': outstanding_balance,
-            'profit_loss': total_payments - total_expenses if total_payments else -total_expenses
+            'project_id': str(pk),
+            'summary': {
+                'total_budget': total_budget,
+                'total_actual': total_actual,
+                'total_variance': total_variance,
+                'variance_percentage': (total_variance / total_budget * 100) if total_budget > 0 else 0,
+            },
+            'items': variance_analysis
         })
+    
+    @action(detail=True, methods=['get'], url_path='health')
+    def health(self, request, pk=None):
+        """
+        Get project health indicator
+        
+        Returns:
+            - Health status: GREEN, YELLOW, or RED
+            - Budget utilization
+            - Payment collection
+            - Completion rate
+            - Delayed milestones
+            - Red/Yellow flags
+        """
+        health_data = get_project_health_data(pk)
+        if not health_data:
+            return Response(
+                {'error': 'Project not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        health_indicator = calculate_project_health(health_data)
+        return Response(health_indicator)
 
 
 class ProjectStageViewSet(viewsets.ModelViewSet):

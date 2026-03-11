@@ -10,8 +10,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from apps.workers.models import Worker, DailyLabourRecord
 from api.serializers.workers import (
     WorkerSerializer, WorkerListSerializer, DailyLabourRecordSerializer
-)
-
+)from api.selectors.worker_selectors import get_workers_unpaid_wages
+from api.services.worker_analytics import calculate_unpaid_wages
 
 class WorkerViewSet(viewsets.ModelViewSet):
     """
@@ -41,9 +41,9 @@ class WorkerViewSet(viewsets.ModelViewSet):
         serializer = DailyLabourRecordSerializer(records, many=True)
         return Response(serializer.data)
     
-    @action(detail=True, methods=['get'])
-    def unpaid_wages(self, request, pk=None):
-        """Get all unpaid wages for a worker"""
+    @action(detail=True, methods=['get'], url_path='worker-unpaid-wages')
+    def worker_unpaid_wages(self, request, pk=None):
+        """Get all unpaid wages for a specific worker"""
         worker = self.get_object()
         unpaid_records = worker.daily_records.filter(paid=False).order_by('-date')
         serializer = DailyLabourRecordSerializer(unpaid_records, many=True)
@@ -51,6 +51,31 @@ class WorkerViewSet(viewsets.ModelViewSet):
         return Response({
             'records': serializer.data,
             'total_unpaid': total_unpaid
+        })
+    
+    @action(detail=False, methods=['get'], url_path='unpaid-wages')
+    def unpaid_wages(self, request):
+        """
+        Get all workers with unpaid wages
+        
+        Returns:
+            - Worker details
+            - Total days worked
+            - Days unpaid
+            - Total unpaid wages
+        """
+        workers = get_workers_unpaid_wages()
+        unpaid_data = calculate_unpaid_wages(workers)
+        
+        total_unpaid = sum(item['total_unpaid_wages'] for item in unpaid_data)
+        total_workers = len(unpaid_data)
+        
+        return Response({
+            'summary': {
+                'total_workers_with_unpaid_wages': total_workers,
+                'total_unpaid_amount': total_unpaid,
+            },
+            'workers': unpaid_data
         })
 
 

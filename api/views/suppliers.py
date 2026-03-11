@@ -11,8 +11,8 @@ from apps.suppliers.models import Supplier, LocalPurchaseOrder, SupplierInvoice
 from api.serializers.suppliers import (
     SupplierSerializer, SupplierListSerializer,
     LocalPurchaseOrderSerializer, SupplierInvoiceSerializer
-)
-
+)from api.selectors.supplier_selectors import get_suppliers_outstanding_payments
+from api.services.supplier_analytics import calculate_supplier_outstanding_payments
 
 class SupplierViewSet(viewsets.ModelViewSet):
     """
@@ -49,6 +49,33 @@ class SupplierViewSet(viewsets.ModelViewSet):
         invoices = supplier.invoices.all().order_by('-invoice_date')
         serializer = SupplierInvoiceSerializer(invoices, many=True)
         return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'], url_path='outstanding-payments')
+    def outstanding_payments(self, request):
+        """
+        Get all suppliers with outstanding payment balances
+        
+        Returns:
+            - Supplier details
+            - Total invoiced
+            - Total paid
+            - Outstanding balance
+            - Payment completion percentage
+        """
+        suppliers = get_suppliers_outstanding_payments()
+        outstanding_data = calculate_supplier_outstanding_payments(suppliers)
+        
+        total_outstanding = sum(item['outstanding_balance'] for item in outstanding_data)
+        total_invoiced = sum(item['total_invoiced'] for item in outstanding_data)
+        
+        return Response({
+            'summary': {
+                'total_suppliers_with_outstanding': len(outstanding_data),
+                'total_outstanding_amount': total_outstanding,
+                'total_invoiced_amount': total_invoiced,
+            },
+            'suppliers': outstanding_data
+        })
 
 
 class LocalPurchaseOrderViewSet(viewsets.ModelViewSet):
