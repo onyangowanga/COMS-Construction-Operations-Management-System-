@@ -250,6 +250,47 @@ class VariationService:
     
     @staticmethod
     @transaction.atomic
+    def certify_variation(
+        variation_id: str,
+        certified_by: User,
+        certified_amount: Decimal,
+        notes: str = ''
+    ) -> VariationOrder:
+        """
+        Certify a variation order by consultant (QS, Architect, Engineer).
+        
+        Consultant certification may occur before or after approval.
+        Certified amount may differ from approved value.
+        
+        Args:
+            variation_id: Variation UUID
+            certified_by: Consultant certifying the variation
+            certified_amount: Amount certified by consultant
+            notes: Optional certification notes
+        
+        Returns:
+            Updated VariationOrder
+        
+        Raises:
+            ValidationError: If variation cannot be certified
+        """
+        variation = VariationOrder.objects.select_for_update().get(id=variation_id)
+        
+        if not variation.can_certify():
+            raise ValidationError(
+                f"Variation {variation.reference_number} cannot be certified. "
+                f"Current status: {variation.get_status_display()}"
+            )
+        
+        variation.certified_by = certified_by
+        variation.certified_amount = certified_amount
+        variation.certified_date = timezone.now()
+        variation.save()
+        
+        return variation
+    
+    @staticmethod
+    @transaction.atomic
     def mark_as_invoiced(
         variation_id: str,
         invoiced_value: Decimal

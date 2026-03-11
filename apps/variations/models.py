@@ -45,6 +45,15 @@ class VariationOrder(models.Model):
         REGULATORY = 'REGULATORY', 'Regulatory/Compliance'
         OTHER = 'OTHER', 'Other'
     
+    # Variation Type (Classification for analysis)
+    class VariationType(models.TextChoices):
+        CLIENT_INSTRUCTION = 'CLIENT_INSTRUCTION', 'Client Instruction'
+        DESIGN_CHANGE = 'DESIGN_CHANGE', 'Design Change'
+        ADDITIONAL_WORK = 'ADDITIONAL_WORK', 'Additional Work'
+        OMISSION = 'OMISSION', 'Omission/Deduction'
+        ERROR_CORRECTION = 'ERROR_CORRECTION', 'Error Correction'
+        UNFORESEEN_CONDITION = 'UNFORESEEN_CONDITION', 'Unforeseen Site Condition'
+    
     # === IDENTIFICATION ===
     
     project = models.ForeignKey(
@@ -72,6 +81,13 @@ class VariationOrder(models.Model):
         max_length=20,
         choices=ChangeType.choices,
         default=ChangeType.SCOPE_CHANGE
+    )
+    
+    variation_type = models.CharField(
+        max_length=25,
+        choices=VariationType.choices,
+        default=VariationType.ADDITIONAL_WORK,
+        help_text="Classification of variation for cost analysis"
     )
     
     priority = models.CharField(
@@ -174,6 +190,32 @@ class VariationOrder(models.Model):
         help_text="User who approved this variation"
     )
     
+    certified_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='variations_certified',
+        help_text="Consultant who certified this variation (QS, Architect, Engineer)"
+    )
+    
+    # === CONSULTANT CERTIFICATION ===
+    
+    certified_amount = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal('0.00'))],
+        help_text="Amount certified by consultant (may differ from approved value)"
+    )
+    
+    certified_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Date variation was certified by consultant"
+    )
+    
     # === ADDITIONAL INFO ===
     
     justification = models.TextField(
@@ -218,21 +260,38 @@ class VariationOrder(models.Model):
         ]
         verbose_name = 'Variation Order'
         verbose_name_plural = 'Variation Orders'
-    
-    def __str__(self):
-        return f"{self.reference_number} - {self.title}"
+    @property
+    def certification_variance(self):
+        """Difference between certified and approved amounts"""
+        if self.certified_amount and self.approved_value:
+            return self.certified_amount - self.approved_value
+        return Decimal('0.00')
     
     @property
-    def is_approved(self):
-        """Check if variation is approved"""
-        return self.status == self.Status.APPROVED
+    def is_certified(self):
+        """Check if variation has been certified by consultant"""
+        return self.certified_amount is not None and self.certified_by is not None
     
-    @property
-    def is_pending(self):
-        """Check if variation is pending approval"""
+    def can_approve(self):
+        """Check if variation can be approved"""
         return self.status == self.Status.SUBMITTED
     
-    @property
+    def can_reject(self):
+        """Check if variation can be rejected"""
+        return self.status == self.Status.SUBMITTED
+    
+    def can_submit(self):
+        """Check if variation can be submitted"""
+        return self.status == self.Status.DRAFT
+    
+    def can_invoice(self):
+        """Check if variation can be invoiced"""
+        return self.status == self.Status.APPROVED
+    
+    def can_certify(self):
+        """Check if variation can be certified by consultant"""
+        # Can certify if submitted or approved
+        return self.status in [self.Status.SUBMITTED, self.Status.APPROVED]
     def value_variance(self):
         """Difference between estimated and approved value"""
         if self.approved_value > 0:

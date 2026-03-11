@@ -52,6 +52,7 @@ class VariationOrderSerializer(serializers.ModelSerializer):
     created_by = UserBasicSerializer(read_only=True)
     submitted_by = UserBasicSerializer(read_only=True)
     approved_by = UserBasicSerializer(read_only=True)
+    certified_by = UserBasicSerializer(read_only=True)
     
     status_display = serializers.CharField(
         source='get_status_display',
@@ -63,6 +64,10 @@ class VariationOrderSerializer(serializers.ModelSerializer):
     )
     change_type_display = serializers.CharField(
         source='get_change_type_display',
+        read_only=True
+    )
+    variation_type_display = serializers.CharField(
+        source='get_variation_type_display',
         read_only=True
     )
     
@@ -77,12 +82,19 @@ class VariationOrderSerializer(serializers.ModelSerializer):
         decimal_places=2,
         read_only=True
     )
+    certification_variance = serializers.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        read_only=True
+    )
+    is_certified = serializers.BooleanField(read_only=True)
     
     # Permission checks
     can_submit = serializers.BooleanField(read_only=True)
     can_approve = serializers.BooleanField(read_only=True)
     can_reject = serializers.BooleanField(read_only=True)
     can_invoice = serializers.BooleanField(read_only=True)
+    can_certify = serializers.BooleanField(read_only=True)
     
     class Meta:
         model = VariationOrder
@@ -95,6 +107,8 @@ class VariationOrderSerializer(serializers.ModelSerializer):
             'description',
             'change_type',
             'change_type_display',
+            'variation_type',
+            'variation_type_display',
             'priority',
             'priority_display',
             'instruction_date',
@@ -105,6 +119,9 @@ class VariationOrderSerializer(serializers.ModelSerializer):
             'paid_value',
             'value_variance',
             'outstanding_amount',
+            'certified_amount',
+            'certification_variance',
+            'is_certified',
             'status',
             'status_display',
             'justification',
@@ -115,14 +132,18 @@ class VariationOrderSerializer(serializers.ModelSerializer):
             'created_by',
             'submitted_by',
             'approved_by',
+            'certified_by',
             'submitted_date',
             'approved_date',
+            'certified_date',
             'created_at',
             'updated_at',
             'can_submit',
             'can_approve',
             'can_reject',
+            'certified_date',
             'can_invoice',
+            'can_certify',
         ]
         read_only_fields = [
             'id',
@@ -263,6 +284,31 @@ class VariationRejectSerializer(serializers.Serializer):
             variation_id=str(validated_data['variation_id']),
             rejected_by=user,
             rejection_reason=validated_data['rejection_reason']
+        )
+
+
+class VariationCertifySerializer(serializers.Serializer):
+    """Serializer for consultant certification of variations"""
+    
+    variation_id = serializers.UUIDField()
+    certified_amount = serializers.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        help_text="Amount certified by consultant (may differ from approved value)"
+    )
+    notes = serializers.CharField(required=False, allow_blank=True)
+    
+    def create(self, validated_data):
+        """Certify variation via service layer"""
+        from apps.variations.services import VariationService
+        
+        user = self.context['request'].user
+        
+        return VariationService.certify_variation(
+            variation_id=str(validated_data['variation_id']),
+            certified_by=user,
+            certified_amount=validated_data['certified_amount'],
+            notes=validated_data.get('notes', '')
         )
 
 

@@ -16,9 +16,11 @@ class VariationOrderAdmin(admin.ModelAdmin):
         'reference_number',
         'project_name',
         'title',
+        'variation_type_badge',
         'status_badge',
         'estimated_value_display',
         'approved_value_display',
+        'certified_amount_display',
         'instruction_date',
         'priority_badge',
     ]
@@ -27,6 +29,7 @@ class VariationOrderAdmin(admin.ModelAdmin):
         'status',
         'priority',
         'change_type',
+        'variation_type',
         'instruction_date',
         'project',
     ]
@@ -45,8 +48,10 @@ class VariationOrderAdmin(admin.ModelAdmin):
         'updated_at',
         'submitted_date',
         'approved_date',
+        'certified_date',
         'value_variance_display',
         'outstanding_amount_display',
+        'certification_variance_display',
     ]
     
     fieldsets = (
@@ -54,6 +59,7 @@ class VariationOrderAdmin(admin.ModelAdmin):
             'fields': (
                 'project',
                 'reference_number',
+                'variation_type',
                 'title',
                 'change_type',
                 'priority',
@@ -72,16 +78,18 @@ class VariationOrderAdmin(admin.ModelAdmin):
                 'instruction_date',
                 'required_by_date',
                 'submitted_date',
-                'approved_date',
+                'certified_date',
             )
         }),
         ('Financial', {
             'fields': (
                 'estimated_value',
                 'approved_value',
+                'certified_amount',
                 'invoiced_value',
                 'paid_value',
                 'value_variance_display',
+                'certification_variance_display',
                 'outstanding_amount_display',
             )
         }),
@@ -96,6 +104,7 @@ class VariationOrderAdmin(admin.ModelAdmin):
                 'created_by',
                 'submitted_by',
                 'approved_by',
+                'certified_by',
             )
         }),
         ('References', {
@@ -175,6 +184,35 @@ class VariationOrderAdmin(admin.ModelAdmin):
         return '-'
     approved_value_display.short_description = 'Approved'
     
+    def certified_amount_display(self, obj):
+        """Display certified amount"""
+        if obj.certified_amount and obj.certified_amount > 0:
+            return format_html(
+                '<strong style="color: #2980b9;">KES {:,.2f}</strong>',
+                obj.certified_amount
+            )
+        return '-'
+    certified_amount_display.short_description = 'Certified'
+    
+    def variation_type_badge(self, obj):
+        """Display variation type as colored badge"""
+        colors = {
+            'CLIENT_INSTRUCTION': '#3498db',
+            'DESIGN_CHANGE': '#9b59b6',
+            'ADDITIONAL_WORK': '#27ae60',
+            'OMISSION': '#e67e22',
+            'ERROR_CORRECTION': '#e74c3c',
+            'UNFORESEEN_CONDITION': '#f39c12',
+        }
+        color = colors.get(obj.variation_type, '#95a5a6')
+        return format_html(
+            '<span style="background: {}; color: white; padding: 3px 8px; '
+            'border-radius: 3px; font-size: 0.75em;">{}</span>',
+            color,
+            obj.get_variation_type_display()
+        )
+    variation_type_badge.short_description = 'Type'
+    
     def value_variance_display(self, obj):
         """Display variance between estimated and approved"""
         variance = obj.value_variance
@@ -187,6 +225,19 @@ class VariationOrderAdmin(admin.ModelAdmin):
             )
         return 'KES 0.00'
     value_variance_display.short_description = 'Variance'
+    
+    def certification_variance_display(self, obj):
+        """Display variance between certified and approved"""
+        variance = obj.certification_variance
+        if variance != 0:
+            color = 'red' if variance > 0 else 'green'
+            return format_html(
+                '<span style="color: {};">KES {:,.2f}</span>',
+                color,
+                variance
+            )
+        return 'KES 0.00'
+    certification_variance_display.short_description = 'Certification Variance'
     
     def outstanding_amount_display(self, obj):
         """Display outstanding amount"""

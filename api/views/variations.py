@@ -21,6 +21,7 @@ from api.serializers.variations import (
     VariationSubmitSerializer,
     VariationApproveSerializer,
     VariationRejectSerializer,
+    VariationCertifySerializer,
     ProjectVariationSummarySerializer,
     VariationTrendDataSerializer,
     PortfolioVariationSummarySerializer,
@@ -154,6 +155,43 @@ class VariationOrderViewSet(viewsets.ModelViewSet):
         variation = self.get_object()
         
         serializer = VariationRejectSerializer(
+            data={
+                'variation_id': pk,
+                **request.data
+            },
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        updated_variation = serializer.save()
+        
+        return Response(
+            VariationOrderSerializer(updated_variation).data,
+            status=status.HTTP_200_OK
+        )
+    
+    @extend_schema(
+        summary="Certify variation",
+        description="Certify variation by consultant (QS, Architect, Engineer)",
+        request=VariationCertifySerializer,
+        responses={200: VariationOrderSerializer}
+    )
+    @action(detail=True, methods=['post'], url_path='certify')
+    def certify(self, request, pk=None):
+        """
+        POST /api/variations/{id}/certify/
+        
+        Certify variation by consultant.
+        Certified amount may differ from approved value.
+        
+        Body:
+        {
+            "certified_amount": 1450000.00,  // Amount certified by consultant
+            "notes": "Certification notes"    // Optional
+        }
+        """
+        variation = self.get_object()
+        
+        serializer = VariationCertifySerializer(
             data={
                 'variation_id': pk,
                 **request.data
