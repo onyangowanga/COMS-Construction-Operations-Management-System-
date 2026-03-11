@@ -79,11 +79,11 @@ docker-compose -f docker-compose.prod.yml up -d
 print_status "Waiting for services to start..."
 sleep 10
 
-# Reset database (drop and recreate) - Load env vars first
-print_status "Resetting database..."
-source .env.production
-docker-compose -f docker-compose.prod.yml exec -T db psql -U ${POSTGRES_USER} -d postgres -c "DROP DATABASE IF EXISTS ${POSTGRES_DB};"
-docker-compose -f docker-compose.prod.yml exec -T db psql -U ${POSTGRES_USER} -d postgres -c "CREATE DATABASE ${POSTGRES_DB};"
+# NOTE: Database reset is disabled for production deployments to preserve data
+# If you need to reset the database, run these commands manually:
+# source .env.production
+# docker-compose -f docker-compose.prod.yml exec -T db psql -U ${POSTGRES_USER} -d postgres -c "DROP DATABASE IF EXISTS ${POSTGRES_DB};"
+# docker-compose -f docker-compose.prod.yml exec -T db psql -U ${POSTGRES_USER} -d postgres -c "CREATE DATABASE ${POSTGRES_DB};"
 
 # Run database migrations
 print_status "Running database migrations..."
