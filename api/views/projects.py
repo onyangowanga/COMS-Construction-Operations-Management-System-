@@ -194,6 +194,57 @@ class ProjectViewSet(viewsets.ModelViewSet):
         
         notifications = get_all_notifications(project_id=pk)
         return Response(notifications)
+    
+    @action(detail=True, methods=['get'], url_path='valuations')
+    def valuations(self, request, pk=None):
+        """
+        Get all valuations for this project
+        
+        Returns:
+            - List of valuations with financial details
+        """
+        from apps.valuations.selectors import get_project_valuations
+        from api.serializers.valuations import ValuationListSerializer
+        
+        valuations = get_project_valuations(str(pk))
+        serializer = ValuationListSerializer(valuations, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'], url_path='valuation-summary')
+    def valuation_summary(self, request, pk=None):
+        """
+        Get valuation summary statistics for this project
+        
+        Returns:
+            - Total valuations count
+            - Total certified amount
+            - Total paid amount
+            - Pending payment amount
+            - Retention held
+            - Latest valuation details
+        """
+        from apps.valuations.selectors import get_valuation_summary
+        from api.serializers.valuations import ValuationSummarySerializer
+        
+        summary = get_valuation_summary(str(pk))
+        serializer = ValuationSummarySerializer(summary)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'], url_path='bq-progress')
+    def bq_progress(self, request, pk=None):
+        """
+        Get overall BQ progress summary for this project
+        
+        Returns:
+            - Total budget
+            - Total completed value
+            - Remaining value
+            - Percentage complete
+        """
+        from apps.valuations.selectors import get_bq_progress_summary
+        
+        progress = get_bq_progress_summary(str(pk))
+        return Response(progress)
 
 
 class ProjectStageViewSet(viewsets.ModelViewSet):

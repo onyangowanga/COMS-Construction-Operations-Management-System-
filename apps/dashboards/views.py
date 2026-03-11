@@ -215,3 +215,22 @@ def finance_summary_partial(request):
     }
     
     return render(request, 'dashboards/partials/finance_summary.html', context)
+
+
+@login_required
+@require_http_methods(["GET"])
+def project_valuation_summary_partial(request, project_id):
+    """
+    HTMX partial: Project valuation summary.
+    
+    URL: /projects/{id}/dashboard/partials/valuation-summary/
+    """
+    project = get_object_or_404(Project, id=project_id)
+    valuation_summary = selectors.get_project_valuation_summary(str(project_id))
+    
+    context = {
+        'project': project,
+        'valuation_summary': valuation_summary,
+    }
+    
+    return render(request, 'dashboards/partials/valuation_summary.html', context)

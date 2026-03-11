@@ -18,6 +18,7 @@ from api.views.documents import DocumentViewSet, DocumentVersionViewSet
 from api.views.media import ProjectPhotoViewSet
 from api.views.approvals import ProjectApprovalViewSet
 from api.views.workflows import ApprovalViewSet, ProjectActivityViewSet
+from api.views.valuations import ValuationViewSet, BQItemProgressViewSet
 
 
 # Create a router and register all viewsets
@@ -67,3 +68,7 @@ router.register(r'approvals', ProjectApprovalViewSet, basename='projectapproval'
 # Workflows
 router.register(r'workflow-approvals', ApprovalViewSet, basename='approval')
 router.register(r'activities', ProjectActivityViewSet, basename='projectactivity')
+
+# Valuations
+router.register(r'valuations', ValuationViewSet, basename='valuation')
+router.register(r'bq-progress', BQItemProgressViewSet, basename='bqprogress')

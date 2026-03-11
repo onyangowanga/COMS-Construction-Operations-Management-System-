@@ -316,3 +316,18 @@ def get_recent_project_activity(project_id: str, limit: int = 20) -> List[Dict[s
         }
         for activity in activities
     ]
+
+
+def get_project_valuation_summary(project_id: str) -> Dict[str, Any]:
+    """
+    Get valuation summary for project dashboard.
+    
+    Returns:
+        - latest_valuation: Latest valuation object
+        - total_certified: Total certified amount
+        - pending_payment: Amount approved but not paid
+        - retention_held: Total retention amount
+    """
+    from apps.valuations.selectors import get_valuation_summary
+    
+    return get_valuation_summary(project_id)

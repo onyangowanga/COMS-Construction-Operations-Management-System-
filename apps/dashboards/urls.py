@@ -40,6 +40,11 @@ urlpatterns = [
         views.project_unpaid_wages_partial,
         name='project_unpaid_wages_partial'
     ),
+    path(
+        'projects/<uuid:project_id>/dashboard/partials/valuation-summary/',
+        views.project_valuation_summary_partial,
+        name='project_valuation_summary_partial'
+    ),
     
     # Procurement Dashboard
     path(

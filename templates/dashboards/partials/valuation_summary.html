@@ -1,0 +1,99 @@
+<!-- Valuation Summary Widget for Project Dashboard -->
+{% if valuation_summary %}
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h6 class="card-title mb-0">
+            <i class="bi bi-file-earmark-check"></i> Valuation Summary
+        </h6>
+    </div>
+    <div class="card-body">
+        {% if valuation_summary.latest_valuation %}
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">{{ valuation_summary.latest_valuation_number }}</h5>
+                        <small class="text-muted">
+                            {{ valuation_summary.latest_valuation_date|date:"M d, Y" }}
+                        </small>
+                    </div>
+                    <div class="text-end">
+                        <h4 class="mb-0">KES {{ valuation_summary.latest_amount_due|floatformat:2|intcomma }}</h4>
+                        <small class="text-muted">Amount Due</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row g-2">
+            <!-- Total Certified -->
+            <div class="col-md-6">
+                <div class="stat-card bg-success-subtle">
+                    <div class="stat-icon text-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">KES {{ valuation_summary.total_certified|floatformat:2|intcomma }}</div>
+                        <div class="stat-label">Total Certified</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Total Paid -->
+            <div class="col-md-6">
+                <div class="stat-card bg-info-subtle">
+                    <div class="stat-icon text-info">
+                        <i class="bi bi-cash-coin"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">KES {{ valuation_summary.total_paid|floatformat:2|intcomma }}</div>
+                        <div class="stat-label">Total Paid</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pending Payment -->
+            <div class="col-md-6">
+                <div class="stat-card bg-warning-subtle">
+                    <div class="stat-icon text-warning">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">KES {{ valuation_summary.pending_payment|floatformat:2|intcomma }}</div>
+                        <div class="stat-label">Pending Payment</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Retention Held -->
+            <div class="col-md-6">
+                <div class="stat-card bg-secondary-subtle">
+                    <div class="stat-icon text-secondary">
+                        <i class="bi bi-shield-lock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">KES {{ valuation_summary.retention_held|floatformat:2|intcomma }}</div>
+                        <div class="stat-label">Retention Held</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Total Valuations -->
+        <div class="mt-3 text-center">
+            <p class="mb-0 text-muted">
+                <strong>{{ valuation_summary.total_valuations }}</strong> Valuation{{ valuation_summary.total_valuations|pluralize }}
+            </p>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="bi bi-file-earmark-x text-muted" style="font-size: 3rem;"></i>
+            <p class="text-muted mt-2">No valuations yet</p>
+            <a href="{% url 'api:valuation-list' %}?project={{ project.id }}" class="btn btn-sm btn-primary">
+                <i class="bi bi-plus-circle"></i> Create First Valuation
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
