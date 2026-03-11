@@ -9,7 +9,7 @@ from .suppliers import SupplierViewSet, LocalPurchaseOrderViewSet, SupplierInvoi
 from .workers import WorkerViewSet, DailyLabourRecordViewSet
 from .ledger import ExpenseViewSet, ExpenseAllocationViewSet
 from .clients import ClientPaymentViewSet, ClientReceiptViewSet
-from .documents import DocumentViewSet, DocumentVersionViewSet
+from .documents import DocumentViewSet, ProjectDocumentViewSet, ObjectDocumentViewSet
 from .media import ProjectPhotoViewSet
 from .approvals import ProjectApprovalViewSet
 
@@ -40,7 +40,8 @@ __all__ = [
     'ClientReceiptViewSet',
     # Documents
     'DocumentViewSet',
-    'DocumentVersionViewSet',
+    'ProjectDocumentViewSet',
+    'ObjectDocumentViewSet',
     # Media
     'ProjectPhotoViewSet',
     # Approvals

@@ -14,7 +14,7 @@ from api.views.suppliers import (
 from api.views.workers import WorkerViewSet, DailyLabourRecordViewSet
 from api.views.ledger import ExpenseViewSet, ExpenseAllocationViewSet
 from api.views.clients import ClientPaymentViewSet, ClientReceiptViewSet
-from api.views.documents import DocumentViewSet, DocumentVersionViewSet
+from api.views.documents import DocumentViewSet, ProjectDocumentViewSet, ObjectDocumentViewSet
 from api.views.media import ProjectPhotoViewSet
 from api.views.approvals import ProjectApprovalViewSet
 from api.views.workflows import ApprovalViewSet, ProjectActivityViewSet
@@ -63,7 +63,6 @@ router.register(r'client-receipts', ClientReceiptViewSet, basename='clientreceip
 
 # Documents
 router.register(r'documents', DocumentViewSet, basename='document')
-router.register(r'document-versions', DocumentVersionViewSet, basename='documentversion')
 
 # Media
 router.register(r'photos', ProjectPhotoViewSet, basename='projectphoto')
