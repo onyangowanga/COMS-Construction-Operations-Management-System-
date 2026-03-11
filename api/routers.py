@@ -22,6 +22,7 @@ from api.views.valuations import ValuationViewSet, BQItemProgressViewSet
 from api.views.site_operations import (
     DailySiteReportViewSet, MaterialDeliveryViewSet, SiteIssueViewSet
 )
+from api.views.portfolio import PortfolioViewSet, ProjectMetricsViewSet
 
 
 # Create a router and register all viewsets
@@ -80,3 +81,7 @@ router.register(r'bq-progress', BQItemProgressViewSet, basename='bqprogress')
 router.register(r'site-reports', DailySiteReportViewSet, basename='sitereport')
 router.register(r'material-deliveries', MaterialDeliveryViewSet, basename='materialdelivery')
 router.register(r'site-issues', SiteIssueViewSet, basename='siteissue')
+
+# Portfolio Analytics
+router.register(r'portfolio', PortfolioViewSet, basename='portfolio')
+router.register(r'project-metrics', ProjectMetricsViewSet, basename='projectmetrics')

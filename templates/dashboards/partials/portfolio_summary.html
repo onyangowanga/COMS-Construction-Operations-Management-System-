@@ -1,0 +1,151 @@
+{% load humanize %}
+
+<div class="row g-3">
+    
+    <!-- Active Projects -->
+    <div class="col-md-3">
+        <div class="card metric-card h-100">
+            <div class="card-body">
+                <div class="metric-value text-primary">{{ summary.active_projects|default:0 }}</div>
+                <div class="metric-label">Active Projects</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total Contract Value -->
+    <div class="col-md-3">
+        <div class="card metric-card h-100">
+            <div class="card-body">
+                <div class="metric-value text-info">KES {{ summary.total_contract_value|floatformat:0|intcomma }}</div>
+                <div class="metric-label">Total Contract Value</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total Revenue -->
+    <div class="col-md-3">
+        <div class="card metric-card h-100">
+            <div class="card-body">
+                <div class="metric-value text-success">KES {{ summary.total_revenue|floatformat:0|intcomma }}</div>
+                <div class="metric-label">Total Revenue</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total Expenses -->
+    <div class="col-md-3">
+        <div class="card metric-card h-100">
+            <div class="card-body">
+                <div class="metric-value text-danger">KES {{ summary.total_expenses|floatformat:0|intcomma }}</div>
+                <div class="metric-label">Total Expenses</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total Profit -->
+    <div class="col-md-3">
+        <div class="card metric-card h-100">
+            <div class="card-body">
+                <div class="metric-value {% if summary.total_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    KES {{ summary.total_profit|floatformat:0|intcomma }}
+                </div>
+                <div class="metric-label">Total Profit</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Projects Over Budget -->
+    <div class="col-md-3">
+        <div class="card metric-card h-100 {% if summary.projects_over_budget > 0 %}border-danger{% endif %}">
+            <div class="card-body">
+                <div class="metric-value {% if summary.projects_over_budget > 0 %}text-danger{% else %}text-success{% endif %}">
+                    {{ summary.projects_over_budget|default:0 }}
+                </div>
+                <div class="metric-label">
+                    <i class="bi bi-exclamation-circle"></i> Over Budget
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Projects Behind Schedule -->
+    <div class="col-md-3">
+        <div class="card metric-card h-100 {% if summary.projects_behind_schedule > 0 %}border-warning{% endif %}">
+            <div class="card-body">
+                <div class="metric-value {% if summary.projects_behind_schedule > 0 %}text-warning{% else %}text-success{% endif %}">
+                    {{ summary.projects_behind_schedule|default:0 }}
+                </div>
+                <div class="metric-label">
+                    <i class="bi bi-clock-history"></i> Behind Schedule
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- High Risk Projects -->
+    <div class="col-md-3">
+        <div class="card metric-card h-100 {% if summary.high_risk_projects > 0 %}border-danger{% endif %}">
+            <div class="card-body">
+                <div class="metric-value {% if summary.high_risk_projects > 0 %}text-danger{% else %}text-success{% endif %}">
+                    {{ summary.high_risk_projects|default:0 }}
+                </div>
+                <div class="metric-label">
+                    <i class="bi bi-flag-fill"></i> High Risk
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Average Budget Utilization -->
+    <div class="col-md-6">
+        <div class="card metric-card h-100">
+            <div class="card-body">
+                <div class="metric-label mb-2">Average Budget Utilization</div>
+                <div class="progress" style="height: 30px;">
+                    {% widthratio summary.avg_budget_utilization 1 1 as budget_pct %}
+                    <div 
+                        class="progress-bar 
+                            {% if budget_pct > 100 %}bg-danger
+                            {% elif budget_pct > 90 %}bg-warning
+                            {% elif budget_pct > 70 %}bg-info
+                            {% else %}bg-success{% endif %}"
+                        role="progressbar"
+                        style="width: {% if budget_pct > 100 %}100{% else %}{{ budget_pct }}{% endif %}%"
+                        aria-valuenow="{{ budget_pct }}"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                    >
+                        {{ summary.avg_budget_utilization|floatformat:1 }}%
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Average Profit Margin -->
+    <div class="col-md-6">
+        <div class="card metric-card h-100">
+            <div class="card-body">
+                <div class="metric-label mb-2">Average Profit Margin</div>
+                <div class="progress" style="height: 30px;">
+                    {% widthratio summary.avg_profit_margin 1 1 as margin_pct %}
+                    <div 
+                        class="progress-bar 
+                            {% if margin_pct < 0 %}bg-danger
+                            {% elif margin_pct < 5 %}bg-warning
+                            {% elif margin_pct < 15 %}bg-info
+                            {% else %}bg-success{% endif %}"
+                        role="progressbar"
+                        style="width: {% if margin_pct < 0 %}10{% elif margin_pct > 100 %}100{% else %}{{ margin_pct }}{% endif %}%"
+                        aria-valuenow="{{ margin_pct }}"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                    >
+                        {{ summary.avg_profit_margin|floatformat:1 }}%
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>

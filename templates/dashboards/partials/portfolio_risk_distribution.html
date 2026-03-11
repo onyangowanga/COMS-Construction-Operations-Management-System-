@@ -1,0 +1,64 @@
+{% load humanize %}
+
+<div class="risk-distribution">
+    <div class="row g-2 text-center">
+        <div class="col-6">
+            <div class="p-3 border rounded bg-light">
+                <div class="display-6 text-success">{{ distribution.low|default:0 }}</div>
+                <div class="small text-muted">Low Risk</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="p-3 border rounded bg-light">
+                <div class="display-6 text-warning">{{ distribution.medium|default:0 }}</div>
+                <div class="small text-muted">Medium Risk</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="p-3 border rounded bg-light">
+                <div class="display-6 text-danger">{{ distribution.high|default:0 }}</div>
+                <div class="small text-muted">High Risk</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="p-3 border rounded border-danger bg-danger bg-opacity-10">
+                <div class="display-6 text-danger fw-bold">{{ distribution.critical|default:0 }}</div>
+                <div class="small text-muted">Critical Risk</div>
+            </div>
+        </div>
+    </div>
+    
+    {% with total=distribution.low|add:distribution.medium|add:distribution.high|add:distribution.critical %}
+    {% if total > 0 %}
+    <div class="mt-3">
+        <div class="progress" style="height: 25px;">
+            {% widthratio distribution.low total 100 as low_pct %}
+            {% widthratio distribution.medium total 100 as medium_pct %}
+            {% widthratio distribution.high total 100 as high_pct %}
+            {% widthratio distribution.critical total 100 as critical_pct %}
+            
+            {% if distribution.low > 0 %}
+            <div class="progress-bar bg-success" style="width: {{ low_pct }}%" title="Low: {{ distribution.low }}">
+                {{ low_pct }}%
+            </div>
+            {% endif %}
+            {% if distribution.medium > 0 %}
+            <div class="progress-bar bg-warning" style="width: {{ medium_pct }}%" title="Medium: {{ distribution.medium }}">
+                {{ medium_pct }}%
+            </div>
+            {% endif %}
+            {% if distribution.high > 0 %}
+            <div class="progress-bar bg-danger" style="width: {{ high_pct }}%" title="High: {{ distribution.high }}">
+                {{ high_pct }}%
+            </div>
+            {% endif %}
+            {% if distribution.critical > 0 %}
+            <div class="progress-bar bg-dark" style="width: {{ critical_pct }}%" title="Critical: {{ distribution.critical }}">
+                {{ critical_pct }}%
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {% endwith %}
+</div>

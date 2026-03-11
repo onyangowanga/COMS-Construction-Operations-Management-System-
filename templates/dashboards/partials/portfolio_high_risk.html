@@ -1,0 +1,53 @@
+{% load humanize %}
+
+{% if high_risk_projects %}
+<div class="list-group list-group-flush">
+    {% for metrics in high_risk_projects|slice:":10" %}
+    <div class="list-group-item">
+        <div class="d-flex w-100 justify-content-between align-items-start">
+            <div class="flex-grow-1">
+                <h6 class="mb-1">
+                    {{ metrics.project.code }} - {{ metrics.project.name|truncatewords:8 }}
+                </h6>
+                <div class="mb-2">
+                    <span class="risk-badge risk-{{ metrics.risk_level|lower }}">
+                        {{ metrics.get_risk_level_display }}
+                    </span>
+                    {% if metrics.is_over_budget %}
+                        <span class="badge bg-danger ms-1">Over Budget</span>
+                    {% endif %}
+                    {% if metrics.is_behind_schedule %}
+                        <span class="badge bg-warning text-dark ms-1">Behind Schedule</span>
+                    {% endif %}
+                </div>
+                <div class="row g-2 small text-muted">
+                    <div class="col-6">
+                        <strong>Budget:</strong> {{ metrics.budget_utilization|floatformat:1 }}%
+                    </div>
+                    <div class="col-6">
+                        <strong>Profit:</strong> {{ metrics.profit_margin|floatformat:1 }}%
+                    </div>
+                    <div class="col-6">
+                        <strong>CPI:</strong> {{ metrics.cost_performance_index|floatformat:2 }}
+                    </div>
+                    <div class="col-6">
+                        <strong>SPI:</strong> {{ metrics.schedule_performance_index|floatformat:2 }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if high_risk_projects.count > 10 %}
+<div class="text-center mt-3">
+    <small class="text-muted">Showing top 10 of {{ high_risk_projects.count }} high risk projects</small>
+</div>
+{% endif %}
+
+{% else %}
+<div class="alert alert-success mb-0">
+    <i class="bi bi-check-circle"></i> No high risk projects! All projects are performing well.
+</div>
+{% endif %}

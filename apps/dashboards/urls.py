@@ -84,4 +84,31 @@ urlpatterns = [
         views.finance_summary_partial,
         name='finance_summary_partial'
     ),
+    
+    # Portfolio Dashboard
+    path(
+        'portfolio/',
+        views.portfolio_dashboard,
+        name='portfolio_dashboard'
+    ),
+    path(
+        'portfolio/partials/summary/',
+        views.portfolio_summary_partial,
+        name='portfolio_summary_partial'
+    ),
+    path(
+        'portfolio/partials/projects-table/',
+        views.portfolio_projects_table_partial,
+        name='portfolio_projects_table_partial'
+    ),
+    path(
+        'portfolio/partials/risk-distribution/',
+        views.portfolio_risk_distribution_partial,
+        name='portfolio_risk_distribution_partial'
+    ),
+    path(
+        'portfolio/partials/high-risk-projects/',
+        views.portfolio_high_risk_projects_partial,
+        name='portfolio_high_risk_partial'
+    ),
 ]

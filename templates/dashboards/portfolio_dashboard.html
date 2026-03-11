@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Portfolio Dashboard - COMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .metric-card {
+        border-left: 4px solid #007bff;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+    
+    .metric-label {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        text-transform: uppercase;
+    }
+    
+    .risk-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+    
+    .risk-low { background-color: #d4edda; color: #155724; }
+    .risk-medium { background-color: #fff3cd; color: #856404; }
+    .risk-high { background-color: #f8d7da; color: #721c24; }
+    .risk-critical { background-color: #dc3545; color: white; }
+    
+    .health-excellent { border-left-color: #28a745; }
+    .health-good { border-left-color: #17a2b8; }
+    .health-warning { border-left-color: #ffc107; }
+    .health-critical { border-left-color: #dc3545; }
+    
+    .filter-panel {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .htmx-indicator {
+        display: none;
+    }
+    
+    .htmx-request .htmx-indicator {
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-bar-chart-line"></i> Portfolio Dashboard
+                    </h1>
+                    <p class="text-muted mb-0">Comprehensive portfolio analytics and project performance metrics</p>
+                </div>
+                <div>
+                    <button 
+                        class="btn btn-primary"
+                        hx-post="/api/portfolio/update-metrics/"
+                        hx-trigger="click"
+                        hx-indicator="#update-indicator"
+                        hx-swap="none"
+                    >
+                        <i class="bi bi-arrow-clockwise"></i> Update Metrics
+                        <span id="update-indicator" class="htmx-indicator spinner-border spinner-border-sm ms-2"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Portfolio Summary Section -->
+    <div class="row mb-4" id="portfolio-summary">
+        <div class="col-12">
+            <div 
+                hx-get="{% url 'dashboards:portfolio_summary_partial' %}"
+                hx-trigger="load, every 30s"
+                hx-indicator=".summary-loading"
+            >
+                <div class="text-center py-5 summary-loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading portfolio summary...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Risk Distribution and High Risk Projects Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> Risk Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div 
+                        hx-get="{% url 'dashboards:portfolio_risk_distribution_partial' %}"
+                        hx-trigger="load, every 60s"
+                    >
+                        <div class="text-center py-4">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-flag-fill text-danger"></i> High Risk Projects
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div 
+                        hx-get="{% url 'dashboards:portfolio_high_risk_partial' %}"
+                        hx-trigger="load, every 60s"
+                    >
+                        <div class="text-center py-4">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- All Projects Table Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-table"></i> All Projects Performance
+                    </h5>
+                </div>
+                <div class="card-body">
+                    
+                    <!-- Filter Panel -->
+                    <div class="filter-panel mb-3">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-auto">
+                                <label class="form-label mb-0"><strong>Filters:</strong></label>
+                            </div>
+                            <div class="col-md-3">
+                                <select 
+                                    class="form-select form-select-sm"
+                                    name="risk_level"
+                                    hx-get="{% url 'dashboards:portfolio_projects_table_partial' %}"
+                                    hx-target="#projects-table-container"
+                                    hx-include="[name='health'], [name='attention_only']"
+                                >
+                                    <option value="">All Risk Levels</option>
+                                    <option value="LOW">Low Risk</option>
+                                    <option value="MEDIUM">Medium Risk</option>
+                                    <option value="HIGH">High Risk</option>
+                                    <option value="CRITICAL">Critical Risk</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select 
+                                    class="form-select form-select-sm"
+                                    name="health"
+                                    hx-get="{% url 'dashboards:portfolio_projects_table_partial' %}"
+                                    hx-target="#projects-table-container"
+                                    hx-include="[name='risk_level'], [name='attention_only']"
+                                >
+                                    <option value="">All Health Status</option>
+                                    <option value="EXCELLENT">Excellent</option>
+                                    <option value="GOOD">Good</option>
+                                    <option value="WARNING">Warning</option>
+                                    <option value="CRITICAL">Critical</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input 
+                                        class="form-check-input" 
+                                        type="checkbox" 
+                                        name="attention_only"
+                                        value="true"
+                                        hx-get="{% url 'dashboards:portfolio_projects_table_partial' %}"
+                                        hx-target="#projects-table-container"
+                                        hx-include="[name='risk_level'], [name='health']"
+                                    >
+                                    <label class="form-check-label">
+                                        Attention Required Only
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Projects Table -->
+                    <div id="projects-table-container">
+                        <div 
+                            hx-get="{% url 'dashboards:portfolio_projects_table_partial' %}"
+                            hx-trigger="load"
+                        >
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2 text-muted">Loading projects...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh success message for update metrics
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+        if (evt.detail.pathInfo.requestPath === '/api/portfolio/update-metrics/') {
+            if (evt.detail.successful) {
+                // Show success notification
+                alert('Metrics updated successfully!');
+                // Refresh all partials
+                htmx.trigger('#portfolio-summary', 'load');
+                htmx.trigger('[hx-get*="risk-distribution"]', 'load');
+                htmx.trigger('[hx-get*="high-risk-projects"]', 'load');
+                htmx.trigger('#projects-table-container', 'load');
+            } else {
+                alert('Error updating metrics. Please try again.');
+            }
+        }
+    });
+</script>
+{% endblock %}

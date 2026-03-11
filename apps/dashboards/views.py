@@ -252,3 +252,108 @@ def project_site_operations_summary_partial(request, project_id):
     }
     
     return render(request, 'dashboards/partials/site_operations_summary.html', context)
+
+
+# Portfolio Dashboard Views
+@login_required
+@require_http_methods(["GET"])
+def portfolio_dashboard(request):
+    """
+    Main portfolio dashboard view.
+    
+    URL: /portfolio/
+    """
+    context = {}
+    return render(request, 'dashboards/portfolio_dashboard.html', context)
+
+
+@login_required
+@require_http_methods(["GET"])
+def portfolio_summary_partial(request):
+    """
+    HTMX partial: Portfolio-wide summary metrics.
+    
+    URL: /portfolio/partials/summary/
+    """
+    from apps.portfolio import selectors as portfolio_selectors
+    
+    summary = portfolio_selectors.get_portfolio_summary()
+    
+    context = {
+        'summary': summary,
+    }
+    
+    return render(request, 'dashboards/partials/portfolio_summary.html', context)
+
+
+@login_required
+@require_http_methods(["GET"])
+def portfolio_projects_table_partial(request):
+    """
+    HTMX partial: All projects with metrics table.
+    
+    URL: /portfolio/partials/projects-table/
+    """
+    from apps.portfolio import selectors as portfolio_selectors
+    
+    # Get filter parameters
+    risk_level = request.GET.get('risk_level', '').upper()
+    health = request.GET.get('health', '').upper()
+    show_attention_only = request.GET.get('attention_only', 'false').lower() == 'true'
+    
+    if show_attention_only:
+        projects_metrics = portfolio_selectors.get_projects_requiring_attention()
+    else:
+        projects_metrics = portfolio_selectors.get_all_projects_with_metrics()
+        
+        # Apply filters if provided
+        if risk_level and risk_level in ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']:
+            projects_metrics = projects_metrics.filter(metrics__risk_level=risk_level)
+        if health and health in ['EXCELLENT', 'GOOD', 'WARNING', 'CRITICAL']:
+            projects_metrics = projects_metrics.filter(metrics__project_health=health)
+    
+    context = {
+        'projects_metrics': projects_metrics,
+        'current_risk_filter': risk_level,
+        'current_health_filter': health,
+    }
+    
+    return render(request, 'dashboards/partials/portfolio_projects_table.html', context)
+
+
+@login_required
+@require_http_methods(["GET"])
+def portfolio_risk_distribution_partial(request):
+    """
+    HTMX partial: Risk distribution chart data.
+    
+    URL: /portfolio/partials/risk-distribution/
+    """
+    from apps.portfolio import selectors as portfolio_selectors
+    
+    distribution = portfolio_selectors.get_portfolio_risk_distribution()
+    
+    context = {
+        'distribution': distribution,
+    }
+    
+    return render(request, 'dashboards/partials/portfolio_risk_distribution.html', context)
+
+
+@login_required
+@require_http_methods(["GET"])
+def portfolio_high_risk_projects_partial(request):
+    """
+    HTMX partial: High and critical risk projects list.
+    
+    URL: /portfolio/partials/high-risk-projects/
+    """
+    from apps.portfolio import selectors as portfolio_selectors
+    
+    high_risk_projects = portfolio_selectors.get_high_risk_projects()
+    
+    context = {
+        'high_risk_projects': high_risk_projects,
+    }
+    
+    return render(request, 'dashboards/partials/portfolio_high_risk.html', context)

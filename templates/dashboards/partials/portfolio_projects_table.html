@@ -1,0 +1,136 @@
+{% load humanize %}
+
+{% if projects_metrics %}
+<div class="table-responsive">
+    <table class="table table-hover table-sm">
+        <thead class="table-light">
+            <tr>
+                <th>Project</th>
+                <th>Status</th>
+                <th>Risk</th>
+                <th>Health</th>
+                <th class="text-end">Budget Util.</th>
+                <th class="text-end">Profit Margin</th>
+                <th class="text-end">CPI</th>
+                <th class="text-end">SPI</th>
+                <th>Flags</th>
+                <th class="text-end">Last Updated</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for project in projects_metrics %}
+            <tr>
+                <td>
+                    <strong>{{ project.code }}</strong><br>
+                    <small class="text-muted">{{ project.name|truncatewords:5 }}</small>
+                </td>
+                <td>
+                    <span class="badge bg-secondary">{{ project.get_status_display }}</span>
+                </td>
+                <td>
+                    {% if project.metrics %}
+                        <span class="risk-badge risk-{{ project.metrics.risk_level|lower }}">
+                            {{ project.metrics.get_risk_level_display }}
+                        </span>
+                    {% else %}
+                        <span class="badge bg-secondary">N/A</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if project.metrics %}
+                        {% if project.metrics.project_health == 'EXCELLENT' %}
+                            <span class="badge bg-success">Excellent</span>
+                        {% elif project.metrics.project_health == 'GOOD' %}
+                            <span class="badge bg-info">Good</span>
+                        {% elif project.metrics.project_health == 'WARNING' %}
+                            <span class="badge bg-warning text-dark">Warning</span>
+                        {% else %}
+                            <span class="badge bg-danger">Critical</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="badge bg-secondary">N/A</span>
+                    {% endif %}
+                </td>
+                <td class="text-end">
+                    {% if project.metrics %}
+                        <span class="{% if project.metrics.budget_utilization > 100 %}text-danger fw-bold{% elif project.metrics.budget_utilization > 90 %}text-warning fw-bold{% endif %}">
+                            {{ project.metrics.budget_utilization|floatformat:1 }}%
+                        </span>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td class="text-end">
+                    {% if project.metrics %}
+                        <span class="{% if project.metrics.profit_margin < 0 %}text-danger fw-bold{% elif project.metrics.profit_margin < 5 %}text-warning{% else %}text-success{% endif %}">
+                            {{ project.metrics.profit_margin|floatformat:1 }}%
+                        </span>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td class="text-end">
+                    {% if project.metrics %}
+                        <span class="{% if project.metrics.cost_performance_index < 0.9 %}text-danger fw-bold{% elif project.metrics.cost_performance_index < 0.95 %}text-warning{% else %}text-success{% endif %}">
+                            {{ project.metrics.cost_performance_index|floatformat:2 }}
+                        </span>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td class="text-end">
+                    {% if project.metrics %}
+                        <span class="{% if project.metrics.schedule_performance_index < 0.9 %}text-danger fw-bold{% elif project.metrics.schedule_performance_index < 0.95 %}text-warning{% else %}text-success{% endif %}">
+                            {{ project.metrics.schedule_performance_index|floatformat:2 }}
+                        </span>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    {% if project.metrics %}
+                        {% if project.metrics.is_over_budget %}
+                            <span class="badge bg-danger" title="Over Budget">
+                                <i class="bi bi-exclamation-circle"></i>
+                            </span>
+                        {% endif %}
+                        {% if project.metrics.is_behind_schedule %}
+                            <span class="badge bg-warning text-dark" title="Behind Schedule">
+                                <i class="bi bi-clock"></i>
+                            </span>
+                        {% endif %}
+                        {% if not project.metrics.is_over_budget and not project.metrics.is_behind_schedule %}
+                            <span class="text-success">
+                                <i class="bi bi-check-circle"></i>
+                            </span>
+                        {% endif %}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td class="text-end">
+                    {% if project.metrics %}
+                        <small class="text-muted">{{ project.metrics.last_updated|timesince }} ago</small>
+                    {% else %}
+                        <small class="text-muted">-</small>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-3 text-muted">
+    <small>
+        <strong>Legend:</strong>
+        CPI (Cost Performance Index): &gt;1.0 good, &lt;1.0 over budget |
+        SPI (Schedule Performance Index): &gt;1.0 ahead, &lt;1.0 behind schedule
+    </small>
+</div>
+
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> No projects found matching the selected filters.
+</div>
+{% endif %}
