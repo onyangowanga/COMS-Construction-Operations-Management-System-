@@ -59,6 +59,12 @@ if [ ! -f .env.production ]; then
     exit 1
 fi
 
+# Load environment variables
+print_status "Loading environment variables..."
+set -a
+source .env.production
+set +a
+
 # Stop existing containers
 print_status "Stopping existing containers..."
 docker-compose -f docker-compose.prod.yml down || true
