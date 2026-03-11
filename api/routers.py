@@ -28,6 +28,9 @@ from api.views.variations import VariationOrderViewSet, ProjectVariationViewSet
 from api.views.subcontracts import (
     SubcontractorViewSet, SubcontractViewSet, SubcontractClaimViewSet
 )
+from api.views.reporting import (
+    ReportViewSet, ReportExecutionViewSet, ReportScheduleViewSet, ReportWidgetViewSet
+)
 
 
 # Create a router and register all viewsets
@@ -102,3 +105,9 @@ router.register(r'projects', ProjectVariationViewSet, basename='project-variatio
 router.register(r'subcontractors', SubcontractorViewSet, basename='subcontractor')
 router.register(r'subcontracts', SubcontractViewSet, basename='subcontract')
 router.register(r'subcontract-claims', SubcontractClaimViewSet, basename='subcontractclaim')
+
+# Reporting Engine
+router.register(r'reports', ReportViewSet, basename='report')
+router.register(r'report-executions', ReportExecutionViewSet, basename='reportexecution')
+router.register(r'report-schedules', ReportScheduleViewSet, basename='reportschedule')
+router.register(r'widgets', ReportWidgetViewSet, basename='widget')
