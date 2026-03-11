@@ -331,3 +331,22 @@ def get_project_valuation_summary(project_id: str) -> Dict[str, Any]:
     from apps.valuations.selectors import get_valuation_summary
     
     return get_valuation_summary(project_id)
+
+
+def get_project_site_operations_summary(project_id: str) -> Dict[str, Any]:
+    """
+    Get site operations summary for project dashboard.
+    
+    Returns:
+        - total_reports: Count of site reports
+        - recent_reports_count: Reports in last 7 days
+        - total_issues: Count of all issues
+        - open_issues_count: Count of open issues
+        - high_priority_issues: Count of high priority open issues
+        - latest_report: Latest site report object
+        - latest_issue: Latest issue object
+        - pending_deliveries: Count of pending deliveries
+    """
+    from apps.site_operations.selectors import get_site_operations_summary
+    
+    return get_site_operations_summary(project_id)

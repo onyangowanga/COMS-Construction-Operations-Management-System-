@@ -234,3 +234,21 @@ def project_valuation_summary_partial(request, project_id):
     }
     
     return render(request, 'dashboards/partials/valuation_summary.html', context)
+
+
+@login_required
+def project_site_operations_summary_partial(request, project_id):
+    """
+    HTMX partial: Project site operations summary.
+    
+    URL: /projects/{id}/dashboard/partials/site-operations-summary/
+    """
+    project = get_object_or_404(Project, id=project_id)
+    site_ops_summary = selectors.get_project_site_operations_summary(str(project_id))
+    
+    context = {
+        'project': project,
+        'site_ops_summary': site_ops_summary,
+    }
+    
+    return render(request, 'dashboards/partials/site_operations_summary.html', context)

@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'apps.workflows',
     'apps.dashboards',
     'apps.valuations',
+    'apps.site_operations',
 ]
 
 MIDDLEWARE = [

@@ -245,6 +245,89 @@ class ProjectViewSet(viewsets.ModelViewSet):
         
         progress = get_bq_progress_summary(str(pk))
         return Response(progress)
+    
+    @action(detail=True, methods=['get'], url_path='site-reports')
+    def site_reports(self, request, pk=None):
+        """
+        Get all daily site reports for this project
+        
+        Returns:
+            - List of site reports ordered by date
+        """
+        from apps.site_operations.selectors import get_project_site_reports
+        from api.serializers.site_operations import DailySiteReportListSerializer
+        
+        reports = get_project_site_reports(str(pk))
+        serializer = DailySiteReportListSerializer(reports, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'], url_path='site-issues')
+    def site_issues(self, request, pk=None):
+        """
+        Get all site issues for this project
+        
+        Query params:
+            status: Filter by status (OPEN, IN_PROGRESS, RESOLVED, CLOSED)
+            severity: Filter by severity (LOW, MEDIUM, HIGH, CRITICAL)
+        
+        Returns:
+            - List of site issues
+        """
+        from apps.site_operations.selectors import get_project_site_issues
+        from api.serializers.site_operations import SiteIssueListSerializer
+        
+        status_filter = request.query_params.get('status')
+        severity_filter = request.query_params.get('severity')
+        
+        issues = get_project_site_issues(
+            str(pk),
+            status=status_filter,
+            severity=severity_filter
+        )
+        serializer = SiteIssueListSerializer(issues, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'], url_path='material-deliveries')
+    def material_deliveries(self, request, pk=None):
+        """
+        Get all material deliveries for this project
+        
+        Query params:
+            status: Filter by status (PENDING, ACCEPTED, REJECTED, PARTIAL)
+        
+        Returns:
+            - List of material deliveries
+        """
+        from apps.site_operations.selectors import get_project_material_deliveries
+        from api.serializers.site_operations import MaterialDeliveryListSerializer
+        
+        status_filter = request.query_params.get('status')
+        deliveries = get_project_material_deliveries(str(pk), status=status_filter)
+        serializer = MaterialDeliveryListSerializer(deliveries, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'], url_path='site-operations-summary')
+    def site_operations_summary(self, request, pk=None):
+        """
+        Get comprehensive site operations summary for this project
+        
+        Returns:
+            - Total reports count
+            - Recent reports count (last 7 days)
+            - Total deliveries count
+            - Pending deliveries count
+            - Total issues count
+            - Open issues count
+            - High priority issues count
+            - Issues breakdown by severity
+            - Latest report, delivery, and issue
+        """
+        from apps.site_operations.selectors import get_site_operations_summary
+        from api.serializers.site_operations import SiteOperationsSummarySerializer
+        
+        summary = get_site_operations_summary(str(pk))
+        serializer = SiteOperationsSummarySerializer(summary)
+        return Response(serializer.data)
 
 
 class ProjectStageViewSet(viewsets.ModelViewSet):

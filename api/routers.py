@@ -19,6 +19,9 @@ from api.views.media import ProjectPhotoViewSet
 from api.views.approvals import ProjectApprovalViewSet
 from api.views.workflows import ApprovalViewSet, ProjectActivityViewSet
 from api.views.valuations import ValuationViewSet, BQItemProgressViewSet
+from api.views.site_operations import (
+    DailySiteReportViewSet, MaterialDeliveryViewSet, SiteIssueViewSet
+)
 
 
 # Create a router and register all viewsets
@@ -72,3 +75,8 @@ router.register(r'activities', ProjectActivityViewSet, basename='projectactivity
 # Valuations
 router.register(r'valuations', ValuationViewSet, basename='valuation')
 router.register(r'bq-progress', BQItemProgressViewSet, basename='bqprogress')
+
+# Site Operations
+router.register(r'site-reports', DailySiteReportViewSet, basename='sitereport')
+router.register(r'material-deliveries', MaterialDeliveryViewSet, basename='materialdelivery')
+router.register(r'site-issues', SiteIssueViewSet, basename='siteissue')
