@@ -1,0 +1,81 @@
+<!-- Financial Summary Stats Cards -->
+<div class="row g-3">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start">
+                <div class="stat-icon success">
+                    <i class="bi bi-cash-coin"></i>
+                </div>
+                <div class="ms-3 flex-grow-1">
+                    <div class="stat-label">Total Revenue</div>
+                    <div class="stat-value text-success">KES {{ summary.total_revenue|floatformat:2 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start">
+                <div class="stat-icon danger">
+                    <i class="bi bi-wallet2"></i>
+                </div>
+                <div class="ms-3 flex-grow-1">
+                    <div class="stat-label">Total Expenses</div>
+                    <div class="stat-value text-danger">KES {{ summary.total_expenses|floatformat:2 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start">
+                <div class="stat-icon {% if summary.profit >= 0 %}primary{% else %}danger{% endif %}">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div class="ms-3 flex-grow-1">
+                    <div class="stat-label">Profit</div>
+                    <div class="stat-value {% if summary.profit >= 0 %}text-primary{% else %}text-danger{% endif %}">
+                        KES {{ summary.profit|floatformat:2 }}
+                    </div>
+                    <small class="text-muted">{{ summary.profit_margin|floatformat:1 }}% margin</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start">
+                <div class="stat-icon info">
+                    <i class="bi bi-pie-chart-fill"></i>
+                </div>
+                <div class="ms-3 flex-grow-1">
+                    <div class="stat-label">Budget Utilization</div>
+                    <div class="stat-value text-info">{{ summary.budget_utilization|floatformat:1 }}%</div>
+                    <small class="text-muted">KES {{ summary.budget_remaining|floatformat:2 }} remaining</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Budget Progress Bar -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted small">Budget: KES {{ summary.budget_allocated|floatformat:2 }}</span>
+            <span class="text-muted small">Spent: KES {{ summary.budget_spent|floatformat:2 }}</span>
+        </div>
+        <div class="progress" style="height: 8px;">
+            <div class="progress-bar {% if summary.budget_utilization > 100 %}bg-danger{% elif summary.budget_utilization > 80 %}bg-warning{% else %}bg-success{% endif %}" 
+                 role="progressbar" 
+                 style="width: {% if summary.budget_utilization > 100 %}100{% else %}{{ summary.budget_utilization|floatformat:0 }}{% endif %}%"
+                 aria-valuenow="{{ summary.budget_utilization }}" 
+                 aria-valuemin="0" 
+                 aria-valuemax="100">
+            </div>
+        </div>
+    </div>
+</div>

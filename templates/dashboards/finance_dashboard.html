@@ -1,0 +1,40 @@
+{% extends "dashboards/base_dashboard.html" %}
+
+{% block title %}Finance Dashboard{% endblock %}
+
+{% block page_title %}
+    <i class="bi bi-cash-stack"></i> Finance Dashboard
+{% endblock %}
+
+{% block page_description %}
+    Organization-wide financial overview
+{% endblock %}
+
+{% block content %}
+<!-- Financial Summary -->
+<div class="row">
+    <div class="col-12">
+        <div class="card-widget">
+            <div class="card-widget-header">
+                <h2 class="card-widget-title">
+                    <i class="bi bi-graph-up"></i> Financial Overview
+                </h2>
+                <span class="htmx-indicator">
+                    <span class="loading-spinner"></span>
+                </span>
+            </div>
+            <div class="card-widget-body"
+                 hx-get="{% url 'dashboards:finance_summary_partial' %}"
+                 hx-trigger="load, refresh from:body"
+                 hx-indicator=".htmx-indicator"
+                 data-auto-refresh="true">
+                <div class="text-center text-muted py-4">
+                    <span class="loading-spinner"></span> Loading financial summary...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% csrf_token %}
+{% endblock %}

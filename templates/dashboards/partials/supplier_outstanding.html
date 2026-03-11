@@ -1,0 +1,61 @@
+{% if outstanding %}
+<div class="table-responsive">
+    <table class="table table-sm table-hover mb-0">
+        <thead>
+            <tr>
+                <th>LPO Number</th>
+                <th>Supplier</th>
+                <th>Invoice</th>
+                <th class="text-end">Total</th>
+                <th class="text-end">Paid</th>
+                <th class="text-end">Balance</th>
+                <th class="text-end">Days Outstanding</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in outstanding %}
+            <tr>
+                <td>{{ item.lpo_number }}</td>
+                <td>{{ item.supplier_name }}</td>
+                <td>{{ item.invoice_number|default:"-" }}</td>
+                <td class="text-end">KES {{ item.total_amount|floatformat:2 }}</td>
+                <td class="text-end">KES {{ item.paid_amount|floatformat:2 }}</td>
+                <td class="text-end fw-bold text-danger">KES {{ item.balance|floatformat:2 }}</td>
+                <td class="text-end">{{ item.days_outstanding }} days</td>
+                <td>
+                    {% if item.status == 'overdue' %}
+                        <span class="badge-status bg-danger text-white">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Overdue
+                        </span>
+                    {% elif item.status == 'due' %}
+                        <span class="badge-status bg-warning text-dark">
+                            <i class="bi bi-clock-fill"></i> Due Soon
+                        </span>
+                    {% else %}
+                        <span class="badge-status bg-info text-white">
+                            <i class="bi bi-info-circle-fill"></i> Recent
+                        </span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr class="fw-bold">
+                <td colspan="5" class="text-end">Total Outstanding:</td>
+                <td class="text-end text-danger">
+                    KES {% widthratio outstanding|length 1 1 as count %}
+                    {{ outstanding|map:"balance"|sum|floatformat:2 }}
+                </td>
+                <td colspan="2"></td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+{% else %}
+<div class="text-center text-muted py-4">
+    <i class="bi bi-check-circle" style="font-size: 3rem; color: #10b981;"></i>
+    <p class="mt-2">No outstanding supplier payments!</p>
+</div>
+{% endif %}

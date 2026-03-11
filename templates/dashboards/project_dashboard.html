@@ -1,0 +1,146 @@
+{% extends "dashboards/base_dashboard.html" %}
+
+{% block title %}{{ project.name }} Dashboard{% endblock %}
+
+{% block page_title %}
+    <i class="bi bi-building"></i> {{ project.project_code }} - {{ project.name }}
+{% endblock %}
+
+{% block page_description %}
+    Project Dashboard - Real-time operational monitoring
+{% endblock %}
+
+{% block header_actions %}
+    <button class="btn btn-outline-primary" onclick="location.reload()">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+{% endblock %}
+
+{% block content %}
+<!-- Financial Summary Row -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card-widget">
+            <div class="card-widget-header">
+                <h2 class="card-widget-title">
+                    <i class="bi bi-graph-up"></i> Financial Summary
+                </h2>
+                <span class="htmx-indicator">
+                    <span class="loading-spinner"></span>
+                </span>
+            </div>
+            <div class="card-widget-body"
+                 hx-get="{% url 'dashboards:project_financial_summary_partial' project.id %}"
+                 hx-trigger="load, refresh from:body"
+                 hx-indicator=".htmx-indicator"
+                 data-auto-refresh="true">
+                <div class="text-center text-muted py-4">
+                    <span class="loading-spinner"></span> Loading financial summary...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Budget Variance & Activity Row -->
+<div class="row mb-4">
+    <!-- Budget Variance Column -->
+    <div class="col-lg-7 mb-4 mb-lg-0">
+        <div class="card-widget">
+            <div class="card-widget-header">
+                <h2 class="card-widget-title">
+                    <i class="bi bi-pie-chart"></i> Budget Variance
+                </h2>
+                <span class="htmx-indicator">
+                    <span class="loading-spinner"></span>
+                </span>
+            </div>
+            <div class="card-widget-body"
+                 hx-get="{% url 'dashboards:project_budget_variance_partial' project.id %}"
+                 hx-trigger="load, refresh from:body"
+                 hx-indicator=".htmx-indicator"
+                 data-auto-refresh="true"
+                 style="max-height: 400px; overflow-y: auto;">
+                <div class="text-center text-muted py-4">
+                    <span class="loading-spinner"></span> Loading budget variance...
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity Column -->
+    <div class="col-lg-5">
+        <div class="card-widget">
+            <div class="card-widget-header">
+                <h2 class="card-widget-title">
+                    <i class="bi bi-clock-history"></i> Recent Activity
+                </h2>
+                <span class="htmx-indicator">
+                    <span class="loading-spinner"></span>
+                </span>
+            </div>
+            <div class="card-widget-body"
+                 hx-get="{% url 'dashboards:project_recent_activity_partial' project.id %}"
+                 hx-trigger="load, refresh from:body"
+                 hx-indicator=".htmx-indicator"
+                 data-auto-refresh="true"
+                 style="max-height: 400px; overflow-y: auto;">
+                <div class="text-center text-muted py-4">
+                    <span class="loading-spinner"></span> Loading recent activity...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Supplier Outstanding & Unpaid Wages Row -->
+<div class="row">
+    <!-- Supplier Outstanding Column -->
+    <div class="col-lg-7 mb-4 mb-lg-0">
+        <div class="card-widget">
+            <div class="card-widget-header">
+                <h2 class="card-widget-title">
+                    <i class="bi bi-exclamation-triangle"></i> Supplier Outstanding Payments
+                </h2>
+                <span class="htmx-indicator">
+                    <span class="loading-spinner"></span>
+                </span>
+            </div>
+            <div class="card-widget-body"
+                 hx-get="{% url 'dashboards:project_supplier_outstanding_partial' project.id %}"
+                 hx-trigger="load, refresh from:body"
+                 hx-indicator=".htmx-indicator"
+                 data-auto-refresh="true">
+                <div class="text-center text-muted py-4">
+                    <span class="loading-spinner"></span> Loading outstanding payments...
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Unpaid Wages Column -->
+    <div class="col-lg-5">
+        <div class="card-widget">
+            <div class="card-widget-header">
+                <h2 class="card-widget-title">
+                    <i class="bi bi-people"></i> Unpaid Wages
+                </h2>
+                <span class="htmx-indicator">
+                    <span class="loading-spinner"></span>
+                </span>
+            </div>
+            <div class="card-widget-body"
+                 hx-get="{% url 'dashboards:project_unpaid_wages_partial' project.id %}"
+                 hx-trigger="load, refresh from:body"
+                 hx-indicator=".htmx-indicator"
+                 data-auto-refresh="true">
+                <div class="text-center text-muted py-4">
+                    <span class="loading-spinner"></span> Loading unpaid wages...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% csrf_token %}
+{% endblock %}

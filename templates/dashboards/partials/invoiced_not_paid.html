@@ -1,0 +1,69 @@
+{% if lpos %}
+<div class="table-responsive">
+    <table class="table table-sm table-hover mb-0">
+        <thead>
+            <tr>
+                <th>LPO / Invoice</th>
+                <th>Project</th>
+                <th>Supplier</th>
+                <th class="text-end">Total Amount</th>
+                <th class="text-end">Paid</th>
+                <th class="text-end">Balance</th>
+                <th>Invoice Date</th>
+                <th class="text-end">Days Overdue</th>
+                <th class="text-center">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for lpo in lpos %}
+            <tr class="{% if lpo.days_overdue > 30 %}table-danger{% elif lpo.days_overdue > 14 %}table-warning{% endif %}">
+                <td>
+                    <div class="fw-bold">{{ lpo.lpo_number }}</div>
+                    <small class="text-muted">{{ lpo.invoice_number }}</small>
+                </td>
+                <td>
+                    <div>{{ lpo.project_code }}</div>
+                    <small class="text-muted">{{ lpo.project_name|truncatechars:30 }}</small>
+                </td>
+                <td>{{ lpo.supplier_name }}</td>
+                <td class="text-end">KES {{ lpo.total_amount|floatformat:2 }}</td>
+                <td class="text-end text-success">KES {{ lpo.paid_amount|floatformat:2 }}</td>
+                <td class="text-end fw-bold text-danger">KES {{ lpo.balance|floatformat:2 }}</td>
+                <td>{{ lpo.invoice_date|date:"M d, Y"|default:"-" }}</td>
+                <td class="text-end">
+                    <span class="{% if lpo.days_overdue > 30 %}badge bg-danger{% elif lpo.days_overdue > 14 %}badge bg-warning text-dark{% else %}badge bg-info{% endif %}">
+                        {{ lpo.days_overdue }} days
+                    </span>
+                </td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-success">
+                        <i class="bi bi-cash-coin"></i> Process Payment
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot class="table-light">
+            <tr class="fw-bold">
+                <td colspan="5" class="text-end">Total Outstanding:</td>
+                <td class="text-end text-danger fs-5">
+                    KES {% widthratio lpos|length 1 1 as count %}{{ lpos|map:"balance"|sum|floatformat:2 }}
+                </td>
+                <td colspan="3"></td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<div class="mt-3 alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <strong>Attention Required:</strong> {{ lpos|length }} unpaid invoice{% if lpos|length != 1 %}s{% endif %} 
+    totaling <strong>KES {{ lpos|map:"balance"|sum|floatformat:2 }}</strong> outstanding.
+</div>
+{% else %}
+<div class="text-center text-muted py-5">
+    <i class="bi bi-check-circle" style="font-size: 4rem; color: #10b981;"></i>
+    <h4 class="mt-3">Excellent!</h4>
+    <p>All invoices have been paid. No outstanding liabilities.</p>
+</div>
+{% endif %}

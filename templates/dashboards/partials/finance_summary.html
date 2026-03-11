@@ -1,0 +1,141 @@
+<!-- Finance Summary Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start">
+                <div class="stat-icon success">
+                    <i class="bi bi-arrow-down-circle-fill"></i>
+                </div>
+                <div class="ms-3 flex-grow-1">
+                    <div class="stat-label">Total Revenue</div>
+                    <div class="stat-value text-success">KES {{ summary.total_revenue|floatformat:2 }}</div>
+                    <small class="text-muted">All projects</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start">
+                <div class="stat-icon danger">
+                    <i class="bi bi-arrow-up-circle-fill"></i>
+                </div>
+                <div class="ms-3 flex-grow-1">
+                    <div class="stat-label">Total Expenses</div>
+                    <div class="stat-value text-danger">KES {{ summary.total_expenses|floatformat:2 }}</div>
+                    <small class="text-muted">All projects</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start">
+                <div class="stat-icon {% if summary.profit >= 0 %}primary{% else %}danger{% endif %}">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div class="ms-3 flex-grow-1">
+                    <div class="stat-label">Net Profit</div>
+                    <div class="stat-value {% if summary.profit >= 0 %}text-primary{% else %}text-danger{% endif %}">
+                        KES {{ summary.profit|floatformat:2 }}
+                    </div>
+                    <small class="text-muted">{{ summary.profit_margin|floatformat:1 }}% margin</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-start">
+                <div class="stat-icon warning">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <div class="ms-3 flex-grow-1">
+                    <div class="stat-label">Supplier Liabilities</div>
+                    <div class="stat-value text-warning">KES {{ summary.supplier_liabilities|floatformat:2 }}</div>
+                    <small class="text-muted">Unpaid invoices</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Metrics -->
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="stat-card">
+            <div class="d-flex align-items-start">
+                <div class="stat-icon info">
+                    <i class="bi bi-folder-fill"></i>
+                </div>
+                <div class="ms-3 flex-grow-1">
+                    <div class="stat-label">Active Projects</div>
+                    <div class="stat-value text-info">{{ summary.active_projects }}</div>
+                    <small class="text-muted">Currently running</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="stat-card">
+            <div class="d-flex align-items-start">
+                <div class="stat-icon primary">
+                    <i class="bi bi-calculator-fill"></i>
+                </div>
+                <div class="ms-3 flex-grow-1">
+                    <div class="stat-label">Average Project Profit</div>
+                    <div class="stat-value text-primary">KES {{ summary.average_project_profit|floatformat:2 }}</div>
+                    <small class="text-muted">Per active project</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Financial Health Indicators -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card-widget border-0">
+            <div class="card-widget-header bg-light">
+                <h3 class="card-widget-title mb-0">
+                    <i class="bi bi-heart-pulse-fill"></i> Financial Health Indicators
+                </h3>
+            </div>
+            <div class="card-widget-body">
+                <div class="row text-center">
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted text-uppercase small mb-2">Profit Margin</h6>
+                        <div class="{% if summary.profit_margin >= 20 %}text-success{% elif summary.profit_margin >= 10 %}text-warning{% else %}text-danger{% endif %} fs-3 fw-bold">
+                            {{ summary.profit_margin|floatformat:1 }}%
+                        </div>
+                        <div class="progress mt-2" style="height: 4px;">
+                            <div class="progress-bar {% if summary.profit_margin >= 20 %}bg-success{% elif summary.profit_margin >= 10 %}bg-warning{% else %}bg-danger{% endif %}"
+                                 style="width: {{ summary.profit_margin|floatformat:0 }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted text-uppercase small mb-2">Liquidity Ratio</h6>
+                        <div class="{% if summary.total_revenue > summary.supplier_liabilities %}text-success{% else %}text-danger{% endif %} fs-3 fw-bold">
+                            {% widthratio summary.total_revenue summary.supplier_liabilities 1 %}:1
+                        </div>
+                        <small class="text-muted">Revenue to Liabilities</small>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted text-uppercase small mb-2">Outstanding Ratio</h6>
+                        {% widthratio summary.supplier_liabilities summary.total_revenue 100 as outstanding_pct %}
+                        <div class="{% if outstanding_pct < 20 %}text-success{% elif outstanding_pct < 40 %}text-warning{% else %}text-danger{% endif %} fs-3 fw-bold">
+                            {{ outstanding_pct }}%
+                        </div>
+                        <small class="text-muted">Of total revenue</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

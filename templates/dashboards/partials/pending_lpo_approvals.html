@@ -1,0 +1,73 @@
+{% if pending_lpos %}
+<div class="table-responsive">
+    <table class="table table-sm table-hover mb-0">
+        <thead>
+            <tr>
+                <th>LPO Number</th>
+                <th>Project</th>
+                <th>Supplier</th>
+                <th class="text-end">Amount</th>
+                <th>Created</th>
+                <th class="text-end">Days Pending</th>
+                <th class="text-center">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for lpo in pending_lpos %}
+            <tr>
+                <td>
+                    <span class="fw-bold">{{ lpo.lpo_number }}</span>
+                </td>
+                <td>
+                    <div>{{ lpo.project_code }}</div>
+                    <small class="text-muted">{{ lpo.project_name|truncatechars:30 }}</small>
+                </td>
+                <td>{{ lpo.supplier_name }}</td>
+                <td class="text-end fw-bold">KES {{ lpo.amount|floatformat:2 }}</td>
+                <td>{{ lpo.created_at|date:"M d, Y" }}</td>
+                <td class="text-end">
+                    <span class="{% if lpo.days_pending > 7 %}text-danger{% elif lpo.days_pending > 3 %}text-warning{% else %}text-muted{% endif %}">
+                        {{ lpo.days_pending }} days
+                    </span>
+                </td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-success">
+                        <i class="bi bi-check-lg"></i> Approve
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-3 p-3 bg-light rounded">
+    <div class="row text-center">
+        <div class="col-md-4">
+            <div class="h4 mb-0">{{ pending_lpos|length }}</div>
+            <small class="text-muted">Pending Approvals</small>
+        </div>
+        <div class="col-md-4">
+            <div class="h4 mb-0 text-danger">
+                {% for lpo in pending_lpos %}{% if lpo.days_pending > 7 %}1{% endif %}{% endfor %}
+            </div>
+            <small class="text-muted">Overdue (>7 days)</small>
+        </div>
+        <div class="col-md-4">
+            <div class="h4 mb-0">
+                KES {% widthratio pending_lpos|length 1 1 as count %}{{ pending_lpos|map:"amount"|sum|floatformat:2 }}
+            </div>
+            <small class="text-muted">Total Value</small>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="text-center text-muted py-5">
+    <i class="bi bi-check-circle" style="font-size: 4rem; color: #10b981;"></i>
+    <h4 class="mt-3">All Clear!</h4>
+    <p>No pending LPO approvals at this time.</p>
+</div>
+{% endif %}

@@ -1,0 +1,57 @@
+{% if variances %}
+<div class="table-responsive">
+    <table class="table table-sm table-hover mb-0">
+        <thead>
+            <tr>
+                <th>BQ Item</th>
+                <th class="text-end">Budget</th>
+                <th class="text-end">Spent</th>
+                <th class="text-end">Remaining</th>
+                <th class="text-end">Variance %</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in variances %}
+            <tr>
+                <td>
+                    <span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ item.description }}">
+                        {{ item.description }}
+                    </span>
+                </td>
+                <td class="text-end">KES {{ item.budget|floatformat:2 }}</td>
+                <td class="text-end">KES {{ item.spent|floatformat:2 }}</td>
+                <td class="text-end {% if item.remaining < 0 %}text-danger{% endif %}">
+                    KES {{ item.remaining|floatformat:2 }}
+                </td>
+                <td class="text-end">
+                    <span class="{% if item.variance_percentage < 0 %}text-danger fw-bold{% elif item.variance_percentage > 20 %}text-success{% else %}text-warning{% endif %}">
+                        {{ item.variance_percentage|floatformat:1 }}%
+                    </span>
+                </td>
+                <td>
+                    {% if item.status == 'over' %}
+                        <span class="badge-status bg-danger text-white">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Over Budget
+                        </span>
+                    {% elif item.status == 'under' %}
+                        <span class="badge-status bg-success text-white">
+                            <i class="bi bi-check-circle-fill"></i> Under Budget
+                        </span>
+                    {% else %}
+                        <span class="badge-status bg-secondary text-white">
+                            <i class="bi bi-dash-circle-fill"></i> On Target
+                        </span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="text-center text-muted py-4">
+    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+    <p class="mt-2">No budget items found for this project.</p>
+</div>
+{% endif %}

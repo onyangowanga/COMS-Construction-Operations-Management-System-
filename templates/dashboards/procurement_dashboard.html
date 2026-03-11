@@ -1,0 +1,93 @@
+{% extends "dashboards/base_dashboard.html" %}
+
+{% block title %}Procurement Dashboard{% endblock %}
+
+{% block page_title %}
+    <i class="bi bi-cart"></i> Procurement Dashboard
+{% endblock %}
+
+{% block page_description %}
+    Monitor procurement lifecycle across all projects
+{% endblock %}
+
+{% block content %}
+<!-- Pending LPO Approvals -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card-widget">
+            <div class="card-widget-header">
+                <h2 class="card-widget-title">
+                    <i class="bi bi-hourglass-split"></i> Pending LPO Approvals
+                </h2>
+                <span class="badge bg-warning text-dark ms-2">Action Required</span>
+                <span class="htmx-indicator ms-2">
+                    <span class="loading-spinner"></span>
+                </span>
+            </div>
+            <div class="card-widget-body"
+                 hx-get="{% url 'dashboards:pending_lpo_approvals_partial' %}"
+                 hx-trigger="load, refresh from:body"
+                 hx-indicator=".htmx-indicator"
+                 data-auto-refresh="true">
+                <div class="text-center text-muted py-4">
+                    <span class="loading-spinner"></span> Loading pending approvals...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delivered but Not Invoiced -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card-widget">
+            <div class="card-widget-header">
+                <h2 class="card-widget-title">
+                    <i class="bi bi-truck"></i> Delivered but Not Invoiced
+                </h2>
+                <span class="badge bg-info text-white ms-2">Awaiting Invoice</span>
+                <span class="htmx-indicator ms-2">
+                    <span class="loading-spinner"></span>
+                </span>
+            </div>
+            <div class="card-widget-body"
+                 hx-get="{% url 'dashboards:delivered_not_invoiced_partial' %}"
+                 hx-trigger="load, refresh from:body"
+                 hx-indicator=".htmx-indicator"
+                 data-auto-refresh="true">
+                <div class="text-center text-muted py-4">
+                    <span class="loading-spinner"></span> Loading delivered items...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invoiced but Not Paid -->
+<div class="row">
+    <div class="col-12">
+        <div class="card-widget">
+            <div class="card-widget-header">
+                <h2 class="card-widget-title">
+                    <i class="bi bi-receipt"></i> Invoiced but Not Paid
+                </h2>
+                <span class="badge bg-danger text-white ms-2">Payment Due</span>
+                <span class="htmx-indicator ms-2">
+                    <span class="loading-spinner"></span>
+                </span>
+            </div>
+            <div class="card-widget-body"
+                 hx-get="{% url 'dashboards:invoiced_not_paid_partial' %}"
+                 hx-trigger="load, refresh from:body"
+                 hx-indicator=".htmx-indicator"
+                 data-auto-refresh="true">
+                <div class="text-center text-muted py-4">
+                    <span class="loading-spinner"></span> Loading unpaid invoices...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% csrf_token %}
+{% endblock %}

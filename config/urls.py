@@ -24,6 +24,9 @@ urlpatterns = [
     path('api/auth/', include('apps.authentication.urls')),
     path('api/', include('api.urls')),
     
+    # Dashboard views
+    path('', include('apps.dashboards.urls')),
+    
     # Template views (login, register, dashboard)
     path('', include('apps.core.urls')),
 ]
