@@ -54,9 +54,12 @@ class LocalPurchaseOrder(models.Model):
     
     class Status(models.TextChoices):
         DRAFT = 'DRAFT', _('Draft')
+        APPROVED = 'APPROVED', _('Approved')
         ISSUED = 'ISSUED', _('Issued')
         PARTIALLY_DELIVERED = 'PARTIALLY_DELIVERED', _('Partially Delivered')
         DELIVERED = 'DELIVERED', _('Delivered')
+        INVOICED = 'INVOICED', _('Invoiced')
+        PAID = 'PAID', _('Paid')
         CANCELLED = 'CANCELLED', _('Cancelled')
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

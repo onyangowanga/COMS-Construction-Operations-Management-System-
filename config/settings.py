@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'apps.documents',
     'apps.media',
     'apps.approvals',
+    'apps.workflows',
 ]
 
 MIDDLEWARE = [

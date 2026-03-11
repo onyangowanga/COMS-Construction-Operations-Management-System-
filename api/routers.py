@@ -17,6 +17,7 @@ from api.views.clients import ClientPaymentViewSet, ClientReceiptViewSet
 from api.views.documents import DocumentViewSet, DocumentVersionViewSet
 from api.views.media import ProjectPhotoViewSet
 from api.views.approvals import ProjectApprovalViewSet
+from api.views.workflows import ApprovalViewSet, ProjectActivityViewSet
 
 
 # Create a router and register all viewsets
@@ -62,3 +63,7 @@ router.register(r'photos', ProjectPhotoViewSet, basename='projectphoto')
 
 # Approvals
 router.register(r'approvals', ProjectApprovalViewSet, basename='projectapproval')
+
+# Workflows
+router.register(r'workflow-approvals', ApprovalViewSet, basename='approval')
+router.register(r'activities', ProjectActivityViewSet, basename='projectactivity')

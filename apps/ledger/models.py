@@ -26,6 +26,12 @@ class Expense(models.Model):
         INSURANCE = 'INSURANCE', _('Insurance')
         MISCELLANEOUS = 'MISCELLANEOUS', _('Miscellaneous')
     
+    class ApprovalStatus(models.TextChoices):
+        APPROVED = 'APPROVED', _('Approved')
+        PENDING_APPROVAL = 'PENDING_APPROVAL', _('Pending Approval')
+        REQUIRES_APPROVAL = 'REQUIRES_APPROVAL', _('Requires Approval')
+        REJECTED = 'REJECTED', _('Rejected')
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     project = models.ForeignKey(
         Project,
@@ -47,6 +53,12 @@ class Expense(models.Model):
         max_length=100,
         blank=True,
         help_text=_("Receipt/Invoice number")
+    )
+    approval_status = models.CharField(
+        max_length=25,
+        choices=ApprovalStatus.choices,
+        default=ApprovalStatus.APPROVED,
+        help_text=_("Approval status for budget control")
     )
     
     created_at = models.DateTimeField(auto_now_add=True)

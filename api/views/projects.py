@@ -153,6 +153,47 @@ class ProjectViewSet(viewsets.ModelViewSet):
         
         health_indicator = calculate_project_health(health_data)
         return Response(health_indicator)
+    
+    @action(detail=True, methods=['get'], url_path='activity')
+    def activity(self, request, pk=None):
+        """
+        Get project activity timeline
+        
+        Query params:
+            limit: Optional limit on number of activities
+        
+        Returns:
+            - List of project activities ordered by most recent
+        """
+        from api.services.activity_service import get_project_activity_timeline
+        from api.serializers.workflows import ProjectActivityListSerializer
+        
+        limit = request.query_params.get('limit')
+        limit = int(limit) if limit else None
+        
+        activities = get_project_activity_timeline(pk, limit=limit)
+        serializer = ProjectActivityListSerializer(activities, many=True)
+        
+        return Response({
+            'project_id': str(pk),
+            'total_activities': activities.count() if not limit else None,
+            'activities': serializer.data
+        })
+    
+    @action(detail=True, methods=['get'], url_path='notifications')
+    def notifications(self, request, pk=None):
+        """
+        Get all notifications for a project
+        
+        Returns:
+            - Budget overruns
+            - Unpaid invoices
+            - Expiring approvals
+        """
+        from api.services.notification_service import get_all_notifications
+        
+        notifications = get_all_notifications(project_id=pk)
+        return Response(notifications)
 
 
 class ProjectStageViewSet(viewsets.ModelViewSet):

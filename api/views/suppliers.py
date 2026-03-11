@@ -83,7 +83,7 @@ class LocalPurchaseOrderViewSet(viewsets.ModelViewSet):
     """
     ViewSet for LocalPurchaseOrder model
     
-    Provides CRUD operations for LPOs
+    Provides CRUD operations for LPOs with workflow actions
     """
     queryset = LocalPurchaseOrder.objects.all().select_related('supplier', 'project').prefetch_related('items')
     serializer_class = LocalPurchaseOrderSerializer
@@ -92,6 +92,94 @@ class LocalPurchaseOrderViewSet(viewsets.ModelViewSet):
     search_fields = ['lpo_number', 'supplier__name', 'project__code', 'project__name']
     ordering_fields = ['issue_date', 'total_amount', 'created_at']
     ordering = ['-issue_date']
+    
+    @action(detail=True, methods=['post'], url_path='approve')
+    def approve(self, request, pk=None):
+        """
+        Approve a draft LPO
+        
+        Transitions: DRAFT -> APPROVED
+        """
+        from api.services.procurement_workflow import approve_lpo, ProcurementWorkflowError
+        
+        lpo = self.get_object()
+        
+        try:
+            result = approve_lpo(lpo, approved_by=request.user)
+            return Response(result, status=status.HTTP_200_OK)
+        except ProcurementWorkflowError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    @action(detail=True, methods=['post'], url_path='mark-delivered')
+    def mark_delivered(self, request, pk=None):
+        """
+        Mark LPO as delivered
+        
+        Transitions: APPROVED/ISSUED -> DELIVERED
+        """
+        from api.services.procurement_workflow import mark_lpo_delivered, ProcurementWorkflowError
+        
+        lpo = self.get_object()
+        
+        try:
+            result = mark_lpo_delivered(lpo, delivered_by=request.user)
+            return Response(result, status=status.HTTP_200_OK)
+        except ProcurementWorkflowError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    @action(detail=True, methods=['post'], url_path='mark-invoiced')
+    def mark_invoiced(self, request, pk=None):
+        """
+        Mark LPO as invoiced
+        
+        Body params:
+            invoice_number (optional): Invoice reference number
+        
+        Transitions: DELIVERED -> INVOICED
+        """
+        from api.services.procurement_workflow import mark_lpo_invoiced, ProcurementWorkflowError
+        
+        lpo = self.get_object()
+        invoice_number = request.data.get('invoice_number')
+        
+        try:
+            result = mark_lpo_invoiced(lpo, invoiced_by=request.user, invoice_number=invoice_number)
+            return Response(result, status=status.HTTP_200_OK)
+        except ProcurementWorkflowError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    @action(detail=True, methods=['post'], url_path='mark-paid')
+    def mark_paid(self, request, pk=None):
+        """
+        Mark LPO as paid
+        
+        Body params:
+            payment_reference (optional): Payment reference number
+        
+        Transitions: INVOICED -> PAID
+        """
+        from api.services.procurement_workflow import mark_lpo_paid, ProcurementWorkflowError
+        
+        lpo = self.get_object()
+        payment_reference = request.data.get('payment_reference')
+        
+        try:
+            result = mark_lpo_paid(lpo, paid_by=request.user, payment_reference=payment_reference)
+            return Response(result, status=status.HTTP_200_OK)
+        except ProcurementWorkflowError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class SupplierInvoiceViewSet(viewsets.ModelViewSet):
