@@ -13,6 +13,7 @@ env:
   POSTGRES_DB: coms_test_db
   POSTGRES_USER: coms_user
   POSTGRES_PASSWORD: coms_pass
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   test:
@@ -47,13 +48,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      env:
-        ACTIONS_RUNNER_FORCE_ACTIONS_NODE_VERSION: node24
     
     - name: Set up Python
       uses: actions/setup-python@v5
-      env:
-        ACTIONS_RUNNER_FORCE_ACTIONS_NODE_VERSION: node24
       with:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: 'pip'
@@ -107,18 +104,12 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      env:
-        ACTIONS_RUNNER_FORCE_ACTIONS_NODE_VERSION: node24
     
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-      env:
-        ACTIONS_RUNNER_FORCE_ACTIONS_NODE_VERSION: node24
     
     - name: Build production image (test build)
       uses: docker/build-push-action@v5
-      env:
-        ACTIONS_RUNNER_FORCE_ACTIONS_NODE_VERSION: node24
       with:
         context: .
         file: ./Dockerfile.prod
@@ -136,8 +127,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      env:
-        ACTIONS_RUNNER_FORCE_ACTIONS_NODE_VERSION: node24
     
     - name: Deploy to VPS
       uses: appleboy/ssh-action@v1.0.3
