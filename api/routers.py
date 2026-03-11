@@ -1,0 +1,64 @@
+"""
+API Routers Configuration
+Centralized router setup for all model viewsets
+"""
+from rest_framework import routers
+from api.views.projects import ProjectViewSet, ProjectStageViewSet
+from api.views.bq import BQSectionViewSet, BQElementViewSet, BQItemViewSet
+from api.views.consultants import (
+    ConsultantViewSet, ConsultantFeeViewSet, ConsultantPaymentViewSet
+)
+from api.views.suppliers import (
+    SupplierViewSet, LocalPurchaseOrderViewSet, SupplierInvoiceViewSet
+)
+from api.views.workers import WorkerViewSet, DailyLabourRecordViewSet
+from api.views.ledger import ExpenseViewSet, ExpenseAllocationViewSet
+from api.views.clients import ClientPaymentViewSet, ClientReceiptViewSet
+from api.views.documents import DocumentViewSet, DocumentVersionViewSet
+from api.views.media import ProjectPhotoViewSet
+from api.views.approvals import ProjectApprovalViewSet
+
+
+# Create a router and register all viewsets
+router = routers.DefaultRouter()
+
+# Projects
+router.register(r'projects', ProjectViewSet, basename='project')
+router.register(r'project-stages', ProjectStageViewSet, basename='projectstage')
+
+# BQ (Bill of Quantities)
+router.register(r'bq-sections', BQSectionViewSet, basename='bqsection')
+router.register(r'bq-elements', BQElementViewSet, basename='bqelement')
+router.register(r'bq-items', BQItemViewSet, basename='bqitem')
+
+# Consultants
+router.register(r'consultants', ConsultantViewSet, basename='consultant')
+router.register(r'consultant-fees', ConsultantFeeViewSet, basename='consultantfee')
+router.register(r'consultant-payments', ConsultantPaymentViewSet, basename='consultantpayment')
+
+# Suppliers
+router.register(r'suppliers', SupplierViewSet, basename='supplier')
+router.register(r'purchase-orders', LocalPurchaseOrderViewSet, basename='purchaseorder')
+router.register(r'supplier-invoices', SupplierInvoiceViewSet, basename='supplierinvoice')
+
+# Workers
+router.register(r'workers', WorkerViewSet, basename='worker')
+router.register(r'labour-records', DailyLabourRecordViewSet, basename='labourrecord')
+
+# Ledger
+router.register(r'expenses', ExpenseViewSet, basename='expense')
+router.register(r'expense-allocations', ExpenseAllocationViewSet, basename='expenseallocation')
+
+# Clients
+router.register(r'client-payments', ClientPaymentViewSet, basename='clientpayment')
+router.register(r'client-receipts', ClientReceiptViewSet, basename='clientreceipt')
+
+# Documents
+router.register(r'documents', DocumentViewSet, basename='document')
+router.register(r'document-versions', DocumentVersionViewSet, basename='documentversion')
+
+# Media
+router.register(r'photos', ProjectPhotoViewSet, basename='projectphoto')
+
+# Approvals
+router.register(r'approvals', ProjectApprovalViewSet, basename='projectapproval')

@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django_bootstrap5',
     'django_htmx',
     'drf_spectacular',
+    'django_filters',  # Django filter for DRF
     'axes',  # Login attempt tracking
     
     # Local apps

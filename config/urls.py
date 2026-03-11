@@ -20,8 +20,9 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    # API endpoints
+    # REST API endpoints
     path('api/auth/', include('apps.authentication.urls')),
+    path('api/', include('api.urls')),
     
     # Template views (login, register, dashboard)
     path('', include('apps.core.urls')),
