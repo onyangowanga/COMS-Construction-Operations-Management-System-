@@ -8,6 +8,7 @@
                 <th style="padding: 1rem; text-align: right; font-weight: 600; color: #495057;">Outflow</th>
                 <th style="padding: 1rem; text-align: right; font-weight: 600; color: #495057;">Net Flow</th>
                 <th style="padding: 1rem; text-align: right; font-weight: 600; color: #495057;">Balance</th>
+                <th style="padding: 1rem; text-align: center; font-weight: 600; color: #495057;">Confidence</th>
                 <th style="padding: 1rem; text-align: center; font-weight: 600; color: #495057;">Month</th>
             </tr>
         </thead>
@@ -36,6 +37,11 @@
                 <td style="padding: 1rem; text-align: right; font-weight: 500;">
                     <span style="color: {% if forecast.cumulative_cash_balance < 0 %}#e74c3c{% else %}#27ae60{% endif %}">
                         KES {{ forecast.cumulative_cash_balance|floatformat:0 }}
+                    </span>
+                </td>
+                <td style="padding: 1rem; text-align: center;">
+                    <span style="display: inline-block; padding: 0.25rem 0.5rem; background: {% if forecast.confidence_level == 'HIGH' %}#d4edda{% elif forecast.confidence_level == 'MEDIUM' %}#fff3cd{% else %}#f8d7da{% endif %}; color: {% if forecast.confidence_level == 'HIGH' %}#155724{% elif forecast.confidence_level == 'MEDIUM' %}#856404{% else %}#721c24{% endif %}; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">
+                        {{ forecast.confidence_level }}
                     </span>
                 </td>
                 <td style="padding: 1rem; text-align: center; font-size: 0.85rem; color: #6c757d;">

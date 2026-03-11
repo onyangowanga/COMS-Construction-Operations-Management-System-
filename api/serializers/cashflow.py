@@ -61,6 +61,7 @@ class CashFlowForecastSerializer(serializers.ModelSerializer):
             # Metrics
             'net_cash_flow',
             'cumulative_cash_balance',
+            'confidence_level',
             'is_actual',
             'forecast_generated_at',
         ]
@@ -133,6 +134,8 @@ class PortfolioCashFlowSummarySerializer(serializers.ModelSerializer):
             'cumulative_portfolio_balance',
             'active_projects_count',
             'projects_with_negative_flow',
+            'average_cash_burn_rate',
+            'cash_runway_months',
             'forecast_generated_at',
         ]
         read_only_fields = fields
@@ -155,6 +158,8 @@ class PortfolioForecastSummarySerializer(serializers.Serializer):
     final_portfolio_balance = serializers.DecimalField(max_digits=15, decimal_places=2)
     months_with_negative_flow = serializers.IntegerField()
     total_forecast_months = serializers.IntegerField()
+    average_burn_rate = serializers.DecimalField(max_digits=15, decimal_places=2)
+    cash_runway_months = serializers.DecimalField(max_digits=5, decimal_places=1)
 
 
 class PortfolioCashFlowTrendSerializer(serializers.Serializer):

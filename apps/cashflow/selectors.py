@@ -119,6 +119,8 @@ def get_portfolio_forecast_summary() -> Dict[str, Any]:
         - final_portfolio_balance
         - months_with_negative_flow
         - total_forecast_months
+        - average_burn_rate (from latest month)
+        - cash_runway_months (from latest month)
     """
     summaries = PortfolioCashFlowSummary.objects.aggregate(
         total_inflow=Sum('total_portfolio_inflow'),
@@ -128,7 +130,7 @@ def get_portfolio_forecast_summary() -> Dict[str, Any]:
         total_months=Count('id')
     )
     
-    # Get final balance from latest month
+    # Get final balance and burn rate from latest month
     latest = PortfolioCashFlowSummary.objects.order_by('-forecast_month').first()
     
     final_balance = (
@@ -137,13 +139,27 @@ def get_portfolio_forecast_summary() -> Dict[str, Any]:
         else Decimal('0.00')
     )
     
+    avg_burn_rate = (
+        latest.average_cash_burn_rate
+        if latest
+        else Decimal('0.00')
+    )
+    
+    runway_months = (
+        latest.cash_runway_months
+        if latest
+        else Decimal('0.0')
+    )
+    
     return {
         'total_expected_inflow': summaries.get('total_inflow') or Decimal('0.00'),
         'total_expected_outflow': summaries.get('total_outflow') or Decimal('0.00'),
         'net_portfolio_cash_flow': summaries.get('net_flow') or Decimal('0.00'),
         'final_portfolio_balance': final_balance,
         'months_with_negative_flow': summaries.get('negative_months') or 0,
-        'total_forecast_months': summaries.get('total_months') or 0
+        'total_forecast_months': summaries.get('total_months') or 0,
+        'average_burn_rate': avg_burn_rate,
+        'cash_runway_months': runway_months
     }
 
 

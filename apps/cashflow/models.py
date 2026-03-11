@@ -147,6 +147,19 @@ class CashFlowForecast(models.Model):
         help_text="Cumulative project cash balance up to this month"
     )
     
+    # Forecast Quality Indicator
+    class ConfidenceLevel(models.TextChoices):
+        LOW = 'LOW', 'Low Confidence'
+        MEDIUM = 'MEDIUM', 'Medium Confidence'
+        HIGH = 'HIGH', 'High Confidence'
+    
+    confidence_level = models.CharField(
+        max_length=10,
+        choices=ConfidenceLevel.choices,
+        default=ConfidenceLevel.MEDIUM,
+        help_text="Forecast reliability based on project progress, historical data, and variance"
+    )
+    
     # Metadata
     is_actual = models.BooleanField(
         default=False,
@@ -237,6 +250,21 @@ class PortfolioCashFlowSummary(models.Model):
     # Project counts
     active_projects_count = models.IntegerField(default=0)
     projects_with_negative_flow = models.IntegerField(default=0)
+    
+    # Liquidity Metrics
+    average_cash_burn_rate = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text="Average monthly cash outflow across portfolio (burn rate)"
+    )
+    
+    cash_runway_months = models.DecimalField(
+        max_digits=5,
+        decimal_places=1,
+        default=Decimal('0.0'),
+        help_text="Estimated months of operation with current cash balance (balance / burn_rate)"
+    )
     
     # Metadata
     forecast_generated_at = models.DateTimeField(auto_now_add=True)

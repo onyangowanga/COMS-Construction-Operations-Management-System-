@@ -93,6 +93,11 @@ class CashFlowService:
             )
             cumulative_balance += net_flow
             
+            # Calculate confidence level for this forecast
+            confidence_level = CashFlowService._calculate_confidence_level(
+                project, forecast_month
+            )
+            
             # Create forecast record
             forecast = CashFlowForecast.objects.create(
                 project=project,
@@ -114,6 +119,7 @@ class CashFlowService:
                 # Metrics
                 net_cash_flow=net_flow,
                 cumulative_cash_balance=cumulative_balance,
+                confidence_level=confidence_level,
                 is_actual=False
             )
             
@@ -341,6 +347,75 @@ class CashFlowService:
         return max(months_remaining, 1)  # At least 1 month
     
     @staticmethod
+    def _calculate_confidence_level(
+        project: Project,
+        forecast_month: datetime
+    ) -> str:
+        """
+        Calculate forecast confidence level based on multiple factors.
+        
+        Confidence Factors:
+        1. Project Progress (Primary) - More progress = more historical data
+        2. Historical Data Availability - More expense records = better predictions
+        3. Cost Variance - Lower variance = more predictable
+        
+        Returns:
+            'LOW', 'MEDIUM', or 'HIGH'
+        """
+        # === Factor 1: Project Progress ===
+        contract_value = project.contract_sum or Decimal('0.00')
+        
+        if contract_value > 0:
+            approved_valuations = Valuation.objects.filter(
+                project=project,
+                status='APPROVED'
+            ).aggregate(total=Sum('work_completed_value'))['total'] or Decimal('0.00')
+            
+            progress_percentage = (approved_valuations / contract_value * 100)
+        else:
+            progress_percentage = Decimal('0')
+        
+        # Base confidence from user specification
+        if progress_percentage < 20:
+            base_confidence = 'LOW'
+        elif progress_percentage < 60:
+            base_confidence = 'MEDIUM'
+        else:
+            base_confidence = 'HIGH'
+        
+        # === Factor 2: Historical Data Availability ===
+        expense_count = Expense.objects.filter(
+            project=project,
+            status='APPROVED'
+        ).count()
+        
+        # Downgrade confidence if insufficient historical data
+        if expense_count < 10 and base_confidence == 'HIGH':
+            base_confidence = 'MEDIUM'
+        elif expense_count < 5 and base_confidence == 'MEDIUM':
+            base_confidence = 'LOW'
+        
+        # === Factor 3: Cost Variance (Optional - if portfolio metrics exist) ===
+        try:
+            # Try to import portfolio metrics if available
+            from apps.portfolio.models import ProjectMetrics
+            
+            metrics = ProjectMetrics.objects.filter(project=project).first()
+            
+            if metrics and hasattr(metrics, 'cost_performance_index'):
+                cpi = float(metrics.cost_performance_index)
+                variance = abs(cpi - 1.0)
+                
+                # High variance reduces confidence
+                if variance > 0.3 and base_confidence == 'HIGH':
+                    base_confidence = 'MEDIUM'
+        except (ImportError, Exception):
+            # Portfolio module doesn't exist or has different structure
+            pass
+        
+        return base_confidence
+    
+    @staticmethod
     @transaction.atomic
     def generate_portfolio_forecast(
         horizon_months: int = 6,
@@ -385,6 +460,9 @@ class CashFlowService:
         summaries = []
         cumulative_balance = Decimal('0.00')
         
+        # Calculate average burn rate across the forecast period
+        all_monthly_outflows = []
+        
         for month_offset in range(horizon_months):
             forecast_month = start_date + relativedelta(months=month_offset)
             
@@ -402,12 +480,26 @@ class CashFlowService:
             net_flow = monthly_forecasts.get('net_flow') or Decimal('0.00')
             
             cumulative_balance += net_flow
+            all_monthly_outflows.append(total_outflow)
             
             # Count projects with negative cash flow
             negative_flow_count = CashFlowForecast.objects.filter(
                 forecast_month=forecast_month,
                 net_cash_flow__lt=0
             ).count()
+            
+            # Calculate average cash burn rate
+            if all_monthly_outflows:
+                avg_burn_rate = sum(all_monthly_outflows) / Decimal(len(all_monthly_outflows))
+            else:
+                avg_burn_rate = Decimal('0.00')
+            
+            # Calculate runway months
+            if avg_burn_rate > 0:
+                # Use cumulative balance to estimate runway
+                cash_runway = cumulative_balance / avg_burn_rate
+            else:
+                cash_runway = Decimal('999.9')  # Infinite runway
             
             # Create portfolio summary
             summary = PortfolioCashFlowSummary.objects.create(
@@ -417,7 +509,9 @@ class CashFlowService:
                 net_portfolio_cash_flow=net_flow,
                 cumulative_portfolio_balance=cumulative_balance,
                 active_projects_count=active_projects.count(),
-                projects_with_negative_flow=negative_flow_count
+                projects_with_negative_flow=negative_flow_count,
+                average_cash_burn_rate=avg_burn_rate,
+                cash_runway_months=cash_runway
             )
             
             summaries.append(summary)

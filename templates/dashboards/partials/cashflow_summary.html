@@ -88,4 +88,18 @@
             Overall portfolio health
         </div>
     </div>
+    
+    <!-- Average Cash Burn Rate -->
+    <div class="metric-card" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); padding: 1.5rem; border-radius: 8px; color: white;">
+        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">
+            Average Cash Burn Rate
+        </div>
+        <div style="font-size: 2rem; font-weight: 700;">
+            {% load humanize %}
+            KES {{ summary.average_burn_rate|floatformat:0|intcomma|default:"0" }} / month
+        </div>
+        <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">
+            🔥 {{ summary.cash_runway_months|floatformat:1|default:"0" }} months runway
+        </div>
+    </div>
 </div>
