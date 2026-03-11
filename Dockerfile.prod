@@ -24,9 +24,8 @@ RUN apt-get update && apt-get install -y \
 # Install Python dependencies
 COPY requirements.txt /app/
 
-# Install packages with older NumPy version for CPU compatibility
+# Install all dependencies (NumPy 1.24.4 is pinned in requirements.txt)
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir numpy==1.24.4 && \
     pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Production

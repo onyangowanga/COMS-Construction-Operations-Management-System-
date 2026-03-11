@@ -42,6 +42,8 @@ celery>=5.3
 redis>=5.0
 
 # Reporting & Data Export
+# NumPy pinned to 1.24.4 for CPU compatibility (no X86_V2 requirement)
+numpy==1.24.4
 pandas>=2.0
 reportlab>=4.0
 openpyxl>=3.1
