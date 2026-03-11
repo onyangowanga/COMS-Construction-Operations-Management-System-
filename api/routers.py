@@ -24,6 +24,7 @@ from api.views.site_operations import (
 )
 from api.views.portfolio import PortfolioViewSet, ProjectMetricsViewSet
 from api.views.cashflow import ProjectCashFlowViewSet, PortfolioCashFlowViewSet
+from api.views.variations import VariationOrderViewSet, ProjectVariationViewSet
 
 
 # Create a router and register all viewsets
@@ -90,3 +91,7 @@ router.register(r'project-metrics', ProjectMetricsViewSet, basename='projectmetr
 # Cash Flow Forecasting
 router.register(r'cashflow/project', ProjectCashFlowViewSet, basename='cashflow-project')
 router.register(r'cashflow/portfolio', PortfolioCashFlowViewSet, basename='cashflow-portfolio')
+
+# Variation Orders (Change Management)
+router.register(r'variations', VariationOrderViewSet, basename='variation')
+router.register(r'projects', ProjectVariationViewSet, basename='project-variations')

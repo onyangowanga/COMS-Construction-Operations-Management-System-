@@ -1,0 +1,151 @@
+{% load humanize %}
+
+{% if variations %}
+<div class="table-responsive">
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                <th style="padding: 1rem; text-align: left; font-weight: 600; color: #495057;">Reference</th>
+                <th style="padding: 1rem; text-align: left; font-weight: 600; color: #495057;">Title</th>
+                <th style="padding: 1rem; text-align: center; font-weight: 600; color: #495057;">Priority</th>
+                <th style="padding: 1rem; text-align: right; font-weight: 600; color: #495057;">Estimated</th>
+                <th style="padding: 1rem; text-align: right; font-weight: 600; color: #495057;">Approved</th>
+                <th style="padding: 1rem; text-align: center; font-weight: 600; color: #495057;">Status</th>
+                <th style="padding: 1rem; text-align: center; font-weight: 600; color: #495057;">Date</th>
+                {% if show_actions %}
+                <th style="padding: 1rem; text-align: center; font-weight: 600; color: #495057;">Actions</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for variation in variations %}
+            <tr style="border-bottom: 1px solid #e9ecef;">
+                <td style="padding: 1rem;">
+                    <div style="font-weight: 600; color: #2c3e50;">
+                        {{ variation.reference_number }}
+                    </div>
+                </td>
+                <td style="padding: 1rem;">
+                    <div style="font-weight: 600; color: #2c3e50; margin-bottom: 0.25rem;">
+                        {{ variation.title }}
+                    </div>
+                    <div style="font-size: 0.85rem; color: #6c757d;">
+                        {{ variation.get_change_type_display }}
+                    </div>
+                </td>
+                <td style="padding: 1rem; text-align: center;">
+                    {% if variation.priority == 'URGENT' %}
+                        <span style="background: #e74c3c; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">URGENT</span>
+                    {% elif variation.priority == 'HIGH' %}
+                        <span style="background: #e67e22; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">HIGH</span>
+                    {% elif variation.priority == 'MEDIUM' %}
+                        <span style="background: #f39c12; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">MEDIUM</span>
+                    {% else %}
+                        <span style="background: #95a5a6; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">LOW</span>
+                    {% endif %}
+                </td>
+                <td style="padding: 1rem; text-align: right; font-weight: 500;">
+                    KES {{ variation.estimated_value|floatformat:0|intcomma }}
+                </td>
+                <td style="padding: 1rem; text-align: right; font-weight: 500;">
+                    {% if variation.approved_value > 0 %}
+                        <strong style="color: #27ae60;">KES {{ variation.approved_value|floatformat:0|intcomma }}</strong>
+                    {% else %}
+                        <span style="color: #95a5a6;">-</span>
+                    {% endif %}
+                </td>
+                <td style="padding: 1rem; text-align: center;">
+                    {% if variation.status == 'DRAFT' %}
+                        <span style="background: #95a5a6; color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">DRAFT</span>
+                    {% elif variation.status == 'SUBMITTED' %}
+                        <span style="background: #3498db; color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">SUBMITTED</span>
+                    {% elif variation.status == 'APPROVED' %}
+                        <span style="background: #27ae60; color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">APPROVED</span>
+                    {% elif variation.status == 'REJECTED' %}
+                        <span style="background: #e74c3c; color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">REJECTED</span>
+                    {% elif variation.status == 'INVOICED' %}
+                        <span style="background: #9b59b6; color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">INVOICED</span>
+                    {% elif variation.status == 'PAID' %}
+                        <span style="background: #16a085; color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">PAID</span>
+                    {% endif %}
+                </td>
+                <td style="padding: 1rem; text-align: center; font-size: 0.85rem; color: #6c757d;">
+                    {{ variation.instruction_date|date:"d M Y" }}
+                </td>
+                {% if show_actions %}
+                <td style="padding: 1rem; text-align: center;">
+                    <button 
+                        onclick="approveVariation('{{ variation.id }}', '{{ variation.reference_number }}')"
+                        style="background: #27ae60; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin-right: 0.5rem;">
+                        ✓ Approve
+                    </button>
+                    <button 
+                        onclick="rejectVariation('{{ variation.id }}', '{{ variation.reference_number }}')"
+                        style="background: #e74c3c; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                        ✗ Reject
+                    </button>
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div style="text-align: center; padding: 3rem; color: #6c757d;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">📄</div>
+    <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem;">
+        No Variation Orders
+    </div>
+    <div style="font-size: 0.9rem;">
+        No variation orders found for this project
+    </div>
+</div>
+{% endif %}
+
+<script>
+function approveVariation(variationId, reference) {
+    if (!confirm(`Approve variation ${reference}?`)) return;
+    
+    fetch(`/api/variations/${variationId}/approve/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert('Variation approved successfully!');
+        location.reload();
+    })
+    .catch(error => {
+        alert('Error approving variation: ' + error);
+    });
+}
+
+function rejectVariation(variationId, reference) {
+    const reason = prompt(`Enter rejection reason for ${reference}:`);
+    if (!reason) return;
+    
+    fetch(`/api/variations/${variationId}/reject/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            rejection_reason: reason
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert('Variation rejected.');
+        location.reload();
+    })
+    .catch(error => {
+        alert('Error rejecting variation: ' + error);
+    });
+}
+</script>

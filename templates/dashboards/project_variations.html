@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Variation Orders - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="padding: 2rem;">
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+            <h1 style="margin: 0; font-size: 1.8rem; color: #2c3e50;">
+                📄 Variation Orders
+            </h1>
+            <p style="margin: 0.5rem 0 0 0; color: #7f8c8d;">
+                {{ project.name }} • {{ project.project_code }}
+            </p>
+        </div>
+        <button 
+            class="btn btn-primary"
+            onclick="window.location.href='{% url 'dashboard:create_variation' project.id %}'"
+            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 0.75rem 1.5rem; border-radius: 6px; color: white; font-weight: 600; cursor: pointer;">
+            ➕ New Variation Order
+        </button>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <!-- Total Variations -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 8px; color: white;">
+            <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">Total Variations</div>
+            <div style="font-size: 2rem; font-weight: 700;">{{ summary.total_variations }}</div>
+            <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">Change orders</div>
+        </div>
+        
+        <!-- Pending Approval -->
+        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 1.5rem; border-radius: 8px; color: white;">
+            <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">Pending Approval</div>
+            <div style="font-size: 2rem; font-weight: 700;">{{ summary.status_breakdown.submitted }}</div>
+            <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">Awaiting decision</div>
+        </div>
+        
+        <!-- Approved Value -->
+        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 1.5rem; border-radius: 8px; color: white;">
+            <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">Approved Value</div>
+            <div style="font-size: 2rem; font-weight: 700;">
+                KES {{ summary.total_approved_value|floatformat:0|intcomma }}
+            </div>
+            <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">Contract additions</div>
+        </div>
+        
+        <!-- Contract Impact -->
+        <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); padding: 1.5rem; border-radius: 8px; color: white;">
+            <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">Contract Impact</div>
+            <div style="font-size: 2rem; font-weight: 700;">
+                {{ summary.contract_impact_percentage|floatformat:1 }}%
+            </div>
+            <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">Of original contract</div>
+        </div>
+        
+        <!-- Outstanding -->
+        <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 1.5rem; border-radius: 8px; color: white;">
+            <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">Outstanding</div>
+            <div style="font-size: 2rem; font-weight: 700;">
+                KES {{ summary.outstanding_value|floatformat:0|intcomma }}
+            </div>
+            <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">Approved not paid</div>
+        </div>
+    </div>
+    
+    <!-- Tabs -->
+    <div style="border-bottom: 2px solid #e9ecef; margin-bottom: 2rem;">
+        <div style="display: flex; gap: 1rem;">
+            <button class="tab-btn active" data-tab="all" onclick="switchTab('all')" style="background: none; border: none; padding: 0.75rem 1rem; cursor: pointer; border-bottom: 3px solid #667eea; color: #667eea; font-weight: 600;">
+                All Variations
+            </button>
+            <button class="tab-btn" data-tab="pending" onclick="switchTab('pending')" style="background: none; border: none; padding: 0.75rem 1rem; cursor: pointer; border-bottom: 3px solid transparent; color: #6c757d; font-weight: 600;">
+                Pending ({{ pending_variations|length }})
+            </button>
+            <button class="tab-btn" data-tab="approved" onclick="switchTab('approved')" style="background: none; border: none; padding: 0.75rem 1rem; cursor: pointer; border-bottom: 3px solid transparent; color: #6c757d; font-weight: 600;">
+                Approved ({{ approved_variations|length }})
+            </button>
+        </div>
+    </div>
+    
+    <!-- All Variations Table -->
+    <div id="tab-all" class="tab-content">
+        <h3 style="margin-bottom: 1rem;">All Variation Orders</h3>
+        {% include 'dashboards/partials/variations_table.html' with variations=all_variations %}
+    </div>
+    
+    <!-- Pending Variations Table -->
+    <div id="tab-pending" class="tab-content" style="display: none;">
+        <h3 style="margin-bottom: 1rem;">Pending Approval</h3>
+        {% include 'dashboards/partials/variations_table.html' with variations=pending_variations show_actions=True %}
+    </div>
+    
+    <!-- Approved Variations Table -->
+    <div id="tab-approved" class="tab-content" style="display: none;">
+        <h3 style="margin-bottom: 1rem;">Approved Variations</h3>
+        {% include 'dashboards/partials/variations_table.html' with variations=approved_variations %}
+    </div>
+</div>
+
+<script>
+function switchTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.style.display = 'none';
+    });
+    
+    // Remove active class from all buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.style.borderBottomColor = 'transparent';
+        btn.style.color = '#6c757d';
+    });
+    
+    // Show selected tab
+    document.getElementById('tab-' + tabName).style.display = 'block';
+    
+    // Add active class to selected button
+    const activeBtn = document.querySelector('[data-tab="' + tabName + '"]');
+    activeBtn.style.borderBottomColor = '#667eea';
+    activeBtn.style.color = '#667eea';
+}
+</script>
+{% endblock %}

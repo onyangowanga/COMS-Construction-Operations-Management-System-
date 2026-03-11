@@ -143,4 +143,11 @@ urlpatterns = [
         views.cashflow_generate_forecast,
         name='cashflow_generate_forecast'
     ),
+    
+    # Variation Orders
+    path(
+        'projects/<uuid:project_id>/variations/',
+        views.project_variations_dashboard,
+        name='project_variations'
+    ),
 ]

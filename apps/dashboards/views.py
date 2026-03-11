@@ -494,3 +494,45 @@ def cashflow_generate_forecast(request):
     }
     
     return render(request, 'dashboards/partials/cashflow_generate_success.html', context)
+
+
+# ============================================================================
+# VARIATION ORDER DASHBOARD VIEWS
+# ============================================================================
+
+@login_required
+@require_http_methods(["GET"])
+def project_variations_dashboard(request, project_id):
+    """
+    Project variation orders dashboard.
+    
+    URL: /projects/{id}/variations/
+    
+    Shows all variation orders for a project with summary metrics.
+    """
+    from apps.variations import selectors as variation_selectors
+    from apps.projects.models import Project
+    
+    project = Project.objects.select_related('organization').get(id=project_id)
+    
+    # Get variation summary
+    summary = variation_selectors.get_project_variation_summary(project_id)
+    
+    # Get all variations
+    all_variations = variation_selectors.get_project_variations(project_id)
+    
+    # Get pending variations
+    pending_variations = variation_selectors.get_pending_variations(project_id)
+    
+    # Get approved variations
+    approved_variations = variation_selectors.get_approved_variations(project_id)
+    
+    context = {
+        'project': project,
+        'summary': summary,
+        'all_variations': all_variations,
+        'pending_variations': pending_variations,
+        'approved_variations': approved_variations,
+    }
+    
+    return render(request, 'dashboards/project_variations.html', context)

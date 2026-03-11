@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'apps.site_operations',
     'apps.portfolio',
     'apps.cashflow',
+    'apps.variations',
 ]
 
 MIDDLEWARE = [
