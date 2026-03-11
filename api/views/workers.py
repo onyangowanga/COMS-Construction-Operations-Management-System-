@@ -10,7 +10,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from apps.workers.models import Worker, DailyLabourRecord
 from api.serializers.workers import (
     WorkerSerializer, WorkerListSerializer, DailyLabourRecordSerializer
-)from api.selectors.worker_selectors import get_workers_unpaid_wages
+)
+from api.selectors.worker_selectors import get_workers_unpaid_wages
 from api.services.worker_analytics import calculate_unpaid_wages
 
 class WorkerViewSet(viewsets.ModelViewSet):

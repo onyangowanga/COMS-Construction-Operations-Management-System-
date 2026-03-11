@@ -11,7 +11,8 @@ from apps.suppliers.models import Supplier, LocalPurchaseOrder, SupplierInvoice
 from api.serializers.suppliers import (
     SupplierSerializer, SupplierListSerializer,
     LocalPurchaseOrderSerializer, SupplierInvoiceSerializer
-)from api.selectors.supplier_selectors import get_suppliers_outstanding_payments
+)
+from api.selectors.supplier_selectors import get_suppliers_outstanding_payments
 from api.services.supplier_analytics import calculate_supplier_outstanding_payments
 
 class SupplierViewSet(viewsets.ModelViewSet):
