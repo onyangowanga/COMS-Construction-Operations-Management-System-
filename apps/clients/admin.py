@@ -63,7 +63,7 @@ class ClientReceiptAdmin(admin.ModelAdmin):
     
     fieldsets = (
         (_('Receipt Information'), {
-            'fields': ('receipt_number', 'payment', 'issued_date', 'document_path')
+            'fields': ('receipt_number', 'payment', 'document_path')
         }),
         (_('Notes'), {
             'fields': ('notes',)
