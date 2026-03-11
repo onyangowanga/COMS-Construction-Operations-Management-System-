@@ -23,6 +23,7 @@ from api.views.site_operations import (
     DailySiteReportViewSet, MaterialDeliveryViewSet, SiteIssueViewSet
 )
 from api.views.portfolio import PortfolioViewSet, ProjectMetricsViewSet
+from api.views.cashflow import ProjectCashFlowViewSet, PortfolioCashFlowViewSet
 
 
 # Create a router and register all viewsets
@@ -85,3 +86,7 @@ router.register(r'site-issues', SiteIssueViewSet, basename='siteissue')
 # Portfolio Analytics
 router.register(r'portfolio', PortfolioViewSet, basename='portfolio')
 router.register(r'project-metrics', ProjectMetricsViewSet, basename='projectmetrics')
+
+# Cash Flow Forecasting
+router.register(r'cashflow/project', ProjectCashFlowViewSet, basename='cashflow-project')
+router.register(r'cashflow/portfolio', PortfolioCashFlowViewSet, basename='cashflow-portfolio')

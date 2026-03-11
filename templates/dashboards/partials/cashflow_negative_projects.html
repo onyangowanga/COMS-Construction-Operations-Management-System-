@@ -1,0 +1,64 @@
+{% if negative_projects %}
+<div class="table-responsive">
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                <th style="padding: 1rem; text-align: left; font-weight: 600; color: #495057;">Project</th>
+                <th style="padding: 1rem; text-align: right; font-weight: 600; color: #495057;">Inflow</th>
+                <th style="padding: 1rem; text-align: right; font-weight: 600; color: #495057;">Outflow</th>
+                <th style="padding: 1rem; text-align: right; font-weight: 600; color: #495057;">Net Flow</th>
+                <th style="padding: 1rem; text-align: right; font-weight: 600; color: #495057;">Balance</th>
+                <th style="padding: 1rem; text-align: center; font-weight: 600; color: #495057;">Month</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for forecast in negative_projects %}
+            <tr style="border-bottom: 1px solid #e9ecef;">
+                <td style="padding: 1rem;">
+                    <div style="font-weight: 600; color: #2c3e50; margin-bottom: 0.25rem;">
+                        {{ forecast.project.name }}
+                    </div>
+                    <div style="font-size: 0.85rem; color: #6c757d;">
+                        {{ forecast.project.project_code }} • {{ forecast.project.organization.name }}
+                    </div>
+                </td>
+                <td style="padding: 1rem; text-align: right; color: #27ae60; font-weight: 500;">
+                    KES {{ forecast.total_inflow|floatformat:0 }}
+                </td>
+                <td style="padding: 1rem; text-align: right; color: #e74c3c; font-weight: 500;">
+                    KES {{ forecast.total_outflow|floatformat:0 }}
+                </td>
+                <td style="padding: 1rem; text-align: right;">
+                    <span style="display: inline-block; padding: 0.25rem 0.75rem; background: #fee; color: #e74c3c; border-radius: 4px; font-weight: 600;">
+                        KES {{ forecast.net_cash_flow|floatformat:0 }}
+                    </span>
+                </td>
+                <td style="padding: 1rem; text-align: right; font-weight: 500;">
+                    <span style="color: {% if forecast.cumulative_cash_balance < 0 %}#e74c3c{% else %}#27ae60{% endif %}">
+                        KES {{ forecast.cumulative_cash_balance|floatformat:0 }}
+                    </span>
+                </td>
+                <td style="padding: 1rem; text-align: center; font-size: 0.85rem; color: #6c757d;">
+                    {{ forecast.forecast_month|date:"M Y" }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+    <strong style="color: #856404;">⚠️ {{ negative_projects.count }} project{{ negative_projects.count|pluralize }}</strong> 
+    <span style="color: #856404;">with negative cash flow this month</span>
+</div>
+{% else %}
+<div style="text-align: center; padding: 3rem; color: #6c757d;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+    <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem;">
+        No Negative Cash Flow
+    </div>
+    <div style="font-size: 0.9rem;">
+        All projects have positive cash flow for this month
+    </div>
+</div>
+{% endif %}

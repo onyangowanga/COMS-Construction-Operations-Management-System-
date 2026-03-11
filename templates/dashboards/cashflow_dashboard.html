@@ -1,0 +1,426 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cash Flow Dashboard - COMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cashflow-dashboard {
+        padding: 2rem;
+        background: #f8f9fa;
+    }
+    
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .forecast-controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .forecast-controls select {
+        padding: 0.5rem 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+    
+    .btn-generate {
+        padding: 0.5rem 1.5rem;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background 0.3s;
+    }
+    
+    .btn-generate:hover {
+        background: #2980b9;
+    }
+    
+    .btn-generate.loading {
+        background: #95a5a6;
+        cursor: not-pending;
+    }
+    
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .dashboard-section {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .section-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .section-header h2 {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .section-header p {
+        margin: 0.5rem 0 0 0;
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    
+    .section-content {
+        padding: 1.5rem;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 400px;
+        padding: 1rem;
+    }
+    
+    .loading-indicator {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 200px;
+        color: #95a5a6;
+    }
+    
+    .loading-indicator::after {
+        content: "Loading...";
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
+    }
+    
+    /* Horizon tabs */
+    .horizon-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid #e9ecef;
+        padding: 0 1.5rem;
+    }
+    
+    .horizon-tab {
+        padding: 0.75rem 1.5rem;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: #6c757d;
+        font-weight: 500;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        transition: all 0.3s;
+    }
+    
+    .horizon-tab.active {
+        color: #3498db;
+        border-bottom-color: #3498db;
+    }
+    
+    .horizon-tab:hover:not(.active) {
+        color: #495057;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cashflow-dashboard">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div>
+            <h1>💰 Cash Flow Dashboard</h1>
+            <p style="color: #6c757d; margin: 0.5rem 0 0 0;">
+                Portfolio-wide cash flow forecasting and monitoring
+            </p>
+        </div>
+        
+        <div class="forecast-controls">
+            <button 
+                class="btn-generate"
+                hx-post="{% url 'dashboards:cashflow_generate_forecast' %}"
+                hx-vals='{"months": 6}'
+                hx-target="#generate-result"
+                hx-indicator="#generate-spinner"
+                hx-swap="innerHTML">
+                <span id="generate-spinner" class="htmx-indicator">⏳</span>
+                🔄 Update Forecast
+            </button>
+        </div>
+    </div>
+    
+    <!-- Generate result message -->
+    <div id="generate-result" style="margin-bottom: 1rem;"></div>
+    
+    <!-- Horizon Selection Tabs -->
+    <div class="horizon-tabs">
+        <button class="horizon-tab active" 
+                onclick="switchHorizon(3, this)">
+            3 Months
+        </button>
+        <button class="horizon-tab" 
+                onclick="switchHorizon(6, this)">
+            6 Months
+        </button>
+        <button class="horizon-tab" 
+                onclick="switchHorizon(12, this)">
+            12 Months
+        </button>
+    </div>
+    
+    <div class="dashboard-grid">
+        <!-- Summary Cards -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2>📊 Portfolio Summary</h2>
+                <p>Key cash flow metrics across all projects</p>
+            </div>
+            <div class="section-content">
+                <div 
+                    hx-get="{% url 'dashboards:cashflow_summary_partial' %}"
+                    hx-trigger="load, every 60s"
+                    hx-swap="innerHTML">
+                    <div class="loading-indicator"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cash Flow Chart -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2>📈 Cash Flow Projection</h2>
+                <p>Monthly inflow, outflow, and cumulative balance</p>
+            </div>
+            <div class="section-content">
+                <div class="chart-container">
+                    <canvas id="cashFlowChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Critical Alerts -->
+        <div class="dashboard-section">
+            <div class="section-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <h2>⚠️ Critical Alerts</h2>
+                <p>Projects requiring immediate attention</p>
+            </div>
+            <div class="section-content">
+                <div 
+                    hx-get="{% url 'dashboards:cashflow_alerts_partial' %}"
+                    hx-trigger="load, every 30s"
+                    hx-swap="innerHTML">
+                    <div class="loading-indicator"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Negative Cash Flow Projects -->
+        <div class="dashboard-section">
+            <div class="section-header" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                <h2>🔻 Negative Cash Flow Projects</h2>
+                <p>Projects with negative cash flow this month</p>
+            </div>
+            <div class="section-content">
+                <div 
+                    hx-get="{% url 'dashboards:cashflow_negative_projects_partial' %}"
+                    hx-trigger="load, every 60s"
+                    hx-swap="innerHTML">
+                    <div class="loading-indicator"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+let cashFlowChart = null;
+let currentHorizon = 6;
+
+// Initialize chart on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadChartData(6);
+});
+
+function switchHorizon(months, button) {
+    currentHorizon = months;
+    
+    // Update active tab
+    document.querySelectorAll('.horizon-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    button.classList.add('active');
+    
+    // Reload chart
+    loadChartData(months);
+}
+
+function loadChartData(months) {
+    fetch(`{% url 'dashboards:cashflow_chart_data_partial' %}?months=${months}`)
+        .then(response => response.json())
+        .then(data => {
+            renderChart(data);
+        })
+        .catch(error => {
+            console.error('Error loading chart data:', error);
+        });
+}
+
+function renderChart(data) {
+    const ctx = document.getElementById('cashFlowChart').getContext('2d');
+    
+    // Destroy existing chart
+    if (cashFlowChart) {
+        cashFlowChart.destroy();
+    }
+    
+    // Create new chart
+    cashFlowChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: [
+                {
+                    label: 'Inflow',
+                    data: data.inflow,
+                    borderColor: '#27ae60',
+                    backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Outflow',
+                    data: data.outflow,
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Net Cash Flow',
+                    data: data.net_flow,
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4
+                },
+                {
+                    label: 'Cumulative Balance',
+                    data: data.cumulative_balance,
+                    borderColor: '#9b59b6',
+                    backgroundColor: 'rgba(155, 89, 182, 0.1)',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                title: {
+                    display: false
+                },
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += new Intl.NumberFormat('en-KE', {
+                                style: 'currency',
+                                currency: 'KES'
+                            }).format(context.parsed.y);
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Monthly Cash Flow (KES)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return 'KES ' + value.toLocaleString();
+                        }
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Cumulative Balance (KES)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return 'KES ' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Auto-refresh chart every 60 seconds
+setInterval(() => {
+    loadChartData(currentHorizon);
+}, 60000);
+</script>
+{% endblock %}

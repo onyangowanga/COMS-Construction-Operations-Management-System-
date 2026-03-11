@@ -1,0 +1,73 @@
+{% if alerts %}
+<div style="display: flex; flex-direction: column; gap: 1rem;">
+    {% for alert in alerts %}
+    <div class="alert-card" style="
+        padding: 1.25rem;
+        border-left: 4px solid {% if alert.severity == 'CRITICAL' %}#e74c3c{% elif alert.severity == 'HIGH' %}#f39c12{% else %}#3498db{% endif %};
+        background: {% if alert.severity == 'CRITICAL' %}#fee{% elif alert.severity == 'HIGH' %}#fffbf0{% else %}#f0f7ff{% endif %};
+        border-radius: 4px;
+    ">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="
+                    width: 2.5rem;
+                    height: 2.5rem;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: {% if alert.severity == 'CRITICAL' %}#e74c3c{% elif alert.severity == 'HIGH' %}#f39c12{% else %}#3498db{% endif %};
+                    color: white;
+                    font-size: 1.25rem;
+                ">
+                    {% if alert.severity == 'CRITICAL' %}🚨{% elif alert.severity == 'HIGH' %}⚠️{% else %}ℹ️{% endif %}
+                </div>
+                <div>
+                    <div style="font-weight: 700; color: #2c3e50; font-size: 1.05rem; margin-bottom: 0.25rem;">
+                        {{ alert.project_name }}
+                    </div>
+                    <div style="font-size: 0.85rem; color: #6c757d;">
+                        {{ alert.alert_type|title }}
+                    </div>
+                </div>
+            </div>
+            <div style="
+                padding: 0.25rem 0.75rem;
+                background: {% if alert.severity == 'CRITICAL' %}#e74c3c{% elif alert.severity == 'HIGH' %}#f39c12{% else %}#3498db{% endif %};
+                color: white;
+                border-radius: 12px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+            ">
+                {{ alert.severity }}
+            </div>
+        </div>
+        
+        <div style="margin-left: 3.25rem;">
+            <div style="color: #495057; margin-bottom: 0.5rem;">
+                {{ alert.message }}
+            </div>
+            <div style="font-size: 0.85rem; color: #6c757d;">
+                Forecast Month: {{ alert.forecast_month|date:"F Y" }}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div style="margin-top: 1rem; padding: 1rem; background: #f8d7da; border-left: 4px solid #dc3545; border-radius: 4px;">
+    <strong style="color: #721c24;">🚨 {{ alerts|length }} critical alert{{ alerts|length|pluralize }}</strong> 
+    <span style="color: #721c24;">requiring immediate attention</span>
+</div>
+{% else %}
+<div style="text-align: center; padding: 3rem; color: #6c757d;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+    <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem;">
+        No Critical Alerts
+    </div>
+    <div style="font-size: 0.9rem;">
+        All projects are within acceptable cash flow parameters
+    </div>
+</div>
+{% endif %}

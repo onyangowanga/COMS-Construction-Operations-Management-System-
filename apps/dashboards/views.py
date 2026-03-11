@@ -357,3 +357,140 @@ def portfolio_high_risk_projects_partial(request):
     }
     
     return render(request, 'dashboards/partials/portfolio_high_risk.html', context)
+
+
+# ============================================
+# CASH FLOW DASHBOARD VIEWS
+# ============================================
+
+@login_required
+@require_http_methods(["GET"])
+def cashflow_dashboard(request):
+    """
+    Main cash flow dashboard view.
+    
+    URL: /portfolio/cashflow/
+    
+    Displays:
+    - Portfolio cash balance projection
+    - Monthly inflow/outflow charts
+    - Projects causing negative cash flow
+    - Critical cash flow alerts
+    """
+    context = {}
+    return render(request, 'dashboards/cashflow_dashboard.html', context)
+
+
+@login_required
+@require_http_methods(["GET"])
+def cashflow_summary_partial(request):
+    """
+    HTMX partial: Cash flow summary cards.
+    
+    URL: /portfolio/cashflow/partials/summary/
+    
+    Displays portfolio cash flow summary metrics.
+    """
+    from apps.cashflow import selectors as cashflow_selectors
+    
+    summary = cashflow_selectors.get_portfolio_forecast_summary()
+    
+    context = {
+        'summary': summary,
+    }
+    
+    return render(request, 'dashboards/partials/cashflow_summary.html', context)
+
+
+@login_required
+@require_http_methods(["GET"])
+def cashflow_chart_data_partial(request):
+    """
+    HTMX partial: Cash flow chart data.
+    
+    URL: /portfolio/cashflow/partials/chart-data/
+    
+    Returns JSON data for cash flow charts.
+    """
+    from apps.cashflow import selectors as cashflow_selectors
+    
+    months = int(request.GET.get('months', 6))
+    
+    trend_data = cashflow_selectors.get_portfolio_cash_flow_trend_data(months=months)
+    
+    # Return as JSON for chart.js
+    return JsonResponse({
+        'labels': [d['month_label'] for d in trend_data],
+        'inflow': [d['inflow'] for d in trend_data],
+        'outflow': [d['outflow'] for d in trend_data],
+        'net_flow': [d['net_flow'] for d in trend_data],
+        'cumulative_balance': [d['cumulative_balance'] for d in trend_data],
+    })
+
+
+@login_required
+@require_http_methods(["GET"])
+def cashflow_negative_projects_partial(request):
+    """
+    HTMX partial: Projects with negative cash flow.
+    
+    URL: /portfolio/cashflow/partials/negative-projects/
+    
+    Displays list of projects with negative cash flow.
+    """
+    from apps.cashflow import selectors as cashflow_selectors
+    
+    negative_projects = cashflow_selectors.get_projects_with_negative_cash_flow()
+    
+    context = {
+        'negative_projects': negative_projects,
+    }
+    
+    return render(request, 'dashboards/partials/cashflow_negative_projects.html', context)
+
+
+@login_required
+@require_http_methods(["GET"])
+def cashflow_alerts_partial(request):
+    """
+    HTMX partial: Critical cash flow alerts.
+    
+    URL: /portfolio/cashflow/partials/alerts/
+    
+    Displays critical cash flow warnings and alerts.
+    """
+    from apps.cashflow import selectors as cashflow_selectors
+    
+    alerts = cashflow_selectors.get_critical_cash_flow_alerts()
+    
+    context = {
+        'alerts': alerts,
+    }
+    
+    return render(request, 'dashboards/partials/cashflow_alerts.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def cashflow_generate_forecast(request):
+    """
+    HTMX action: Generate cash flow forecast.
+    
+    URL: /portfolio/cashflow/generate/
+    
+    Triggers forecast generation for all active projects.
+    """
+    from apps.cashflow.services import CashFlowService
+    
+    months = int(request.POST.get('months', 6))
+    
+    # Generate forecast
+    result = CashFlowService.update_all_forecasts(horizon_months=months)
+    
+    # Return success message
+    context = {
+        'message': f"Forecast generated for {result['updated_projects']} projects",
+        'result': result,
+    }
+    
+    return render(request, 'dashboards/partials/cashflow_generate_success.html', context)

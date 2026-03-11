@@ -1,0 +1,91 @@
+<div class="summary-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+    <!-- Total Expected Inflow -->
+    <div class="metric-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 8px; color: white;">
+        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">
+            Total Expected Inflow
+        </div>
+        <div style="font-size: 2rem; font-weight: 700;">
+            KES {{ summary.total_expected_inflow|floatformat:0|default:"0" }}
+        </div>
+        <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">
+            💰 Revenue forecast
+        </div>
+    </div>
+    
+    <!-- Total Expected Outflow -->
+    <div class="metric-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 1.5rem; border-radius: 8px; color: white;">
+        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">
+            Total Expected Outflow
+        </div>
+        <div style="font-size: 2rem; font-weight: 700;">
+            KES {{ summary.total_expected_outflow|floatformat:0|default:"0" }}
+        </div>
+        <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">
+            💸 Expense forecast
+        </div>
+    </div>
+    
+    <!-- Net Cash Flow -->
+    <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 1.5rem; border-radius: 8px; color: white;">
+        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">
+            Net Portfolio Cash Flow
+        </div>
+        <div style="font-size: 2rem; font-weight: 700;">
+            KES {{ summary.net_portfolio_cash_flow|floatformat:0|default:"0" }}
+        </div>
+        <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">
+            📊 Inflow - Outflow
+        </div>
+    </div>
+    
+    <!-- Final Portfolio Balance -->
+    <div class="metric-card" style="background: {% if summary.final_portfolio_balance >= 0 %}linear-gradient(135deg, #43e97b 0%, #38f9d7 100%){% else %}linear-gradient(135deg, #fa709a 0%, #fee140 100%){% endif %}; padding: 1.5rem; border-radius: 8px; color: white;">
+        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">
+            Final Portfolio Balance
+        </div>
+        <div style="font-size: 2rem; font-weight: 700;">
+            KES {{ summary.final_portfolio_balance|floatformat:0|default:"0" }}
+        </div>
+        <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">
+            {% if summary.final_portfolio_balance >= 0 %}
+                ✅ Positive balance
+            {% else %}
+                ⚠️ Negative balance
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Months with Negative Flow -->
+    <div class="metric-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 1.5rem; border-radius: 8px; color: white;">
+        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">
+            Months with Negative Flow
+        </div>
+        <div style="font-size: 2rem; font-weight: 700;">
+            {{ summary.months_with_negative_flow|default:"0" }}
+        </div>
+        <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">
+            out of {{ summary.total_forecast_months|default:"0" }} months
+        </div>
+    </div>
+    
+    <!-- Health Indicator -->
+    <div class="metric-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); padding: 1.5rem; border-radius: 8px; color: #2c3e50;">
+        <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 0.5rem;">
+            Cash Flow Health
+        </div>
+        <div style="font-size: 2rem; font-weight: 700;">
+            {% if summary.months_with_negative_flow == 0 %}
+                🟢 Excellent
+            {% elif summary.months_with_negative_flow <= 2 %}
+                🟡 Good
+            {% elif summary.months_with_negative_flow <= 4 %}
+                🟠 Warning
+            {% else %}
+                🔴 Critical
+            {% endif %}
+        </div>
+        <div style="font-size: 0.85rem; opacity: 0.7; margin-top: 0.5rem;">
+            Overall portfolio health
+        </div>
+    </div>
+</div>

@@ -111,4 +111,36 @@ urlpatterns = [
         views.portfolio_high_risk_projects_partial,
         name='portfolio_high_risk_partial'
     ),
+    
+    # Cash Flow Dashboard URLs
+    path(
+        'portfolio/cashflow/',
+        views.cashflow_dashboard,
+        name='cashflow_dashboard'
+    ),
+    path(
+        'portfolio/cashflow/partials/summary/',
+        views.cashflow_summary_partial,
+        name='cashflow_summary_partial'
+    ),
+    path(
+        'portfolio/cashflow/partials/chart-data/',
+        views.cashflow_chart_data_partial,
+        name='cashflow_chart_data_partial'
+    ),
+    path(
+        'portfolio/cashflow/partials/negative-projects/',
+        views.cashflow_negative_projects_partial,
+        name='cashflow_negative_projects_partial'
+    ),
+    path(
+        'portfolio/cashflow/partials/alerts/',
+        views.cashflow_alerts_partial,
+        name='cashflow_alerts_partial'
+    ),
+    path(
+        'portfolio/cashflow/generate/',
+        views.cashflow_generate_forecast,
+        name='cashflow_generate_forecast'
+    ),
 ]
