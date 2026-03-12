@@ -40,7 +40,7 @@ export function useAuth() {
 
   // Login handler
   const handleLogin = useCallback(
-    async (credentials: { username: string; password: string }) => {
+    async (credentials: { email: string; password: string }) => {
       await login(credentials);
       router.push('/dashboard');
     },
