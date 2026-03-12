@@ -15,6 +15,7 @@ const apiClient: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Enable sending cookies with requests
 });
 
 // ============================================================================
@@ -24,9 +25,15 @@ const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = Cookies.get(TOKEN_KEY);
+    const csrfToken = Cookies.get('csrftoken');
     
-    if (token &&!config.headers.Authorization) {
+    if (token && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    // Add CSRF token for unsafe methods
+    if (csrfToken && ['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase() || '')) {
+      config.headers['X-CSRFToken'] = csrfToken;
     }
     
     return config;
@@ -166,6 +173,19 @@ function handleApiError(error: AxiosError): ApiError {
 // ============================================================================
 // API Methods
 // ============================================================================
+
+/**
+ * Fetch CSRF token from the server
+ * This should be called before making any POST/PUT/PATCH/DELETE requests
+ */
+export const fetchCSRFToken = async (): Promise<void> => {
+  try {
+    // Make a GET request to get the CSRF cookie
+    await apiClient.get('/csrf/');
+  } catch (error) {
+    console.warn('Failed to fetch CSRF token:', error);
+  }
+};
 
 export const api = {
   /**

@@ -11,6 +11,8 @@ from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from django.contrib.auth import authenticate, login, logout
 from django.db import transaction
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
 from .serializers import (
     LoginSerializer,
@@ -50,6 +52,7 @@ def get_user_agent(request):
     return request.META.get('HTTP_USER_AGENT', '')
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class LoginView(APIView):
     """
     User login endpoint.
@@ -205,6 +208,7 @@ class LogoutView(APIView):
         return response
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(APIView):
     """
     User registration endpoint.
@@ -269,6 +273,7 @@ class RegisterView(APIView):
         }, status=status.HTTP_201_CREATED)
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class TokenRefreshView(APIView):
     """
     Token refresh endpoint.

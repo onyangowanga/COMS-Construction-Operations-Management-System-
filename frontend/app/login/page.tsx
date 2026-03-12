@@ -98,7 +98,7 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-600">
-          <p>&copy; 2024 COMS. All rights reserved.</p>
+          <p>&copy; 2026 COMS. All rights reserved.</p>
         </div>
       </Card>
     </div>
