@@ -206,7 +206,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = env('X_FRAME_OPTIONS', default='SAMEORIGIN')
 
 # Session Configuration
-SESSION_COOKIE_AGE = 86400  # 24 hours in seconds
+SESSION_COOKIE_AGE = 300  # 24 hours in seconds
 SESSION_SAVE_EVERY_REQUEST = True  # Update session on every request to track activity
 SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie
 SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection

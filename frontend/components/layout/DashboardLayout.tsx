@@ -11,7 +11,7 @@ import { cn } from '@/utils/helpers';
 import { useUIStore, useAuthStore } from '@/store';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
-import { Loading } from '@/components/ui';
+import { LoadingSpinner } from '@/components/ui';
 
 export interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -33,7 +33,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loading size="lg" />
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
