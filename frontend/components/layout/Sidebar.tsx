@@ -7,6 +7,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { 
   ChevronLeft, 
@@ -65,11 +66,34 @@ export const Sidebar: React.FC = () => {
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-800">
         {!sidebarCollapsed && (
-          <span className="text-xl font-bold">COMS</span>
+          <div className="flex items-center gap-2">
+            <Image 
+              src="/logo.png" 
+              alt="COMS Logo" 
+              width={32} 
+              height={32}
+              className="rounded"
+            />
+            <span className="text-xl font-bold">COMS</span>
+          </div>
+        )}
+        {sidebarCollapsed && (
+          <div className="flex items-center justify-center w-full">
+            <Image 
+              src="/favicon-96x96.png" 
+              alt="COMS" 
+              width={24} 
+              height={24}
+              className="rounded"
+            />
+          </div>
         )}
         <button
           onClick={toggleSidebarCollapse}
-          className="p-1.5 rounded-lg hover:bg-gray-800 transition-colors"
+          className={cn(
+            "p-1.5 rounded-lg hover:bg-gray-800 transition-colors",
+            sidebarCollapsed && "absolute right-1"
+          )}
         >
           {sidebarCollapsed ? (
             <ChevronRight className="h-5 w-5" />
