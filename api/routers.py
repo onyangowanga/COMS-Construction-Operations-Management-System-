@@ -31,6 +31,11 @@ from api.views.subcontracts import (
 from api.views.reporting import (
     ReportViewSet, ReportExecutionViewSet, ReportScheduleViewSet, ReportWidgetViewSet
 )
+from api.views.notifications import (
+    NotificationViewSet, NotificationPreferenceViewSet, 
+    NotificationTemplateViewSet, NotificationBatchViewSet
+)
+from api.views.events import SystemEventViewSet
 
 
 # Create a router and register all viewsets
@@ -111,3 +116,12 @@ router.register(r'reports', ReportViewSet, basename='report')
 router.register(r'report-executions', ReportExecutionViewSet, basename='reportexecution')
 router.register(r'report-schedules', ReportScheduleViewSet, basename='reportschedule')
 router.register(r'widgets', ReportWidgetViewSet, basename='widget')
+
+# Notification Engine
+router.register(r'notifications', NotificationViewSet, basename='notification')
+router.register(r'notification-preferences', NotificationPreferenceViewSet, basename='notificationpreference')
+router.register(r'notification-templates', NotificationTemplateViewSet, basename='notificationtemplate')
+router.register(r'notification-batches', NotificationBatchViewSet, basename='notificationbatch')
+
+# Event Logging
+router.register(r'events', SystemEventViewSet, basename='event')

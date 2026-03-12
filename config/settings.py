@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'apps.subcontracts',
     'apps.reporting',
     'apps.notifications',
+    'apps.events',
 ]
 
 MIDDLEWARE = [
@@ -85,6 +86,7 @@ MIDDLEWARE = [
     'django_htmx.middleware.HtmxMiddleware',  # HTMX support
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.events.middleware.EventLoggingMiddleware',  # Event logging
 ]
 
 ROOT_URLCONF = 'config.urls'
