@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'apps.variations',
     'apps.subcontracts',
     'apps.reporting',
+    'apps.notifications',
 ]
 
 MIDDLEWARE = [
