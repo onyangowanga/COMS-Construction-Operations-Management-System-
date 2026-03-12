@@ -19,13 +19,23 @@ RUN if [ -f package-lock.json ]; then \
 FROM node:18-alpine AS builder
 WORKDIR /app
 
+# Accept build arguments
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_WS_URL
+ARG NEXT_PUBLIC_APP_NAME
+ARG NEXT_PUBLIC_APP_VERSION
+
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Set environment variables for build
+# Set environment variables for build (NEXT_PUBLIC_* vars are baked into the build)
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://156.232.88.156/api}
+ENV NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL:-ws://156.232.88.156/ws}
+ENV NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME:-COMS}
+ENV NEXT_PUBLIC_APP_VERSION=${NEXT_PUBLIC_APP_VERSION:-1.0.0}
 
 # Build the application
 RUN npm run build
