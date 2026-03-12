@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     'apps.reporting',
     'apps.notifications',
     'apps.events',
+    'apps.roles',
 ]
 
 MIDDLEWARE = [
@@ -87,6 +88,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.events.middleware.EventLoggingMiddleware',  # Event logging
+    'apps.roles.middleware.RBACMiddleware',  # Role-based access control
 ]
 
 ROOT_URLCONF = 'config.urls'

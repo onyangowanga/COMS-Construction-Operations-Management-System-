@@ -36,6 +36,7 @@ from api.views.notifications import (
     NotificationTemplateViewSet, NotificationBatchViewSet
 )
 from api.views.events import SystemEventViewSet
+from apps.roles.views import RoleViewSet, PermissionViewSet, UserRoleViewSet
 
 
 # Create a router and register all viewsets
@@ -125,3 +126,8 @@ router.register(r'notification-batches', NotificationBatchViewSet, basename='not
 
 # Event Logging
 router.register(r'events', SystemEventViewSet, basename='event')
+
+# Role-Based Access Control
+router.register(r'roles', RoleViewSet, basename='role')
+router.register(r'permissions', PermissionViewSet, basename='permission')
+router.register(r'user-roles', UserRoleViewSet, basename='user-role')
