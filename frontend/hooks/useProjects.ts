@@ -5,6 +5,7 @@
 
 'use client';
 
+import React from 'react';
 import { useProjectStore } from '@/store';
 import { useApi } from './useApi';
 import { projectService } from '@/services';
@@ -109,16 +110,18 @@ export function useProject(id: string) {
     data: project,
     isLoading,
     error,
-  } = useQuery(
-    ['project', id],
-    () => projectService.getProject(id),
-    {
-      enabled: !!id,
-      onSuccess: (data) => {
-        selectProject(data);
-      },
+  } = useQuery({
+    queryKey: ['project', id],
+    queryFn: () => projectService.getProject(id),
+    enabled: !!id,
+  });
+
+  // Select project when data is loaded
+  React.useEffect(() => {
+    if (project) {
+      selectProject(project);
     }
-  );
+  }, [project, selectProject]);
 
   return {
     project,

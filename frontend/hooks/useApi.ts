@@ -59,7 +59,6 @@ export function useApi() {
         if (options?.showSuccessToast) {
           success(options.successMessage || 'Success', 'Operation completed successfully');
         }
-        options?.onSuccess?.(data);
         options?.onSuccess?.(data, variables, context);
       },
       onError: (error: any, variables, context) => {
@@ -69,7 +68,6 @@ export function useApi() {
             error?.message || 'An error occurred'
           );
         }
-        options?.onError?.(error);
         options?.onError?.(error, variables, context);
       },
       ...options,

@@ -85,7 +85,7 @@ export const Topbar: React.FC = () => {
                   {user?.full_name || user?.username}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {user?.roles?.[0]?.name || 'User'}
+                  {user?.roles?.[0]?.role_name || 'User'}
                 </p>
               </div>
               <ChevronDown className="h-4 w-4 text-gray-500" />

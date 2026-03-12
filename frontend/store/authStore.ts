@@ -109,20 +109,20 @@ export const useAuthStore = create<AuthState>()(
       hasPermission: (permissionCode) => {
         const { user } = get();
         if (!user) return false;
-        return user.permissions?.some(p => p.code === permissionCode) || false;
+        return user.permissions?.includes(permissionCode) || false;
       },
 
       hasRole: (roleCode) => {
         const { user } = get();
         if (!user) return false;
-        return user.roles?.some(r => r.code === roleCode) || false;
+        return user.roles?.some(r => r.role_code === roleCode) || false;
       },
 
       hasAnyPermission: (permissionCodes) => {
         const { user } = get();
         if (!user) return false;
         return permissionCodes.some(code => 
-          user.permissions?.some(p => p.code === code)
+          user.permissions?.includes(code)
         );
       },
 
@@ -130,7 +130,7 @@ export const useAuthStore = create<AuthState>()(
         const { user } = get();
         if (!user) return false;
         return permissionCodes.every(code => 
-          user.permissions?.some(p => p.code === code)
+          user.permissions?.includes(code)
         );
       },
     }),

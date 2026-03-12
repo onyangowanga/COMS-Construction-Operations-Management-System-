@@ -23,11 +23,12 @@ export function usePermissions() {
       if (!user) return false;
 
       try {
-        const result = await permissionService.checkPermission(
-          user.id,
+        const result = await permissionService.checkPermission({
+          userId: user.id,
           permissionCode,
-          context
-        );
+          organizationId: context?.organizationId?.toString(),
+          projectId: context?.projectId?.toString(),
+        });
         return result;
       } catch (error) {
         console.error('Permission check error:', error);
@@ -43,7 +44,13 @@ export function usePermissions() {
       if (!user) return [];
 
       try {
-        const permissions = await permissionService.getUserPermissions(user.id, context);
+        const permissions = await permissionService.getUserPermissions(
+          user.id,
+          {
+            organizationId: context?.organizationId?.toString(),
+            projectId: context?.projectId?.toString(),
+          }
+        );
         return permissions;
       } catch (error) {
         console.error('Failed to get user permissions:', error);
@@ -59,7 +66,13 @@ export function usePermissions() {
       if (!user) return [];
 
       try {
-        const roles = await permissionService.getUserRoles(user.id, context);
+        const roles = await permissionService.getUserRoles(
+          user.id,
+          {
+            organizationId: context?.organizationId?.toString(),
+            projectId: context?.projectId?.toString(),
+          }
+        );
         return roles;
       } catch (error) {
         console.error('Failed to get user roles:', error);

@@ -38,41 +38,31 @@ export function useNotifications() {
   }, []);
 
   // Mark as read mutation
-  const markAsReadMutation = useMutation(
-    (id: string) => notificationService.markAsRead(id),
-    {
-      onSuccess: (_, id) => {
-        markAsRead(id);
-        fetchUnreadCount();
-      },
-    }
-  );
+  const markAsReadMutation = useMutation({
+    mutationFn: (id: string) => notificationService.markAsRead(id),
+    onSuccess: (_data, id) => {
+      markAsRead(id);
+      fetchUnreadCount();
+    },
+  });
 
   // Mark all as read mutation
-  const markAllAsReadMutation = useMutation(
-    () => notificationService.markAllAsRead(),
-    {
-      showSuccessToast: true,
-      successMessage: 'All notifications marked as read',
-      onSuccess: () => {
-        markAllAsRead();
-        fetchUnreadCount();
-      },
-    }
-  );
+  const markAllAsReadMutation = useMutation({
+    mutationFn: () => notificationService.markAllAsRead(),
+    onSuccess: () => {
+      markAllAsRead();
+      fetchUnreadCount();
+    },
+  });
 
   // Delete notification mutation
-  const deleteMutation = useMutation(
-    (id: string) => notificationService.deleteNotification(id),
-    {
-      showSuccessToast: true,
-      successMessage: 'Notification deleted',
-      onSuccess: (_, id) => {
-        deleteNotification(id);
-        fetchUnreadCount();
-      },
-    }
-  );
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => notificationService.deleteNotification(id),
+    onSuccess: (_data, id) => {
+      deleteNotification(id);
+      fetchUnreadCount();
+    },
+  });
 
   return {
     notifications,

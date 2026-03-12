@@ -8,10 +8,38 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { 
+  ChevronLeft, 
+  ChevronRight,
+  LayoutDashboard,
+  FolderKanban,
+  FileText,
+  FileStack,
+  GitBranch,
+  Receipt,
+  ShoppingCart,
+  BarChart3,
+  Settings,
+  Settings2,
+  type LucideIcon
+} from 'lucide-react';
 import { cn } from '@/utils/helpers';
 import { useUIStore, useAuthStore } from '@/store';
 import { SIDEBAR_NAVIGATION } from '@/utils/constants';
+
+// Icon mapping
+const iconMap: Record<string, LucideIcon> = {
+  LayoutDashboard,
+  FolderKanban,
+  FileText,
+  FileStack,
+  GitBranch,
+  Receipt,
+  ShoppingCart,
+  BarChart3,
+  Settings,
+  Settings2,
+};
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
@@ -54,24 +82,24 @@ export const Sidebar: React.FC = () => {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4">
         {visibleNavItems.map((item) => {
-          const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
-          const Icon = item.icon;
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+          const Icon = iconMap[item.icon] || LayoutDashboard;
 
           return (
-            <div key={item.path}>
+            <div key={item.href}>
               <Link
-                href={item.path}
+                href={item.href}
                 className={cn(
                   'flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors',
                   'hover:bg-gray-800',
                   isActive ? 'bg-primary-600 text-white' : 'text-gray-300',
                   sidebarCollapsed && 'justify-center'
                 )}
-                title={sidebarCollapsed ? item.label : undefined}
+                title={sidebarCollapsed ? item.name : undefined}
               >
                 <Icon className="h-5 w-5 shrink-0" />
                 {!sidebarCollapsed && (
-                  <span className="font-medium">{item.label}</span>
+                  <span className="font-medium">{item.name}</span>
                 )}
               </Link>
 
@@ -79,11 +107,11 @@ export const Sidebar: React.FC = () => {
               {!sidebarCollapsed && item.subsections && isActive && (
                 <div className="ml-8 mt-1 space-y-1">
                   {item.subsections.map((sub) => {
-                    const isSubActive = pathname === sub.path;
+                    const isSubActive = pathname === sub.href;
                     return (
                       <Link
-                        key={sub.path}
-                        href={sub.path}
+                        key={sub.href}
+                        href={sub.href}
                         className={cn(
                           'block px-4 py-2 text-sm rounded-lg transition-colors',
                           isSubActive
@@ -91,7 +119,7 @@ export const Sidebar: React.FC = () => {
                             : 'text-gray-400 hover:text-white hover:bg-gray-800'
                         )}
                       >
-                        {sub.label}
+                        {sub.name}
                       </Link>
                     );
                   })}
