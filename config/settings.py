@@ -189,7 +189,9 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[
     'http://localhost:3000',
     'http://localhost:8000',
+    'http://156.232.88.156',
 ])
+CORS_ALLOW_CREDENTIALS = True  # Allow cookies to be sent with requests
 
 # Security Settings (Production)
 SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=True if not DEBUG else False)
@@ -204,11 +206,11 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = env('X_FRAME_OPTIONS', default='SAMEORIGIN')
 
 # Session Configuration
-SESSION_COOKIE_AGE = 120  # 2 minutes in seconds
+SESSION_COOKIE_AGE = 86400  # 24 hours in seconds
 SESSION_SAVE_EVERY_REQUEST = True  # Update session on every request to track activity
 SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie
 SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Clear session when browser closes
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Allow session to persist
 
 # Email Configuration
 EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')

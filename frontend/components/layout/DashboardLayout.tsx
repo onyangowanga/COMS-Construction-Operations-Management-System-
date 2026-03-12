@@ -5,18 +5,43 @@
 
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/helpers';
-import { useUIStore } from '@/store';
+import { useUIStore, useAuthStore } from '@/store';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { Loading } from '@/components/ui';
 
 export interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+  const router = useRouter();
   const { sidebarCollapsed } = useUIStore();
+  const { isAuthenticated, isLoading, user } = useAuthStore();
+
+  useEffect(() => {
+    // Only redirect if definitely not authenticated and not loading
+    if (!isLoading && !isAuthenticated && !user) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, isLoading, user, router]);
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loading size="lg" />
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated
+  if (!isAuthenticated && !user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
