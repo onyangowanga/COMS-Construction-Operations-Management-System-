@@ -95,10 +95,45 @@ jobs:
         pytest --cov=apps --cov-report=html || true
       continue-on-error: true
 
-  build:
-    name: Build Docker Image
+  frontend-test:
+    name: Frontend Tests
     runs-on: ubuntu-latest
-    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./frontend
+      run: npm ci
+    
+    - name: Run TypeScript check
+      working-directory: ./frontend
+      run: npx tsc --noEmit
+    
+    - name: Run ESLint
+      working-directory: ./frontend
+      run: npm run lint
+      continue-on-error: true
+    
+    - name: Build frontend
+      working-directory: ./frontend
+      run: npm run build
+      env:
+        NEXT_PUBLIC_API_URL: http://localhost:8000/api
+        NEXT_PUBLIC_WS_URL: ws://localhost:8000/ws
+
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [test, frontend-test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:
@@ -108,20 +143,30 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
     
-    - name: Build production image (test build)
+    - name: Build backend production image
       uses: docker/build-push-action@v5
       with:
         context: .
         file: ./Dockerfile.prod
         push: false
-        tags: coms:latest
+        tags: coms-backend:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Build frontend production image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        file: ./frontend/Dockerfile
+        push: false
+        tags: coms-frontend:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
   deploy:
     name: Deploy to VPS
     runs-on: ubuntu-latest
-    needs: [test, build]
+    needs: [test, frontend-test, build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:

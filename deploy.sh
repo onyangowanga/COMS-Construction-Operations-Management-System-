@@ -85,7 +85,12 @@ docker image prune -f
 
 # Build new images
 print_status "Building Docker images..."
-docker-compose -f docker-compose.prod.yml build --no-cache
+print_status "Building backend..."
+docker-compose -f docker-compose.prod.yml build --no-cache web
+print_status "Building frontend..."
+docker-compose -f docker-compose.prod.yml build --no-cache frontend
+print_status "Building nginx..."
+docker-compose -f docker-compose.prod.yml build --no-cache nginx
 
 # Start containers
 print_status "Starting containers..."
@@ -108,6 +113,17 @@ docker-compose -f docker-compose.prod.yml exec -T web python manage.py migrate -
 # Collect static files
 print_status "Collecting static files..."
 docker-compose -f docker-compose.prod.yml exec -T web python manage.py collectstatic --noinput
+
+# Verify frontend is running
+print_status "Verifying frontend container..."
+FRONTEND_STATUS=$(docker inspect -f '{{.State.Status}}' coms_frontend_prod 2>/dev/null || echo "not found")
+if [ "$FRONTEND_STATUS" != "running" ]; then
+    print_warning "Frontend container is not running. Status: $FRONTEND_STATUS"
+    print_status "Checking frontend logs..."
+    docker-compose -f docker-compose.prod.yml logs --tail=20 frontend
+else
+    print_status "Frontend container is running successfully."
+fi
 
 # Create superuser if needed (optional)
 # docker-compose -f docker-compose.prod.yml exec -T web python manage.py createsuperuser --noinput || true
