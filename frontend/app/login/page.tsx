@@ -17,15 +17,15 @@ export default function LoginPage() {
   const { login, isLoading } = useAuth();
   const { error: showError } = useToast();
   const [credentials, setCredentials] = useState({
-    username: '',
+    email: '',
     password: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!credentials.username || !credentials.password) {
-      showError('Validation Error', 'Please enter both username and password');
+    if (!credentials.email || !credentials.password) {
+      showError('Validation Error', 'Please enter both email and password');
       return;
     }
 
@@ -56,11 +56,11 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input
-            label="Username"
-            type="text"
-            value={credentials.username}
+            label="Email"
+            type="email"
+            value={credentials.email}
             onChange={(e) =>
-              setCredentials({ ...credentials, username: e.target.value })
+              setCredentials({ ...credentials, email: e.target.value })
             }
             required
             disabled={isLoading}
