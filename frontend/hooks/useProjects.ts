@@ -110,16 +110,18 @@ export function useProject(id: string) {
     data: project,
     isLoading,
     error,
-  } = useQuery({
-    queryKey: ['project', id],
-    queryFn: () => projectService.getProject(id),
-    enabled: !!id,
-  });
+  } = useQuery(
+    ['project', id],
+    () => projectService.getProject(id),
+    {
+      enabled: !!id,
+    }
+  );
 
   // Select project when data is loaded
   React.useEffect(() => {
-    if (project) {
-      selectProject(project);
+    if (project && typeof project === 'object' && 'id' in project) {
+      selectProject(project as Project);
     }
   }, [project, selectProject]);
 

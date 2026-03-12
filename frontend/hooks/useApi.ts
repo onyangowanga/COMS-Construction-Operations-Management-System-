@@ -9,8 +9,8 @@ import { useQuery, useMutation, useQueryClient, type UseQueryOptions, type UseMu
 import { useToast } from './useToast';
 
 interface UseApiOptions<TData, TError, TVariables> {
-  onSuccess?: (data: TData) => void;
-  onError?: (error: TError) => void;
+  onSuccess?: (data: TData, variables: TVariables, context: any) => void;
+  onError?: (error: TError, variables: TVariables, context: any) => void;
   showSuccessToast?: boolean;
   showErrorToast?: boolean;
   successMessage?: string;
@@ -55,13 +55,13 @@ export function useApi() {
   ) {
     return useMutation<TData, TError, TVariables>({
       mutationFn,
-      onSuccess: (data, variables, context) => {
+      onSuccess: (data: TData, variables: TVariables, context: any) => {
         if (options?.showSuccessToast) {
           success(options.successMessage || 'Success', 'Operation completed successfully');
         }
         options?.onSuccess?.(data, variables, context);
       },
-      onError: (error: any, variables, context) => {
+      onError: (error: any, variables: TVariables, context: any) => {
         if (options?.showErrorToast !== false) {
           showError(
             options?.errorMessage || 'Error',
