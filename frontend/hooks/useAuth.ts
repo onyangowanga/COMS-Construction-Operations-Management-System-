@@ -16,7 +16,9 @@ export function useAuth() {
     user,
     isAuthenticated,
     isLoading,
+    isInitialized,
     error,
+    initializeAuth,
     login,
     logout,
     refreshUser,
@@ -29,14 +31,8 @@ export function useAuth() {
 
   // Check if user is authenticated on mount
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = authService.getToken();
-      if (token && !user) {
-        await refreshUser();
-      }
-    };
-    checkAuth();
-  }, []);
+    initializeAuth();
+  }, [initializeAuth]);
 
   // Login handler
   const handleLogin = useCallback(
@@ -79,6 +75,7 @@ export function useAuth() {
     user,
     isAuthenticated,
     isLoading,
+    isInitialized,
     error,
     login: handleLogin,
     logout: handleLogout,

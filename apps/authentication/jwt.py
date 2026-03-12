@@ -47,8 +47,8 @@ def set_jwt_cookies(response, tokens):
         value=tokens['access'],
         max_age=JWT_ACCESS_MINUTES * 60,  # Convert to seconds
         httponly=True,
-        secure=not settings.DEBUG,  # False in development, True in production
-        samesite='Lax',
+        secure=settings.SESSION_COOKIE_SECURE,
+        samesite=settings.SESSION_COOKIE_SAMESITE,
         path='/',
     )
     
@@ -58,8 +58,8 @@ def set_jwt_cookies(response, tokens):
         value=tokens['refresh'],
         max_age=JWT_REFRESH_DAYS * 24 * 60 * 60,  # Convert to seconds
         httponly=True,
-        secure=not settings.DEBUG,  # False in development, True in production
-        samesite='Lax',
+        secure=settings.SESSION_COOKIE_SECURE,
+        samesite=settings.SESSION_COOKIE_SAMESITE,
         path='/api/auth/',  # Only send to auth endpoints
     )
 

@@ -12,12 +12,14 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isInitialized: boolean;
   error: string | null;
   
   // Actions
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  initializeAuth: () => Promise<void>;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -36,12 +38,14 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       isLoading: false,
+      isInitialized: false,
       error: null,
 
       setUser: (user) => {
         set({ 
           user, 
           isAuthenticated: !!user,
+          isInitialized: true,
           error: null 
         });
       },
@@ -50,6 +54,32 @@ export const useAuthStore = create<AuthState>()(
 
       setError: (error) => set({ error }),
 
+      initializeAuth: async () => {
+        if (get().isInitialized || get().isLoading) {
+          return;
+        }
+
+        try {
+          set({ isLoading: true, error: null });
+          const user = await authService.getCurrentUser();
+          set({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+            isInitialized: true,
+            error: null,
+          });
+        } catch (error) {
+          authService.clearStoredAuth();
+          set({
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+            isInitialized: true,
+          });
+        }
+      },
+
       login: async (credentials) => {
         try {
           set({ isLoading: true, error: null });
@@ -57,12 +87,14 @@ export const useAuthStore = create<AuthState>()(
           set({ 
             user: response.user, 
             isAuthenticated: true,
-            isLoading: false 
+            isLoading: false,
+            isInitialized: true,
           });
         } catch (error: any) {
           set({ 
             error: error.message || 'Login failed',
-            isLoading: false 
+            isLoading: false,
+            isInitialized: true,
           });
           throw error;
         }
@@ -76,6 +108,7 @@ export const useAuthStore = create<AuthState>()(
             user: null, 
             isAuthenticated: false,
             isLoading: false,
+            isInitialized: true,
             error: null
           });
         } catch (error) {
@@ -84,18 +117,21 @@ export const useAuthStore = create<AuthState>()(
           set({ 
             user: null, 
             isAuthenticated: false,
-            isLoading: false 
+            isLoading: false,
+            isInitialized: true,
           });
         }
       },
 
       refreshUser: async () => {
         try {
+          set({ isLoading: true, error: null });
           const user = await authService.getCurrentUser();
-          set({ user, isAuthenticated: true });
+          set({ user, isAuthenticated: true, isLoading: false, isInitialized: true });
         } catch (error) {
           console.error('Failed to refresh user:', error);
-          set({ user: null, isAuthenticated: false });
+          authService.clearStoredAuth();
+          set({ user: null, isAuthenticated: false, isLoading: false, isInitialized: true });
         }
       },
 

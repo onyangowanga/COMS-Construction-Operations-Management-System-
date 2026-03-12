@@ -20,17 +20,21 @@ export interface DashboardLayoutProps {
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const router = useRouter();
   const { sidebarCollapsed } = useUIStore();
-  const { isAuthenticated, isLoading, user } = useAuthStore();
+  const { isAuthenticated, isLoading, isInitialized, user, initializeAuth } = useAuthStore();
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
 
   useEffect(() => {
     // Only redirect if definitely not authenticated and not loading
-    if (!isLoading && !isAuthenticated && !user) {
+    if (isInitialized && !isLoading && !isAuthenticated && !user) {
       router.push('/login');
     }
-  }, [isAuthenticated, isLoading, user, router]);
+  }, [isAuthenticated, isInitialized, isLoading, user, router]);
 
   // Show loading while checking authentication
-  if (isLoading) {
+  if (isLoading || !isInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="lg" />

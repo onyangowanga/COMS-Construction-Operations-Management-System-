@@ -53,7 +53,6 @@ export interface LoginCredentials {
 }
 
 export interface LoginResponse {
-  access: string;
-  refresh: string;
   user: User;
+  message: string;
 }

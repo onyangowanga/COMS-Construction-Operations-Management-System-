@@ -71,6 +71,11 @@ apiClient.interceptors.response.use(
   },
   async (error: AxiosError) => {
     const originalRequest: any = error.config;
+    const requestUrl = originalRequest?.url || '';
+
+    if (requestUrl.includes('/auth/login/') || requestUrl.includes('/auth/token/refresh/')) {
+      return Promise.reject(handleApiError(error));
+    }
 
     // Handle 401 Unauthorized - Token Refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -78,8 +83,7 @@ apiClient.interceptors.response.use(
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
+          .then(() => {
             return apiClient(originalRequest);
           })
           .catch((err) => {
@@ -90,33 +94,19 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const refreshToken = Cookies.get(REFRESH_TOKEN_KEY);
-
-      if (!refreshToken) {
-        processQueue(error, null);
-        isRefreshing = false;
-        
-        // Redirect to login
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
-        
-        return Promise.reject(error);
-      }
-
       try {
-        const response = await axios.post(`${API_URL}/auth/token/refresh/`, {
-          refresh: refreshToken,
-        });
+        await axios.post(
+          `${API_URL}/auth/token/refresh/`,
+          {},
+          {
+            withCredentials: true,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
-        const { access } = response.data;
-        
-        Cookies.set(TOKEN_KEY, access, { expires: 1 });
-        
-        apiClient.defaults.headers.Authorization = `Bearer ${access}`;
-        originalRequest.headers.Authorization = `Bearer ${access}`;
-        
-        processQueue(null, access);
+        processQueue(null, 'refreshed');
         
         return apiClient(originalRequest);
       } catch (refreshError) {
@@ -125,6 +115,10 @@ apiClient.interceptors.response.use(
         // Clear tokens and redirect to login
         Cookies.remove(TOKEN_KEY);
         Cookies.remove(REFRESH_TOKEN_KEY);
+
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('coms_user');
+        }
         
         if (typeof window !== 'undefined') {
           window.location.href = '/login';
