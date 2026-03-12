@@ -65,9 +65,19 @@ set -a
 source .env.production
 set +a
 
-# Stop existing containers
+# Stop existing containers more aggressively
 print_status "Stopping existing containers..."
-docker-compose -f docker-compose.prod.yml down || true
+
+# First, try normal docker-compose down
+docker-compose -f docker-compose.prod.yml down --remove-orphans || true
+
+# Also stop any containers with coms in the name (in case they're orphaned)
+print_status "Cleaning up any orphaned containers..."
+docker ps -a --filter "name=coms" --format "{{.Names}}" | xargs -r docker rm -f 2>/dev/null || true
+
+# Remove any networks with coms in the name
+print_status "Cleaning up orphaned networks..."
+docker network ls --filter "name=coms" --format "{{.Name}}" | xargs -r docker network rm 2>/dev/null || true
 
 # Remove old images (optional, comment out to keep)
 print_status "Removing old images..."
