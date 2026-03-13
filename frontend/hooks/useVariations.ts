@@ -59,11 +59,21 @@ export function useVariations(params?: VariationQueryParams) {
     }
   );
 
+  const variations = Array.isArray(data)
+    ? data
+    : Array.isArray((data as any)?.results)
+      ? (data as any).results
+      : [];
+
+  const totalCount = Array.isArray(data)
+    ? data.length
+    : (data as any)?.count || 0;
+
   return {
-    variations: (data?.results || []) as VariationOrder[],
-    totalCount: data?.count || 0,
-    nextPage: data?.next || null,
-    previousPage: data?.previous || null,
+    variations: variations as VariationOrder[],
+    totalCount,
+    nextPage: (data as any)?.next || null,
+    previousPage: (data as any)?.previous || null,
     isLoading,
     error,
     refetchVariations: () => invalidateQueries(['variations']),

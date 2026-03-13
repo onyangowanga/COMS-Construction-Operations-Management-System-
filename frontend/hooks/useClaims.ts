@@ -59,11 +59,21 @@ export function useClaims(params?: ClaimQueryParams) {
     }
   );
 
+  const claims = Array.isArray(data)
+    ? data
+    : Array.isArray((data as any)?.results)
+      ? (data as any).results
+      : [];
+
+  const totalCount = Array.isArray(data)
+    ? data.length
+    : (data as any)?.count || 0;
+
   return {
-    claims: (data?.results || []) as Claim[],
-    totalCount: data?.count || 0,
-    nextPage: data?.next || null,
-    previousPage: data?.previous || null,
+    claims: claims as Claim[],
+    totalCount,
+    nextPage: (data as any)?.next || null,
+    previousPage: (data as any)?.previous || null,
     isLoading,
     error,
     refetchClaims: () => invalidateQueries(['claims']),

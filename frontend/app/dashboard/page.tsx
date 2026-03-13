@@ -5,11 +5,11 @@
 
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout';
 import { Card, CardHeader, CardTitle, CardContent, Badge } from '@/components/ui';
-import { useAuth } from '@/hooks';
+import { useAuth, useProjects } from '@/hooks';
 import { 
   FolderKanban, 
   DollarSign, 
@@ -25,20 +25,44 @@ import { formatCompactNumber } from '@/utils/formatters';
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { projects, isLoading: isProjectsLoading } = useProjects({
+    page: 1,
+    page_size: 10,
+    ordering: '-created_at',
+  });
 
-  // Mock data - would come from API
-  const stats = {
-    activeProjects: 12,
-    totalBudget: 45000000,
-    pendingApprovals: 8,
-    criticalIssues: 3,
-  };
+  const recentProjects = useMemo(
+    () =>
+      (projects || []).map((project) => {
+        const rawStatus = String((project as any).status || 'DESIGN').toUpperCase();
+        const completion = Number((project as any).progress_percentage ?? project.completion_percentage ?? 0);
+        const statusLabel = rawStatus.toLowerCase().replace('_', ' ');
 
-  const recentProjects = [
-    { id: 1, name: 'Highway Expansion Project', status: 'active', completion: 65 },
-    { id: 2, name: 'Shopping Mall Construction', status: 'active', completion: 42 },
-    { id: 3, name: 'Residential Complex Phase 2', status: 'on-hold', completion: 28 },
-  ];
+        return {
+          id: project.id,
+          name: project.name,
+          status: rawStatus,
+          statusLabel,
+          completion,
+          isActive: ['DESIGN', 'APPROVAL', 'IMPLEMENTATION', 'ON_HOLD'].includes(rawStatus),
+          contractValue: Number((project as any).project_value ?? project.contract_value ?? 0),
+        };
+      }),
+    [projects]
+  );
+
+  const stats = useMemo(() => {
+    const activeProjects = recentProjects.filter((project) => project.isActive).length;
+    const totalBudget = recentProjects.reduce((sum, project) => sum + (project.contractValue || 0), 0);
+    const pendingApprovals = recentProjects.filter((project) => project.status === 'APPROVAL').length;
+
+    return {
+      activeProjects,
+      totalBudget,
+      pendingApprovals,
+      criticalIssues: 0,
+    };
+  }, [recentProjects]);
 
   const shortcuts = [
     {
@@ -199,35 +223,36 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentProjects.map((project) => (
-                <div
-                  key={project.id}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{project.name}</h3>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge
-                        variant={project.status === 'active' ? 'success' : 'warning'}
-                        size="sm"
-                      >
-                        {project.status}
-                      </Badge>
-                      <span className="text-sm text-gray-600">
-                        {project.completion}% Complete
-                      </span>
+              {isProjectsLoading ? (
+                <p className="text-sm text-gray-500">Loading projects...</p>
+              ) : recentProjects.length === 0 ? (
+                <p className="text-sm text-gray-500">No projects found yet.</p>
+              ) : (
+                recentProjects.map((project) => (
+                  <div
+                    key={project.id}
+                    className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900">{project.name}</h3>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge
+                          variant={project.status === 'COMPLETED' ? 'success' : project.status === 'CANCELLED' ? 'destructive' : 'warning'}
+                          size="sm"
+                        >
+                          {project.statusLabel}
+                        </Badge>
+                        <span className="text-sm text-gray-600">{project.completion}% Complete</span>
+                      </div>
+                    </div>
+                    <div className="w-32">
+                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="h-full bg-primary-600 transition-all" style={{ width: `${project.completion}%` }} />
+                      </div>
                     </div>
                   </div>
-                  <div className="w-32">
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary-600 transition-all"
-                        style={{ width: `${project.completion}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
