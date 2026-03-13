@@ -16,7 +16,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { Activity, BriefcaseBusiness, FileText, Receipt } from 'lucide-react';
+import { Activity, Briefcase, FileText, Receipt } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/PermissionGuard';
 import { ProjectMetricsCard, ProjectStatusBadge } from '@/components/projects';
 import { DashboardLayout } from '@/components/layout';
@@ -65,7 +65,7 @@ export default function ProjectDashboardPage() {
               <ProjectMetricsCard
                 title="Contract Value"
                 value={formatCurrency(dashboard?.kpis.contract_value ?? Number(project.contract_value || 0))}
-                icon={<BriefcaseBusiness className="h-5 w-5" />}
+                icon={<Briefcase className="h-5 w-5" />}
               />
               <ProjectMetricsCard
                 title="Total Variations"

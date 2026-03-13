@@ -4,7 +4,7 @@
 // ============================================================================
 
 import { create } from 'zustand';
-import type { Project } from '@/types';
+import type { Project, ProjectFormInput } from '@/types';
 import { projectService } from '@/services';
 
 interface ProjectState {
@@ -23,8 +23,8 @@ interface ProjectState {
   // API actions
   fetchProjects: (params?: any) => Promise<void>;
   fetchProject: (id: string) => Promise<void>;
-  createProject: (data: Partial<Project>) => Promise<Project>;
-  updateProjectById: (id: string, data: Partial<Project>) => Promise<void>;
+  createProject: (data: ProjectFormInput) => Promise<Project>;
+  updateProjectById: (id: string, data: ProjectFormInput) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   
   setLoading: (loading: boolean) => void;
