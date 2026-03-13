@@ -55,9 +55,11 @@ export const useAuthStore = create<AuthState>()(
       setError: (error) => set({ error }),
 
       initializeAuth: async () => {
-        if (get().isInitialized || get().isLoading) {
-          return;
-        }
+        const { user, isInitialized, isLoading } = get();
+        // Skip if already loading
+        if (isLoading) return;
+        // Skip if already initialized AND user already has permissions loaded
+        if (isInitialized && user && user.permissions !== undefined) return;
 
         try {
           set({ isLoading: true, error: null });

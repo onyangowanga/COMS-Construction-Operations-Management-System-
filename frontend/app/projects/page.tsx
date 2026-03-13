@@ -106,7 +106,7 @@ export default function ProjectsPage() {
       width: '180px',
       render: (_, row) => (
         <div className="flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
-          <PermissionGuard permission="project.view">
+          <PermissionGuard permission="view_project">
             <Button
               variant="ghost"
               size="sm"
@@ -117,7 +117,7 @@ export default function ProjectsPage() {
             </Button>
           </PermissionGuard>
 
-          <PermissionGuard permission="project.update">
+          <PermissionGuard permission="edit_project">
             <Button
               variant="outline"
               size="sm"
@@ -128,7 +128,7 @@ export default function ProjectsPage() {
             </Button>
           </PermissionGuard>
 
-          <PermissionGuard permission="project.delete">
+          <PermissionGuard permission="delete_project">
             <Button
               variant="destructive"
               size="sm"
@@ -152,7 +152,7 @@ export default function ProjectsPage() {
             <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
             <p className="text-gray-600 mt-1">Manage all construction projects</p>
           </div>
-          <PermissionGuard permission="project.create">
+          <PermissionGuard permission="create_project">
             <Button leftIcon={<Plus className="h-5 w-5" />} onClick={() => router.push('/projects/create')}>
               New Project
             </Button>

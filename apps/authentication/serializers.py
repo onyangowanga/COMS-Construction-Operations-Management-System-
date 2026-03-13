@@ -188,7 +188,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
     system_role_display = serializers.CharField(source='get_system_role_display', read_only=True)
     organization_name = serializers.CharField(source='organization.name', read_only=True, allow_null=True)
     is_locked = serializers.SerializerMethodField()
-    
+    permissions = serializers.SerializerMethodField()
+    roles = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
@@ -210,12 +212,53 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'is_locked',
             'created_at',
             'last_login',
+            'permissions',
+            'roles',
         ]
         read_only_fields = fields
-    
+
     def get_is_locked(self, obj):
         """Check if account is currently locked"""
         return obj.is_account_locked()
+
+    def get_permissions(self, obj):
+        """Return a flat list of all permission codes for this user."""
+        if obj.is_superuser:
+            # Superusers get all active permission codes
+            try:
+                from apps.roles.models import Permission
+                return list(Permission.objects.filter(is_active=True).values_list('code', flat=True))
+            except Exception:
+                return []
+        try:
+            from apps.roles.selectors import UserRoleSelector
+            permissions = UserRoleSelector.get_user_permissions(obj)
+            return list(permissions.values_list('code', flat=True))
+        except Exception:
+            return []
+
+    def get_roles(self, obj):
+        """Return a list of role summaries assigned to the user."""
+        try:
+            from apps.roles.selectors import UserRoleSelector
+            user_roles = UserRoleSelector.get_user_roles(user=obj, is_active=True)
+            result = []
+            for ur in user_roles:
+                result.append({
+                    'id': str(ur.id),
+                    'role_code': ur.role.code,
+                    'role_name': ur.role.name,
+                    'organization': str(ur.organization_id) if ur.organization_id else None,
+                    'organization_name': ur.organization.name if ur.organization else None,
+                    'project': str(ur.project_id) if ur.project_id else None,
+                    'project_name': ur.project.name if ur.project else None,
+                    'assigned_at': ur.assigned_at.isoformat() if ur.assigned_at else None,
+                    'expires_at': ur.expires_at.isoformat() if ur.expires_at else None,
+                    'is_active': ur.is_active,
+                })
+            return result
+        except Exception:
+            return []
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):

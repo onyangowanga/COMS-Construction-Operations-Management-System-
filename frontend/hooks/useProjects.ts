@@ -5,7 +5,6 @@
 
 'use client';
 
-import React from 'react';
 import { useProjectStore } from '@/store';
 import { useApi } from './useApi';
 import { projectService } from '@/services';

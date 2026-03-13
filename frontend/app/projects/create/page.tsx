@@ -23,7 +23,7 @@ export default function CreateProjectPage() {
   return (
     <DashboardLayout>
       <PermissionGuard
-        permission="project.create"
+        permission="create_project"
         fallback={
           <Card>
             <CardContent>

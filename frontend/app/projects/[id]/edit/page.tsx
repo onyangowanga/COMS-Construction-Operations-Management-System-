@@ -29,7 +29,7 @@ export default function EditProjectPage() {
   return (
     <DashboardLayout>
       <PermissionGuard
-        permission="project.update"
+        permission="edit_project"
         fallback={
           <Card>
             <CardContent>

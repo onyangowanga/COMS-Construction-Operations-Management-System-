@@ -71,7 +71,7 @@ export default function ProjectDetailPage() {
   return (
     <DashboardLayout>
       <PermissionGuard
-        permission="project.view"
+        permission="view_project"
         fallback={
           <Card>
             <CardContent>
