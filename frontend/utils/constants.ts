@@ -88,19 +88,19 @@ export const SIDEBAR_NAVIGATION = [
     name: 'Documents',
     href: '/documents',
     icon: 'FileStack',
-    permission: 'view_document',
+    permission: null,
   },
   {
     name: 'Variations',
     href: '/variations',
     icon: 'GitBranch',
-    permission: 'view_variation',
+    permission: null,
   },
   {
     name: 'Claims',
     href: '/claims',
     icon: 'Receipt',
-    permission: 'view_claim',
+    permission: null,
   },
   {
     name: 'Procurement',

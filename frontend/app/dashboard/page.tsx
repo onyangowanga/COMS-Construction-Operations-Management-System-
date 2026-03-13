@@ -6,6 +6,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout';
 import { Card, CardHeader, CardTitle, CardContent, Badge } from '@/components/ui';
 import { useAuth } from '@/hooks';
@@ -15,9 +16,12 @@ import {
   FileText, 
   AlertTriangle,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  FileStack,
+  GitBranch,
+  Receipt,
 } from 'lucide-react';
-import { formatCurrency, formatCompactNumber } from '@/utils/formatters';
+import { formatCompactNumber } from '@/utils/formatters';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -35,6 +39,30 @@ export default function DashboardPage() {
     { id: 2, name: 'Shopping Mall Construction', status: 'active', completion: 42 },
     { id: 3, name: 'Residential Complex Phase 2', status: 'on-hold', completion: 28 },
   ];
+
+  const shortcuts = [
+    {
+      name: 'Documents',
+      href: '/documents',
+      description: 'Upload, review, and manage project files',
+      icon: FileStack,
+      visible: true,
+    },
+    {
+      name: 'Variations',
+      href: '/variations',
+      description: 'Track variation requests and approvals',
+      icon: GitBranch,
+      visible: true,
+    },
+    {
+      name: 'Claims',
+      href: '/claims',
+      description: 'Manage claims, certification, and payment state',
+      icon: Receipt,
+      visible: true,
+    },
+  ].filter((item) => item.visible);
 
   return (
     <DashboardLayout>
@@ -130,6 +158,39 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+
+        {shortcuts.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Module Shortcuts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {shortcuts.map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="group border border-gray-200 rounded-lg p-4 hover:border-primary-300 hover:bg-primary-50/30 transition-colors"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-primary-100 text-primary-700 flex items-center justify-center">
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900 group-hover:text-primary-700">{item.name}</h3>
+                          <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
 
         {/* Recent Projects */}
         <Card>

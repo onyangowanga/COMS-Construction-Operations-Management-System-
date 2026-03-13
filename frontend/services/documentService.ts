@@ -4,13 +4,20 @@
 // ============================================================================
 
 import { api } from './apiClient';
-import type { Document, PaginatedResponse, QueryParams } from '@/types';
+import type {
+  Document,
+  DocumentApprovalPayload,
+  DocumentQueryParams,
+  DocumentRejectionPayload,
+  DocumentUploadInput,
+  PaginatedResponse,
+} from '@/types';
 
 export const documentService = {
   /**
    * Get all documents
    */
-  async getDocuments(params?: QueryParams): Promise<PaginatedResponse<Document>> {
+  async getDocuments(params?: DocumentQueryParams): Promise<PaginatedResponse<Document>> {
     try {
       const response = await api.get<PaginatedResponse<Document>>('/documents/', {
         params,
@@ -36,21 +43,12 @@ export const documentService = {
   /**
    * Upload document
    */
-  async uploadDocument(
-    data: {
-      title: string;
-      description?: string;
-      category: string;
-      project?: string;
-      file: File;
-    },
-    onProgress?: (progress: number) => void
-  ): Promise<Document> {
+  async uploadDocument(data: DocumentUploadInput, onProgress?: (progress: number) => void): Promise<Document> {
     try {
       const formData = new FormData();
       formData.append('title', data.title);
       if (data.description) formData.append('description', data.description);
-      formData.append('category', data.category);
+      formData.append('document_type', data.document_type);
       if (data.project) formData.append('project', data.project);
       formData.append('file', data.file);
 
@@ -104,9 +102,23 @@ export const documentService = {
   /**
    * Approve document
    */
-  async approveDocument(id: string): Promise<Document> {
+  async approveDocument(id: string, payload?: DocumentApprovalPayload): Promise<Document> {
     try {
-      const response = await api.post<Document>(`/documents/${id}/approve/`);
+      const response = await api.post<Document>(`/documents/${id}/approve/`, payload || {});
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Reject document
+   */
+  async rejectDocument(id: string, payload: DocumentRejectionPayload): Promise<Document> {
+    try {
+      const response = await api.post<Document>(`/documents/${id}/reject/`, {
+        rejection_reason: payload.reason,
+      });
       return response;
     } catch (error) {
       throw error;

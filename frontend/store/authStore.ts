@@ -147,6 +147,7 @@ export const useAuthStore = create<AuthState>()(
       hasPermission: (permissionCode) => {
         const { user } = get();
         if (!user) return false;
+        if (user.is_superuser || user.is_staff) return true;
         return user.permissions?.includes(permissionCode) || false;
       },
 
@@ -159,6 +160,7 @@ export const useAuthStore = create<AuthState>()(
       hasAnyPermission: (permissionCodes) => {
         const { user } = get();
         if (!user) return false;
+        if (user.is_superuser || user.is_staff) return true;
         return permissionCodes.some(code => 
           user.permissions?.includes(code)
         );
@@ -167,6 +169,7 @@ export const useAuthStore = create<AuthState>()(
       hasAllPermissions: (permissionCodes) => {
         const { user } = get();
         if (!user) return false;
+        if (user.is_superuser || user.is_staff) return true;
         return permissionCodes.every(code => 
           user.permissions?.includes(code)
         );

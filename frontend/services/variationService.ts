@@ -4,13 +4,18 @@
 // ============================================================================
 
 import { api } from './apiClient';
-import type { VariationOrder, PaginatedResponse, QueryParams } from '@/types';
+import type {
+  PaginatedResponse,
+  VariationFormInput,
+  VariationOrder,
+  VariationQueryParams,
+} from '@/types';
 
 export const variationService = {
   /**
    * Get all variations
    */
-  async getVariations(params?: QueryParams): Promise<PaginatedResponse<VariationOrder>> {
+  async getVariations(params?: VariationQueryParams): Promise<PaginatedResponse<VariationOrder>> {
     try {
       const response = await api.get<PaginatedResponse<VariationOrder>>('/variations/', {
         params,
@@ -36,7 +41,7 @@ export const variationService = {
   /**
    * Create variation
    */
-  async createVariation(data: Partial<VariationOrder>): Promise<VariationOrder> {
+  async createVariation(data: VariationFormInput): Promise<VariationOrder> {
     try {
       const response = await api.post<VariationOrder>('/variations/', data);
       return response;
@@ -48,7 +53,7 @@ export const variationService = {
   /**
    * Update variation
    */
-  async updateVariation(id: string, data: Partial<VariationOrder>): Promise<VariationOrder> {
+  async updateVariation(id: string, data: Partial<VariationFormInput>): Promise<VariationOrder> {
     try {
       const response = await api.patch<VariationOrder>(`/variations/${id}/`, data);
       return response;
@@ -100,6 +105,18 @@ export const variationService = {
       const response = await api.post<VariationOrder>(`/variations/${id}/reject/`, {
         rejection_reason: reason,
       });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Certify variation
+   */
+  async certifyVariation(id: string, data: { certified_amount: string; notes?: string }): Promise<VariationOrder> {
+    try {
+      const response = await api.post<VariationOrder>(`/variations/${id}/certify/`, data);
       return response;
     } catch (error) {
       throw error;
