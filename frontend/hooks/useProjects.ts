@@ -5,6 +5,7 @@
 
 'use client';
 
+import { useEffect } from 'react';
 import { useProjectStore } from '@/store';
 import { useApi } from './useApi';
 import { projectService } from '@/services';
@@ -117,7 +118,7 @@ export function useProject(id?: string) {
   );
 
   // Select project when data is loaded
-  React.useEffect(() => {
+  useEffect(() => {
     if (project && typeof project === 'object' && 'id' in project) {
       selectProject(project as Project);
     }
