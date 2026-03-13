@@ -9,21 +9,17 @@ import React from 'react';
 import { useProjectStore } from '@/store';
 import { useApi } from './useApi';
 import { projectService } from '@/services';
-import type { Project, QueryParams } from '@/types';
+import type {
+  Project,
+  ProjectDashboardData,
+  ProjectFormInput,
+  ProjectMetrics,
+  ProjectStage,
+  QueryParams,
+} from '@/types';
 
 export function useProjects(params?: QueryParams) {
-  const {
-    projects,
-    selectedProject,
-    isLoading: storeLoading,
-    error: storeError,
-    fetchProjects,
-    fetchProject,
-    createProject,
-    updateProjectById,
-    deleteProject,
-    selectProject,
-  } = useProjectStore();
+  const { projects, selectedProject, isLoading: storeLoading, error: storeError, selectProject } = useProjectStore();
 
   const { useQuery, useMutation, invalidateQueries } = useApi();
 
@@ -43,7 +39,7 @@ export function useProjects(params?: QueryParams) {
 
   // Create project mutation
   const createMutation = useMutation(
-    (data: Partial<Project>) => projectService.createProject(data),
+    (data: ProjectFormInput) => projectService.createProject(data),
     {
       showSuccessToast: true,
       successMessage: 'Project Created',
@@ -55,7 +51,7 @@ export function useProjects(params?: QueryParams) {
 
   // Update project mutation
   const updateMutation = useMutation(
-    ({ id, data }: { id: string; data: Partial<Project> }) =>
+    ({ id, data }: { id: string; data: ProjectFormInput }) =>
       projectService.updateProject(id, data),
     {
       showSuccessToast: true,
@@ -84,15 +80,18 @@ export function useProjects(params?: QueryParams) {
   return {
     projects: projectsData?.results || projects,
     totalCount: projectsData?.count || 0,
+    nextPage: projectsData?.next || null,
+    previousPage: projectsData?.previous || null,
     selectedProject,
     isLoading: queryLoading || storeLoading,
     error: queryError || storeError,
     
     // Actions
     selectProject,
-    createProject: createMutation.mutate,
-    updateProject: updateMutation.mutate,
-    deleteProject: deleteMutation.mutate,
+    refetchProjects: () => invalidateQueries(['projects']),
+    createProject: createMutation.mutateAsync,
+    updateProject: updateMutation.mutateAsync,
+    deleteProject: deleteMutation.mutateAsync,
     
     // Mutation states
     isCreating: createMutation.isPending,
@@ -102,7 +101,7 @@ export function useProjects(params?: QueryParams) {
 }
 
 // Hook for single project
-export function useProject(id: string) {
+export function useProject(id?: string) {
   const { selectProject } = useProjectStore();
   const { useQuery } = useApi();
 
@@ -112,7 +111,7 @@ export function useProject(id: string) {
     error,
   } = useQuery(
     ['project', id],
-    () => projectService.getProject(id),
+    () => projectService.getProject(id as string),
     {
       enabled: !!id,
     }
@@ -127,6 +126,63 @@ export function useProject(id: string) {
 
   return {
     project,
+    isLoading,
+    error,
+  };
+}
+
+export function useProjectMetrics(id?: string) {
+  const { useQuery } = useApi();
+
+  const { data, isLoading, error } = useQuery(
+    ['project-metrics', id],
+    () => projectService.getProjectMetrics(id as string),
+    {
+      enabled: !!id,
+      staleTime: 2 * 60 * 1000,
+    }
+  );
+
+  return {
+    metrics: data as ProjectMetrics | undefined,
+    isLoading,
+    error,
+  };
+}
+
+export function useProjectDashboard(id?: string) {
+  const { useQuery } = useApi();
+
+  const { data, isLoading, error } = useQuery(
+    ['project-dashboard', id],
+    () => projectService.getProjectDashboard(id as string),
+    {
+      enabled: !!id,
+      staleTime: 2 * 60 * 1000,
+    }
+  );
+
+  return {
+    dashboard: data as ProjectDashboardData | undefined,
+    isLoading,
+    error,
+  };
+}
+
+export function useProjectStages(id?: string) {
+  const { useQuery } = useApi();
+
+  const { data, isLoading, error } = useQuery(
+    ['project-stages', id],
+    () => projectService.getProjectStages(id as string),
+    {
+      enabled: !!id,
+      staleTime: 2 * 60 * 1000,
+    }
+  );
+
+  return {
+    stages: (data || []) as ProjectStage[],
     isLoading,
     error,
   };

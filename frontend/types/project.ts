@@ -27,6 +27,17 @@ export interface Project {
   updated_at: string;
 }
 
+export interface ProjectFormInput {
+  name: string;
+  client: string;
+  contract_value: string;
+  project_manager?: string;
+  start_date: string;
+  end_date: string;
+  status: ProjectStatus;
+  description?: string;
+}
+
 export enum ProjectStatus {
   PLANNING = 'planning',
   ACTIVE = 'active',
@@ -67,4 +78,51 @@ export interface ProjectMetrics {
   earned_value: number;
   planned_value: number;
   actual_cost: number;
+}
+
+export interface BudgetVsActualPoint {
+  period: string;
+  budget: number;
+  actual: number;
+}
+
+export interface VariationTrendPoint {
+  period: string;
+  value: number;
+}
+
+export interface ClaimProgressPoint {
+  period: string;
+  certified: number;
+  submitted: number;
+}
+
+export interface ProjectDashboardData {
+  kpis: {
+    contract_value: number;
+    total_variations: number;
+    approved_claims: number;
+    completion_percentage: number;
+  };
+  budget_vs_actual: BudgetVsActualPoint[];
+  variation_trend: VariationTrendPoint[];
+  claim_progress: ClaimProgressPoint[];
+  recent_documents: Array<{
+    id: string;
+    title: string;
+    created_at: string;
+  }>;
+  recent_variations: Array<{
+    id: string;
+    title: string;
+    status: string;
+    estimated_value?: number;
+    created_at: string;
+  }>;
+  recent_activity: Array<{
+    id: string;
+    action: string;
+    actor_name?: string;
+    created_at: string;
+  }>;
 }

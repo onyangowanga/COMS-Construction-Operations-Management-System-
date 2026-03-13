@@ -4,7 +4,15 @@
 // ============================================================================
 
 import { api } from './apiClient';
-import type { Project, ProjectMetrics, ProjectStage, PaginatedResponse, QueryParams } from '@/types';
+import type {
+  Project,
+  ProjectDashboardData,
+  ProjectFormInput,
+  ProjectMetrics,
+  ProjectStage,
+  PaginatedResponse,
+  QueryParams,
+} from '@/types';
 
 export const projectService = {
   /**
@@ -36,7 +44,7 @@ export const projectService = {
   /**
    * Create project
    */
-  async createProject(data: Partial<Project>): Promise<Project> {
+  async createProject(data: ProjectFormInput): Promise<Project> {
     try {
       const response = await api.post<Project>('/projects/', data);
       return response;
@@ -48,9 +56,9 @@ export const projectService = {
   /**
    * Update project
    */
-  async updateProject(id: string, data: Partial<Project>): Promise<Project> {
+  async updateProject(id: string, data: ProjectFormInput): Promise<Project> {
     try {
-      const response = await api.patch<Project>(`/projects/${id}/`, data);
+      const response = await api.put<Project>(`/projects/${id}/`, data);
       return response;
     } catch (error) {
       throw error;
@@ -73,7 +81,7 @@ export const projectService = {
    */
   async getProjectMetrics(id: string): Promise<ProjectMetrics> {
     try {
-      const response = await api.get<ProjectMetrics>(`/project-metrics/${id}/`);
+      const response = await api.get<ProjectMetrics>(`/projects/${id}/metrics/`);
       return response;
     } catch (error) {
       throw error;
@@ -97,9 +105,9 @@ export const projectService = {
   /**
    * Get project dashboard data
    */
-  async getProjectDashboard(id: string): Promise<any> {
+  async getProjectDashboard(id: string): Promise<ProjectDashboardData> {
     try {
-      const response = await api.get(`/projects/${id}/dashboard/`);
+      const response = await api.get<ProjectDashboardData>(`/projects/${id}/dashboard/`);
       return response;
     } catch (error) {
       throw error;
