@@ -44,7 +44,7 @@ export default function ProjectsPage() {
     ordering,
   });
 
-  const canView = hasPermission('project.view');
+  const canView = hasPermission('view_project');
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil((totalCount || 0) / 10)), [totalCount]);
 
