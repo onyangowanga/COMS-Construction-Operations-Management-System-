@@ -91,7 +91,7 @@ export function DocumentTable({
               <Button variant="primary" size="sm" leftIcon={<Check className="h-4 w-4" />} onClick={() => onApprove(row)}>
                 Approve
               </Button>
-              <Button variant="warning" size="sm" leftIcon={<X className="h-4 w-4" />} onClick={() => onReject(row)}>
+              <Button variant="secondary" size="sm" leftIcon={<X className="h-4 w-4" />} onClick={() => onReject(row)}>
                 Reject
               </Button>
             </>

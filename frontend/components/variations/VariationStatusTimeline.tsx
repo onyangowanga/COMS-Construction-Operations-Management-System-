@@ -11,7 +11,7 @@ interface VariationStatusTimelineProps {
 export function VariationStatusTimeline({ variation }: VariationStatusTimelineProps) {
   const steps = [
     { key: 'DRAFT', label: 'Draft', date: variation.created_at },
-    { key: 'SUBMITTED', label: 'Submitted', date: variation.submitted_date },
+    { key: 'SUBMITTED', label: 'Submitted', date: variation.requested_date || variation.reviewed_date },
     { key: 'APPROVED', label: 'Approved', date: variation.approved_date },
     { key: 'INVOICED', label: 'Invoiced', date: undefined },
     { key: 'PAID', label: 'Paid', date: undefined },
