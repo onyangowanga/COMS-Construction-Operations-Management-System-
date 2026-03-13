@@ -73,7 +73,11 @@ apiClient.interceptors.response.use(
     const originalRequest: any = error.config;
     const requestUrl = originalRequest?.url || '';
 
-    if (requestUrl.includes('/auth/login/') || requestUrl.includes('/auth/token/refresh/')) {
+    if (
+      requestUrl.includes('/auth/login/') ||
+      requestUrl.includes('/auth/token/refresh/') ||
+      requestUrl.includes('/auth/me/')
+    ) {
       return Promise.reject(handleApiError(error));
     }
 
@@ -121,7 +125,9 @@ apiClient.interceptors.response.use(
         }
         
         if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
         }
         
         return Promise.reject(refreshError);
