@@ -6,6 +6,7 @@ from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
+from django.db.models.deletion import ProtectedError
 from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.suppliers.models import Supplier, LocalPurchaseOrder, SupplierInvoice
@@ -66,6 +67,29 @@ class SupplierViewSet(viewsets.ModelViewSet):
             return
 
         raise ValidationError({'organization': 'Your account is not linked to an organization.'})
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Delete supplier.
+
+        If supplier is referenced by protected records (LPOs/invoices),
+        fall back to deactivation so user can still "remove" it from active use.
+        """
+        supplier = self.get_object()
+
+        try:
+            supplier.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ProtectedError:
+            supplier.is_active = False
+            supplier.save(update_fields=['is_active', 'updated_at'])
+            return Response(
+                {
+                    'message': 'Supplier has related records and was deactivated instead of hard-deleted.',
+                    'is_active': supplier.is_active,
+                },
+                status=status.HTTP_200_OK,
+            )
     
     @action(detail=True, methods=['get'])
     def purchase_orders(self, request, pk=None):
