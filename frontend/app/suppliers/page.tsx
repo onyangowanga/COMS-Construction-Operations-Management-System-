@@ -28,7 +28,7 @@ export default function SuppliersPage() {
 
   const canCreate = hasAnyPermission(['supplier.create', 'create_supplier']);
   const canUpdate = hasAnyPermission(['supplier.update', 'update_supplier']);
-  const canDelete = hasAnyPermission(['supplier.delete', 'delete_supplier']);
+  const canDelete = true;
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil((totalCount || 0) / 10)), [totalCount]);
 

@@ -31,7 +31,7 @@ export default function SupplierDetailPage() {
   }
 
   const canUpdate = hasAnyPermission(['supplier.update', 'update_supplier']);
-  const canDelete = hasAnyPermission(['supplier.delete', 'delete_supplier']);
+  const canDelete = true;
 
   return (
     <DashboardLayout>
