@@ -11,6 +11,8 @@ Comprehensive serializers for subcontract operations including:
 from decimal import Decimal
 from rest_framework import serializers
 from django.utils import timezone
+from django.db import IntegrityError
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 from apps.subcontracts.models import (
     Subcontractor,
@@ -104,26 +106,51 @@ class SubcontractorCreateSerializer(serializers.Serializer):
     tax_number = serializers.CharField(max_length=100, required=False, allow_blank=True)
     specialization = serializers.CharField(max_length=255, required=False, allow_blank=True)
     notes = serializers.CharField(required=False, allow_blank=True)
+
+    def validate(self, attrs):
+        """Validate organization context and avoid DB-level unique crashes."""
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+
+        if not user or not getattr(user, 'organization', None):
+            raise serializers.ValidationError({
+                'organization': 'Your account is not linked to an organization. Please contact an administrator.'
+            })
+
+        name = attrs.get('name', '').strip()
+        if Subcontractor.objects.filter(organization=user.organization, name__iexact=name).exists():
+            raise serializers.ValidationError({
+                'name': 'A subcontractor with this name already exists in your organization.'
+            })
+
+        attrs['name'] = name
+        return attrs
     
     def create(self, validated_data):
         """Create subcontractor using service layer"""
         user = self.context['request'].user
-        
-        subcontractor = SubcontractService.create_subcontractor(
-            organization=user.organization,
-            name=validated_data['name'],
-            contact_person=validated_data['contact_person'],
-            phone=validated_data['phone'],
-            email=validated_data['email'],
-            address=validated_data['address'],
-            created_by=user,
-            company_registration=validated_data.get('company_registration', ''),
-            tax_number=validated_data.get('tax_number', ''),
-            specialization=validated_data.get('specialization', ''),
-            notes=validated_data.get('notes', '')
-        )
-        
-        return subcontractor
+
+        try:
+            subcontractor = SubcontractService.create_subcontractor(
+                organization=user.organization,
+                name=validated_data['name'],
+                contact_person=validated_data['contact_person'],
+                phone=validated_data['phone'],
+                email=validated_data['email'],
+                address=validated_data['address'],
+                created_by=user,
+                company_registration=validated_data.get('company_registration', ''),
+                tax_number=validated_data.get('tax_number', ''),
+                specialization=validated_data.get('specialization', ''),
+                notes=validated_data.get('notes', '')
+            )
+            return subcontractor
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError({'non_field_errors': exc.messages})
+        except IntegrityError:
+            raise serializers.ValidationError({
+                'name': 'A subcontractor with this name already exists in your organization.'
+            })
 
 
 class SubcontractAgreementBasicSerializer(serializers.ModelSerializer):
