@@ -63,7 +63,7 @@ export function ProcurementForm({
     staleTime: 60_000,
   });
   const supplierOptions = useMemo(
-    () => (suppliersRaw ?? []).map((s: { id: string; name: string }) => ({ value: s.id, label: s.name })),
+    () => (suppliersRaw ?? []).map((s: { id: string; company_name?: string; name?: string }) => ({ value: s.id, label: s.company_name || s.name || 'Unknown Supplier' })),
     [suppliersRaw],
   );
 

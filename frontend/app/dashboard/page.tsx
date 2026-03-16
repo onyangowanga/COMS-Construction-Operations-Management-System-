@@ -94,6 +94,13 @@ export default function DashboardPage() {
       icon: Users,
       visible: true,
     },
+    {
+      name: 'Suppliers',
+      href: '/suppliers',
+      description: 'Manage supplier records for procurement orders',
+      icon: Users,
+      visible: true,
+    },
   ].filter((item) => item.visible);
 
   return (

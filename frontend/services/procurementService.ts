@@ -17,7 +17,9 @@ import type {
   ProcurementOrder,
   ProcurementOrderFormInput,
   ProcurementQueryParams,
+  Supplier,
 } from '@/types';
+import { supplierService } from './supplierService';
 
 // Normalize backend LPO record to frontend ProcurementOrder shape
 function normalize(raw: Record<string, unknown>): ProcurementOrder {
@@ -51,10 +53,10 @@ function toPayload(data: Partial<ProcurementOrderFormInput>): Record<string, unk
 
 export const procurementService = {
   // List suppliers so the form can render a supplier dropdown
-  async getSuppliers(): Promise<Array<{ id: string; name: string }>> {
-    const data = await api.get<PaginatedResponse<{ id: string; name: string }> | { id: string; name: string }[]>('/suppliers/');
+  async getSuppliers(): Promise<Supplier[]> {
+    const data = await supplierService.getSuppliers({ page_size: 200, ordering: 'name' });
     if (Array.isArray(data)) return data;
-    return (data as PaginatedResponse<{ id: string; name: string }>).results ?? [];
+    return (data as PaginatedResponse<Supplier>).results ?? [];
   },
 
   async getOrders(params?: ProcurementQueryParams): Promise<PaginatedResponse<ProcurementOrder> | ProcurementOrder[]> {

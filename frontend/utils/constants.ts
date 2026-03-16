@@ -115,6 +115,12 @@ export const SIDEBAR_NAVIGATION = [
     permission: ['subcontractor.view', 'view_subcontractor', 'view_subcontract', 'subcontractor.create'],
   },
   {
+    name: 'Suppliers',
+    href: '/suppliers',
+    icon: 'Users',
+    permission: ['supplier.view', 'view_supplier', 'supplier.create'],
+  },
+  {
     name: 'Reports',
     href: '/reports',
     icon: 'BarChart3',
