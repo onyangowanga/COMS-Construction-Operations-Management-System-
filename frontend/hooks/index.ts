@@ -12,3 +12,5 @@ export { useNotifications } from './useNotifications';
 export { useDocuments, useDocument } from './useDocuments';
 export { useVariations, useVariation } from './useVariations';
 export { useClaims, useClaim } from './useClaims';
+export { useProcurement, useProcurementOrder } from './useProcurement';
+export { useSubcontractors, useSubcontractor } from './useSubcontractors';

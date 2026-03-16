@@ -12,5 +12,6 @@ export { claimService } from './claimService';
 export { documentService } from './documentService';
 export { reportService } from './reportService';
 export { procurementService } from './procurementService';
+export { subcontractorService } from './subcontractorService';
 export { notificationService } from './notificationService';
 export { eventService } from './eventService';

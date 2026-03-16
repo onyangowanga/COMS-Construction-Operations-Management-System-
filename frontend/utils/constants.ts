@@ -106,7 +106,13 @@ export const SIDEBAR_NAVIGATION = [
     name: 'Procurement',
     href: '/procurement',
     icon: 'ShoppingCart',
-    permission: 'view_lpo',
+    permission: ['procurement.view', 'view_procurement', 'view_procurement_order', 'procurement.create', 'view_lpo'],
+  },
+  {
+    name: 'Subcontractors',
+    href: '/subcontractors',
+    icon: 'Users',
+    permission: ['subcontractor.view', 'view_subcontractor', 'view_subcontract', 'subcontractor.create'],
   },
   {
     name: 'Reports',

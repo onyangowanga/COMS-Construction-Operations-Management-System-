@@ -22,6 +22,7 @@ import {
   BarChart3,
   Settings,
   Settings2,
+  Users,
   type LucideIcon
 } from 'lucide-react';
 import { cn } from '@/utils/helpers';
@@ -40,6 +41,7 @@ const iconMap: Record<string, LucideIcon> = {
   BarChart3,
   Settings,
   Settings2,
+  Users,
 };
 
 export const Sidebar: React.FC = () => {

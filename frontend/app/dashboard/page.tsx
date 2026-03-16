@@ -20,6 +20,7 @@ import {
   FileStack,
   GitBranch,
   Receipt,
+  Users,
 } from 'lucide-react';
 import { formatCompactNumber } from '@/utils/formatters';
 
@@ -84,6 +85,13 @@ export default function DashboardPage() {
       href: '/claims',
       description: 'Manage claims, certification, and payment state',
       icon: Receipt,
+      visible: true,
+    },
+    {
+      name: 'Subcontractors',
+      href: '/subcontractors',
+      description: 'Register subcontractors and track assignments',
+      icon: Users,
       visible: true,
     },
   ].filter((item) => item.visible);
