@@ -2,9 +2,10 @@
 Supplier ViewSets
 Handles Supplier, LocalPurchaseOrder, SupplierInvoice API endpoints
 """
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.suppliers.models import Supplier, LocalPurchaseOrder, SupplierInvoice
@@ -34,6 +35,37 @@ class SupplierViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return SupplierListSerializer
         return SupplierSerializer
+
+    def get_queryset(self):
+        """Limit suppliers to the authenticated user's organization."""
+        queryset = super().get_queryset()
+        user = self.request.user
+
+        if getattr(user, 'organization_id', None):
+            return queryset.filter(organization=user.organization)
+
+        # Superusers without a bound organization can still manage all suppliers.
+        if getattr(user, 'is_superuser', False):
+            return queryset
+
+        return queryset.none()
+
+    def perform_create(self, serializer):
+        """Auto-assign organization from logged-in user where possible."""
+        user = self.request.user
+
+        if getattr(user, 'organization_id', None):
+            requested_org = serializer.validated_data.get('organization')
+            if requested_org and requested_org != user.organization and not getattr(user, 'is_superuser', False):
+                raise ValidationError({'organization': 'You can only create suppliers in your own organization.'})
+            serializer.save(organization=user.organization)
+            return
+
+        if getattr(user, 'is_superuser', False) and serializer.validated_data.get('organization'):
+            serializer.save()
+            return
+
+        raise ValidationError({'organization': 'Your account is not linked to an organization.'})
     
     @action(detail=True, methods=['get'])
     def purchase_orders(self, request, pk=None):
