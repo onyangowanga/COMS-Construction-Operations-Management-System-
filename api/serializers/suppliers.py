@@ -96,6 +96,34 @@ class SupplierSerializer(serializers.ModelSerializer):
             # organization is injected in SupplierViewSet.perform_create()
             'organization': {'required': False},
         }
+
+    def validate(self, attrs):
+        """Block duplicate supplier names per organization (case-insensitive)."""
+        request = self.context.get('request')
+
+        name = attrs.get('name', getattr(self.instance, 'name', ''))
+        if isinstance(name, str):
+            name = name.strip()
+            attrs['name'] = name
+
+        organization = None
+        if self.instance is not None:
+            organization = self.instance.organization
+        elif request is not None and getattr(request.user, 'organization_id', None):
+            organization = request.user.organization
+        else:
+            organization = attrs.get('organization')
+
+        if organization and name:
+            qs = Supplier.objects.filter(organization=organization, name__iexact=name)
+            if self.instance is not None:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise serializers.ValidationError({
+                    'name': 'A supplier with this company name already exists in your organization.'
+                })
+
+        return attrs
     
     def get_total_lpo_value(self, obj):
         """Calculate total value of all LPOs"""
