@@ -22,7 +22,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
     
     Provides CRUD operations for suppliers
     """
-    queryset = Supplier.objects.all().select_related('organization').prefetch_related('purchase_orders', 'invoices')
+    queryset = Supplier.objects.all().select_related('organization').prefetch_related('lpos', 'invoices')
     serializer_class = SupplierSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['is_active', 'organization']
@@ -71,7 +71,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
     def purchase_orders(self, request, pk=None):
         """Get all purchase orders for a supplier"""
         supplier = self.get_object()
-        lpos = supplier.purchase_orders.all().order_by('-issue_date')
+        lpos = supplier.lpos.all().order_by('-issue_date')
         serializer = LocalPurchaseOrderSerializer(lpos, many=True)
         return Response(serializer.data)
     

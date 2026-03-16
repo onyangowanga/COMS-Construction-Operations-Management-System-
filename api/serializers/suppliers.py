@@ -80,7 +80,7 @@ class LocalPurchaseOrderSerializer(serializers.ModelSerializer):
 
 class SupplierSerializer(serializers.ModelSerializer):
     """Serializer for Supplier model"""
-    purchase_orders = LocalPurchaseOrderSerializer(many=True, read_only=True)
+    purchase_orders = LocalPurchaseOrderSerializer(source='lpos', many=True, read_only=True)
     invoices = SupplierInvoiceSerializer(many=True, read_only=True)
     total_lpo_value = serializers.SerializerMethodField()
     
@@ -99,7 +99,7 @@ class SupplierSerializer(serializers.ModelSerializer):
     
     def get_total_lpo_value(self, obj):
         """Calculate total value of all LPOs"""
-        return sum(lpo.total_amount for lpo in obj.purchase_orders.all())
+        return sum(lpo.total_amount for lpo in obj.lpos.all())
 
 
 class SupplierListSerializer(serializers.ModelSerializer):
