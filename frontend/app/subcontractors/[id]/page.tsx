@@ -61,10 +61,12 @@ export default function SubcontractorDetailPage() {
               initialValues={subcontractor}
               isSubmitting={isUpdating}
               onSubmit={async (values) => {
-                await updateSubcontractor({
-                  id: subcontractor.id,
-                  payload: values,
-                });
+                try {
+                  await updateSubcontractor({ id: subcontractor.id, payload: values });
+                  router.push(`/subcontractors/${subcontractor.id}`);
+                } catch {
+                  // Errors are already surfaced by useApi mutation toast.
+                }
               }}
               onCancel={() => router.push('/subcontractors')}
             />

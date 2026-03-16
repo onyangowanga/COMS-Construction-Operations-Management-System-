@@ -23,12 +23,16 @@ export default function CreateSubcontractorPage() {
           <SubcontractorForm
             isSubmitting={isCreating}
             onSubmit={async (values) => {
-              const created = await createSubcontractor(values as never);
-              if (created?.id) {
-                router.push(`/subcontractors/${created.id}`);
-                return;
+              try {
+                const created = await createSubcontractor(values as never);
+                if (created?.id) {
+                  router.push(`/subcontractors/${created.id}`);
+                  return;
+                }
+                router.push('/subcontractors');
+              } catch {
+                // Errors are already surfaced by useApi mutation toast.
               }
-              router.push('/subcontractors');
             }}
             onCancel={() => router.push('/subcontractors')}
           />
