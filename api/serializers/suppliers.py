@@ -92,6 +92,10 @@ class SupplierSerializer(serializers.ModelSerializer):
             'invoices', 'total_lpo_value', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+        extra_kwargs = {
+            # organization is injected in SupplierViewSet.perform_create()
+            'organization': {'required': False},
+        }
     
     def get_total_lpo_value(self, obj):
         """Calculate total value of all LPOs"""
