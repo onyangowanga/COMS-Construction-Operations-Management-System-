@@ -13,6 +13,7 @@ import type {
   Report,
   ReportCreatePayload,
   ReportExecution,
+  ReportExecutionProgress,
   ReportSchedule,
   ReportScheduleCreatePayload,
 } from '@/types';
@@ -97,7 +98,7 @@ export function useReport(id?: string) {
 export function useReportExecutions(reportId?: string) {
   const { useQuery } = useApi();
 
-  const { data, isLoading, error } = useQuery(
+  const { data, isLoading, error, refetch } = useQuery(
     ['report-executions', reportId],
     () => reportService.getExecutionHistory(reportId as string),
     {
@@ -110,6 +111,29 @@ export function useReportExecutions(reportId?: string) {
     executions: (data || []) as ReportExecution[],
     isLoading,
     error,
+    refetch,
+  };
+}
+
+export function useReportExecutionProgress(executionId?: string, enabled = true) {
+  const { useQuery } = useApi();
+
+  const { data, isLoading, error, refetch } = useQuery(
+    ['report-execution-progress', executionId],
+    () => reportService.getExecutionProgress(executionId as string),
+    {
+      enabled: Boolean(executionId) && enabled,
+      staleTime: 0,
+      refetchInterval: 2000,
+      refetchIntervalInBackground: true,
+    }
+  );
+
+  return {
+    progress: data as ReportExecutionProgress | undefined,
+    isLoading,
+    error,
+    refetch,
   };
 }
 

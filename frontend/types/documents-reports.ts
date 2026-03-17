@@ -239,6 +239,13 @@ export interface DashboardWidgetData {
     chart_type?: string;
     timestamp?: string;
     error?: string;
+    source_report_id?: string;
+    source_report_name?: string;
+    drilldown?: {
+      route: string;
+      report_id?: string;
+      filters?: Record<string, unknown>;
+    };
     [key: string]: unknown;
   };
 }

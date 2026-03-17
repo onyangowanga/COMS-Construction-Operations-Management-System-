@@ -21,6 +21,7 @@ export {
 	useReports,
 	useReport,
 	useReportExecutions,
+	useReportExecutionProgress,
 	useReportSchedules,
 	useDashboardWidgets,
 } from './useReports';

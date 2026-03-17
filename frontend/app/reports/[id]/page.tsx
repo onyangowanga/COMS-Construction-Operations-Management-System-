@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { PlayCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout';
 import { PermissionGuard } from '@/components/auth/PermissionGuard';
 import { ReportExecutionTable } from '@/components/reports';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Select, Textarea } from '@/components/ui';
-import { useReport, useReportExecutions, useReportSchedules, useToast } from '@/hooks';
+import { useReport, useReportExecutions, useReportExecutionProgress, useReportSchedules, useToast } from '@/hooks';
 import { reportService } from '@/services';
 
 export default function ReportDetailPage() {
@@ -17,6 +17,7 @@ export default function ReportDetailPage() {
 
   const reportId = useMemo(() => String(params?.id || ''), [params]);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [activeExecutionId, setActiveExecutionId] = useState<string | null>(null);
 
   const [scheduleName, setScheduleName] = useState('');
   const [frequency, setFrequency] = useState('DAILY');
@@ -26,7 +27,12 @@ export default function ReportDetailPage() {
   const [parametersText, setParametersText] = useState('{}');
 
   const { report, isLoading } = useReport(reportId);
-  const { executions, isLoading: executionsLoading } = useReportExecutions(reportId);
+  const { executions, isLoading: executionsLoading, refetch: refetchExecutions } = useReportExecutions(reportId);
+  const latestExecution = executions[0];
+  const shouldPollProgress = Boolean(
+    activeExecutionId && (!latestExecution || ['PENDING', 'RUNNING'].includes(latestExecution.status))
+  );
+  const { progress } = useReportExecutionProgress(activeExecutionId || undefined, shouldPollProgress);
   const {
     schedules,
     isLoading: schedulesLoading,
@@ -34,6 +40,33 @@ export default function ReportDetailPage() {
     deleteSchedule,
     isCreating: isCreatingSchedule,
   } = useReportSchedules({ report: reportId, ordering: '-created_at' });
+
+  useEffect(() => {
+    if (!latestExecution) {
+      return;
+    }
+
+    if (['PENDING', 'RUNNING'].includes(latestExecution.status)) {
+      setActiveExecutionId(latestExecution.id);
+      return;
+    }
+
+    if (activeExecutionId && latestExecution.id === activeExecutionId) {
+      void refetchExecutions();
+      setActiveExecutionId(null);
+    }
+  }, [latestExecution, activeExecutionId, refetchExecutions]);
+
+  useEffect(() => {
+    if (!progress || !activeExecutionId) {
+      return;
+    }
+
+    if (!['PENDING', 'RUNNING'].includes(progress.status)) {
+      void refetchExecutions();
+      setActiveExecutionId(null);
+    }
+  }, [progress, activeExecutionId, refetchExecutions]);
 
   const handleExecute = async () => {
     if (!reportId) {
@@ -43,7 +76,9 @@ export default function ReportDetailPage() {
     setIsExecuting(true);
     try {
       const parameters = JSON.parse(parametersText || '{}');
-      await reportService.executeReport(reportId, parameters);
+      const execution = await reportService.executeReport(reportId, parameters);
+      setActiveExecutionId(execution.id);
+      void refetchExecutions();
       success('Report Executed', 'Execution has started successfully.');
     } catch (executionError: any) {
       error('Execution Failed', executionError?.message || 'Unable to execute report');
@@ -66,7 +101,7 @@ export default function ReportDetailPage() {
         delivery_method: deliveryMethod as 'EMAIL' | 'DASHBOARD' | 'STORAGE' | 'ALL',
         recipients: recipients
           .split(',')
-          .map((item) => item.trim())
+          .map((item: string) => item.trim())
           .filter(Boolean),
         parameters: JSON.parse(parametersText || '{}'),
       });
@@ -109,11 +144,39 @@ export default function ReportDetailPage() {
                 label="Runtime Parameters (JSON)"
                 rows={5}
                 value={parametersText}
-                onChange={(event) => setParametersText(event.target.value)}
+                onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setParametersText(event.target.value)}
                 helperText="JSON payload passed into the report execution engine"
               />
             </CardContent>
           </Card>
+
+          {activeExecutionId && progress ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Live Execution Progress</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm text-gray-600">
+                    <span>Status: {progress.status}</span>
+                    <span>{progress.progress}%</span>
+                  </div>
+                  <div className="h-3 rounded-full bg-gray-100 overflow-hidden">
+                    <div
+                      className="h-full bg-primary-600 transition-all duration-500"
+                      style={{ width: `${Math.max(0, Math.min(100, progress.progress || 0))}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>
+                      Attempt {progress.attempt_count} of {progress.max_attempts}
+                    </span>
+                    {progress.error_message ? <span>{progress.error_message}</span> : null}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
 
           <Card>
             <CardHeader>
@@ -130,11 +193,11 @@ export default function ReportDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
-                <Input label="Name" value={scheduleName} onChange={(event) => setScheduleName(event.target.value)} />
+                <Input label="Name" value={scheduleName} onChange={(event: ChangeEvent<HTMLInputElement>) => setScheduleName(event.target.value)} />
                 <Select
                   label="Frequency"
                   value={frequency}
-                  onChange={(event) => setFrequency(event.target.value)}
+                  onChange={(event: ChangeEvent<HTMLSelectElement>) => setFrequency(event.target.value)}
                   options={[
                     { value: 'DAILY', label: 'Daily' },
                     { value: 'WEEKLY', label: 'Weekly' },
@@ -146,7 +209,7 @@ export default function ReportDetailPage() {
                 <Select
                   label="Format"
                   value={exportFormat}
-                  onChange={(event) => setExportFormat(event.target.value)}
+                  onChange={(event: ChangeEvent<HTMLSelectElement>) => setExportFormat(event.target.value)}
                   options={[
                     { value: 'PDF', label: 'PDF' },
                     { value: 'EXCEL', label: 'Excel' },
@@ -157,7 +220,7 @@ export default function ReportDetailPage() {
                 <Select
                   label="Delivery"
                   value={deliveryMethod}
-                  onChange={(event) => setDeliveryMethod(event.target.value)}
+                  onChange={(event: ChangeEvent<HTMLSelectElement>) => setDeliveryMethod(event.target.value)}
                   options={[
                     { value: 'EMAIL', label: 'Email' },
                     { value: 'DASHBOARD', label: 'Dashboard' },
@@ -176,7 +239,7 @@ export default function ReportDetailPage() {
                 label="Recipients"
                 placeholder="finance@example.com, ops@example.com"
                 value={recipients}
-                onChange={(event) => setRecipients(event.target.value)}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => setRecipients(event.target.value)}
                 helperText="Comma-separated email list"
               />
 
