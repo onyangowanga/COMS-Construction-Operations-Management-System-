@@ -41,9 +41,9 @@ class ReportViewSet(viewsets.ModelViewSet):
     queryset = ReportSelector.get_base_queryset()
     serializer_class = ReportSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['report_type', 'is_active', 'is_public']
+    filterset_fields = ['module', 'report_type', 'is_active', 'is_public']
     search_fields = ['name', 'description']
-    ordering_fields = ['name', 'created_at']
+    ordering_fields = ['name', 'code', 'created_at']
     ordering = ['name']
     
     def get_serializer_class(self):
@@ -137,6 +137,38 @@ class ReportViewSet(viewsets.ModelViewSet):
             context={'request': request}
         )
         return Response(serializer.data)
+    
+    @extend_schema(
+        summary="Preview next report code",
+        responses={200: {'type': 'object', 'properties': {
+            'code': {'type': 'string'},
+            'sequence': {'type': 'integer'},
+            'year': {'type': 'integer'}
+        }}}
+    )
+    @action(detail=False, methods=['get'], url_path='next-code')
+    def next_code(self, request):
+        """
+        GET /api/reports/next-code/
+        
+        Preview the next auto-generated report code for this organization.
+        
+        Returns:
+        {
+            "code": "RPT-2026-001",
+            "sequence": 1,
+            "year": 2026
+        }
+        """
+        from apps.common.services.code_generator import generate_report_code
+        
+        code, sequence, year = generate_report_code(request.user.organization)
+        
+        return Response({
+            'code': code,
+            'sequence': sequence,
+            'year': year
+        })
 
 
 class ReportExecutionViewSet(viewsets.ReadOnlyModelViewSet):

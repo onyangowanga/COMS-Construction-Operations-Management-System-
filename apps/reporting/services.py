@@ -41,6 +41,7 @@ except ImportError:
     OPENPYXL_AVAILABLE = False
 
 from apps.reporting.models import Report, ReportSchedule, ReportExecution
+from apps.common.services.code_generator import generate_report_code
 from apps.reporting.selectors import (
     ProjectFinancialDataSelector,
     CashFlowDataSelector,
@@ -67,6 +68,12 @@ class ReportService:
         name,
         report_type,
         created_by,
+        module='general',
+        filters=None,
+        columns=None,
+        aggregations=None,
+        group_by=None,
+        code=None,
         description='',
         default_parameters=None,
         is_public=False,
@@ -88,11 +95,22 @@ class ReportService:
         Returns:
             Report: Created report object
         """
+        generated_code, sequence, year = generate_report_code(organization)
+        final_code = code or generated_code
+
         report = Report.objects.create(
             organization=organization,
+            code=final_code,
+            year=year,
+            sequence=sequence,
             name=name,
             description=description,
+            module=module,
             report_type=report_type,
+            filters=filters or {},
+            columns=columns or [],
+            aggregations=aggregations or {},
+            group_by=group_by or [],
             default_parameters=default_parameters or {},
             is_public=is_public,
             cache_duration=cache_duration,

@@ -26,12 +26,13 @@ class ReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
         fields = [
-            'id', 'organization', 'name', 'description', 'report_type',
+            'id', 'code', 'year', 'sequence', 'organization', 'name', 'description', 'module',
+            'report_type', 'filters', 'columns', 'aggregations', 'group_by',
             'default_parameters', 'is_active', 'is_public', 'cache_duration',
             'created_by', 'created_at', 'updated_at',
             'total_executions', 'last_execution'
         ]
-        read_only_fields = ['id', 'organization', 'created_by', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'code', 'year', 'sequence', 'organization', 'created_by', 'created_at', 'updated_at']
 
 
 class ReportCreateSerializer(serializers.ModelSerializer):
@@ -40,9 +41,21 @@ class ReportCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
         fields = [
-            'name', 'description', 'report_type', 'default_parameters',
-            'is_public', 'cache_duration'
+            'name', 'description', 'module', 'report_type',
+            'filters', 'columns', 'aggregations', 'group_by', 'default_parameters',
+            'is_public', 'cache_duration', 'code'
         ]
+    
+    def validate(self, data):
+        """Validate that only superusers can manually set the code"""
+        request = self.context.get('request')
+        if 'code' in data and data['code']:
+            # Check if user is superuser
+            if not getattr(request.user, 'is_superuser', False):
+                raise serializers.ValidationError(
+                    {'code': 'Only admin users can manually set the report code.'}
+                )
+        return data
     
     def create(self, validated_data):
         request = self.context['request']

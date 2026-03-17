@@ -105,26 +105,124 @@ export interface PurchaseOrder {
 
 export interface Report {
   id: string;
+  code: string;
+  year: number;
+  sequence: number;
   name: string;
   description: string;
-  report_type: string;
-  category: string;
-  created_by: string;
-  created_by_name: string;
+  module: string;
+  report_type: 'TABLE' | 'SUMMARY' | 'CHART' | 'PROJECT_FINANCIAL' | 'CASH_FLOW' | 'VARIATION_IMPACT' | 'SUBCONTRACTOR_PAYMENT' | 'DOCUMENT_AUDIT' | 'PROCUREMENT_SUMMARY' | 'CUSTOM';
+  filters: Record<string, unknown>;
+  columns: string[];
+  aggregations: Record<string, unknown>;
+  group_by: string[];
+  default_parameters: Record<string, unknown>;
+  is_active: boolean;
+  is_public: boolean;
+  cache_duration: number;
+  created_by?: {
+    id: string;
+    username: string;
+    first_name: string;
+    last_name: string;
+  };
   created_at: string;
-  last_executed?: string;
-  is_scheduled: boolean;
+  updated_at: string;
+  total_executions?: number;
+  last_execution?: string | null;
 }
 
 export interface ReportExecution {
   id: string;
-  report: string;
-  report_name: string;
-  status: 'pending' | 'running' | 'completed' | 'failed';
-  executed_by: string;
-  executed_by_name: string;
-  executed_at: string;
-  completed_at?: string;
-  output_file?: string;
+  report: Report;
+  schedule?: string | null;
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CACHED';
+  export_format: 'PDF' | 'EXCEL' | 'CSV' | 'JSON';
+  parameters: Record<string, unknown>;
+  file_path?: string;
+  file_size?: number | null;
+  row_count?: number | null;
+  execution_time?: number | null;
   error_message?: string;
+  cache_key?: string;
+  executed_by?: {
+    id: string;
+    username: string;
+    first_name: string;
+    last_name: string;
+  };
+  created_at: string;
+  completed_at?: string;
+  duration?: number;
+  was_successful?: boolean;
+}
+
+export interface ReportCreatePayload {
+  name: string;
+  description?: string;
+  module: string;
+  report_type: Report['report_type'];
+  filters?: Record<string, unknown>;
+  columns?: string[];
+  aggregations?: Record<string, unknown>;
+  group_by?: string[];
+  default_parameters?: Record<string, unknown>;
+  is_public?: boolean;
+  cache_duration?: number;
+  code?: string;
+}
+
+export interface ReportSchedule {
+  id: string;
+  report: Report;
+  name: string;
+  frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'CUSTOM';
+  cron_expression?: string;
+  export_format: 'PDF' | 'EXCEL' | 'CSV' | 'JSON';
+  parameters: Record<string, unknown>;
+  delivery_method: 'EMAIL' | 'DASHBOARD' | 'STORAGE' | 'ALL';
+  recipients: string[];
+  is_active: boolean;
+  last_run?: string | null;
+  next_run?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReportScheduleCreatePayload {
+  report_id: string;
+  name: string;
+  frequency: ReportSchedule['frequency'];
+  cron_expression?: string;
+  export_format: ReportSchedule['export_format'];
+  parameters?: Record<string, unknown>;
+  delivery_method: ReportSchedule['delivery_method'];
+  recipients?: string[];
+}
+
+export interface ReportWidget {
+  id: string;
+  name: string;
+  widget_type: 'KPI' | 'CHART' | 'TABLE' | 'GAUGE' | 'TREND';
+  chart_type?: 'LINE' | 'BAR' | 'PIE' | 'DONUT' | 'AREA';
+  data_source: string;
+  query_parameters: Record<string, unknown>;
+  display_order: number;
+  refresh_interval: number;
+  icon?: string;
+  color?: string;
+  is_active: boolean;
+  report?: string | null;
+}
+
+export interface DashboardWidgetData {
+  widget: ReportWidget;
+  data: {
+    value?: unknown;
+    widget_type?: string;
+    chart_type?: string;
+    timestamp?: string;
+    error?: string;
+    [key: string]: unknown;
+  };
 }

@@ -72,3 +72,20 @@ def generate_lpo_number(project: Project) -> Tuple[str, int, None]:
         sequence = (last.sequence if last else 0) + 1
         code = f"LPO-{project.code}-{sequence:03d}"
         return code, sequence, None
+
+
+def generate_report_code(organization, year: Optional[int] = None) -> Tuple[str, int, int]:
+    """Generate organization-scoped report code (RPT-YYYY-NNN)"""
+    from apps.reporting.models import Report
+    
+    year = year or timezone.now().year
+
+    with transaction.atomic():
+        last = Report.objects.select_for_update().filter(
+            organization=organization,
+            year=year,
+        ).order_by('-sequence').first()
+
+        sequence = (last.sequence if last else 0) + 1
+        code = f"RPT-{year}-{sequence:03d}"
+        return code, sequence, year

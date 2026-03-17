@@ -26,7 +26,12 @@ class Report(models.Model):
     """
     
     class ReportType(models.TextChoices):
-        """Available report types"""
+        """Available report output types"""
+        TABLE = 'TABLE', _('Table')
+        SUMMARY = 'SUMMARY', _('Summary')
+        CHART = 'CHART', _('Chart')
+
+        # Backward compatibility with existing data.
         PROJECT_FINANCIAL = 'PROJECT_FINANCIAL', _('Project Financial Summary')
         CASH_FLOW = 'CASH_FLOW', _('Cash Flow Forecast Report')
         VARIATION_IMPACT = 'VARIATION_IMPACT', _('Variation Impact Report')
@@ -64,10 +69,39 @@ class Report(models.Model):
         blank=True,
         help_text=_("Report description")
     )
+    module = models.CharField(
+        max_length=100,
+        default='general',
+        help_text=_("Business module this report belongs to")
+    )
     report_type = models.CharField(
         max_length=50,
         choices=ReportType.choices,
         help_text=_("Type of report")
+    )
+
+    # Builder configuration
+    filters = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text=_("Report filters definition")
+    )
+    columns = ArrayField(
+        models.CharField(max_length=100),
+        default=list,
+        blank=True,
+        help_text=_("Selected report columns")
+    )
+    aggregations = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text=_("Aggregation configuration")
+    )
+    group_by = ArrayField(
+        models.CharField(max_length=100),
+        default=list,
+        blank=True,
+        help_text=_("Grouping columns")
     )
     
     # Parameters (stored as JSON)
@@ -94,6 +128,21 @@ class Report(models.Model):
         help_text=_("Cache duration in seconds (0 = no cache)")
     )
     
+    # Structured identifier (organization-scoped)
+    code = models.CharField(
+        max_length=50,
+        unique=False,  # Uniqueness enforced by (organization, year, sequence)
+        help_text=_("Auto-generated report code (e.g., RPT-2026-001)")
+    )
+    year = models.IntegerField(
+        help_text=_("Year for sequence tracking")
+    )
+    sequence = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0)],
+        help_text=_("Sequence number within organization year")
+    )
+    
     # Audit fields
     created_by = models.ForeignKey(
         User,
@@ -116,8 +165,15 @@ class Report(models.Model):
         verbose_name = _('Report')
         verbose_name_plural = _('Reports')
         ordering = ['name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['organization', 'year', 'sequence'],
+                name='unique_report_sequence_per_org_year',
+            )
+        ]
         indexes = [
             models.Index(fields=['organization', 'is_active']),
+            models.Index(fields=['module']),
             models.Index(fields=['report_type']),
             models.Index(fields=['created_at']),
         ]
