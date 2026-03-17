@@ -11,7 +11,7 @@ import { Bell, CheckCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout';
 import { NotificationList } from '@/components/notifications';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@/components/ui';
-import { PermissionGuard } from '@/components/auth';
+import { PermissionGuard } from '@/components/auth/PermissionGuard';
 import { useNotifications } from '@/hooks';
 
 // --------------------------------------------------------------------------
