@@ -65,18 +65,36 @@ export const notificationService = {
   },
 
   async markAsRead(id: string): Promise<Notification> {
-    const data = await api.post<unknown>(`/notifications/${id}/read/`);
-    return normalize(data);
+    try {
+      const data = await api.post<unknown>(`/notifications/${id}/read/`);
+      const normalized = normalize(data);
+
+      // Some backends return only a message for mark-read actions.
+      if (!normalized.id) {
+        return this.getNotification(id);
+      }
+
+      return normalized;
+    } catch {
+      await api.post(`/notifications/${id}/mark_read/`);
+      return this.getNotification(id);
+    }
   },
 
   async markAllAsRead(): Promise<void> {
-    await api.post('/notifications/read-all/');
+    try {
+      await api.post('/notifications/read-all/');
+    } catch {
+      await api.post('/notifications/mark_all_read/');
+    }
   },
 
   async getUnreadCount(): Promise<number> {
     try {
-      const response = await api.get<{ unread_count: number }>('/notifications/unread_count/');
-      return response.unread_count;
+      const response = await api.get<{ unread_count?: number; total?: number }>('/notifications/unread_count/');
+      if (typeof response.unread_count === 'number') return response.unread_count;
+      if (typeof response.total === 'number') return response.total;
+      return 0;
     } catch {
       return 0;
     }
