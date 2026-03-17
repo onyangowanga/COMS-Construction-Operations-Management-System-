@@ -72,6 +72,9 @@ class LocalPurchaseOrderSerializer(serializers.ModelSerializer):
             'notes', 'items', 'item_count', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'lpo_number': {'required': False},
+        }
     
     def get_item_count(self, obj):
         """Get number of items in this LPO"""

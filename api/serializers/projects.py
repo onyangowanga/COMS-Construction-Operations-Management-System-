@@ -43,6 +43,9 @@ class ProjectSerializer(serializers.ModelSerializer):
             'progress_percentage', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'code': {'required': False},
+        }
     
     def get_total_stages(self, obj):
         """Get total number of stages"""

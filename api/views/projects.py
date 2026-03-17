@@ -6,6 +6,8 @@ from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db import transaction
+from django.utils import timezone
 
 from apps.projects.models import Project, ProjectStage
 from api.serializers.projects import (
@@ -35,6 +37,41 @@ class ProjectViewSet(viewsets.ModelViewSet):
     search_fields = ['code', 'name', 'client_name', 'location']
     ordering_fields = ['created_at', 'start_date', 'project_value', 'name']
     ordering = ['-created_at']
+
+    def _generate_project_code(self, organization) -> str:
+        """Generate a project code in the format PRJ-{YEAR}-{SEQ}."""
+        year = timezone.now().year
+        prefix = f"PRJ-{year}-"
+
+        queryset = Project.objects.filter(code__startswith=prefix)
+        if organization is not None:
+            queryset = queryset.filter(organization=organization)
+
+        last_project = queryset.select_for_update().order_by('-code').first()
+        sequence = 1
+
+        if last_project and last_project.code:
+            try:
+                sequence = int(last_project.code.split('-')[-1]) + 1
+            except (ValueError, IndexError):
+                sequence = 1
+
+        return f"{prefix}{sequence:03d}"
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        """Auto-generate project code unless a superuser explicitly provides one."""
+        user = self.request.user
+        provided_code = serializer.validated_data.get('code')
+
+        organization = serializer.validated_data.get('organization')
+        if getattr(user, 'organization_id', None):
+            organization = user.organization
+
+        can_override_code = bool(getattr(user, 'is_superuser', False) and provided_code)
+        code = provided_code if can_override_code else self._generate_project_code(organization)
+
+        serializer.save(organization=organization, code=code)
     
     def get_serializer_class(self):
         """Use lightweight serializer for list view"""

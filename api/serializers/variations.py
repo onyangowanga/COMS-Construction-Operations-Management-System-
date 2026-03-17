@@ -35,10 +35,10 @@ class ProjectBasicSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'name',
-            'project_code',
+            'code',
             'status',
             'organization_name',
-            'contract_sum',
+            'project_value',
         ]
         read_only_fields = fields
 
@@ -195,7 +195,7 @@ class VariationOrderListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for list views"""
     
     project_name = serializers.CharField(source='project.name', read_only=True)
-    project_code = serializers.CharField(source='project.project_code', read_only=True)
+    project_code = serializers.CharField(source='project.code', read_only=True)
     
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)

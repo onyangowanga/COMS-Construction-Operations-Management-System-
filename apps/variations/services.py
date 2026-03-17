@@ -30,7 +30,7 @@ class VariationService:
         from datetime import datetime
         
         year = datetime.now().year
-        project_code = project.project_code or str(project.id)[:6]
+        project_code = project.code or str(project.id)[:6]
         
         # Get last variation for this project in current year
         last_variation = VariationOrder.objects.filter(

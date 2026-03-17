@@ -7,6 +7,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.db.models.deletion import ProtectedError
+from django.db import transaction
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.suppliers.models import Supplier, LocalPurchaseOrder, SupplierInvoice
@@ -148,6 +150,38 @@ class LocalPurchaseOrderViewSet(viewsets.ModelViewSet):
     search_fields = ['lpo_number', 'supplier__name', 'project__code', 'project__name']
     ordering_fields = ['issue_date', 'total_amount', 'created_at']
     ordering = ['-issue_date']
+
+    def _generate_lpo_number(self, project) -> str:
+        """Generate LPO number in the format LPO-{PROJECT_CODE}-{YEAR}-{SEQ}."""
+        year = timezone.now().year
+        project_code = (getattr(project, 'code', None) or str(project.id)[:6]).upper()
+        prefix = f"LPO-{project_code}-{year}-"
+
+        last_lpo = LocalPurchaseOrder.objects.select_for_update().filter(
+            project=project,
+            lpo_number__startswith=prefix,
+        ).order_by('-lpo_number').first()
+
+        sequence = 1
+        if last_lpo and last_lpo.lpo_number:
+            try:
+                sequence = int(last_lpo.lpo_number.split('-')[-1]) + 1
+            except (ValueError, IndexError):
+                sequence = 1
+
+        return f"{prefix}{sequence:03d}"
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        """Auto-generate LPO number unless a superuser explicitly provides one."""
+        user = self.request.user
+        provided_lpo_number = serializer.validated_data.get('lpo_number')
+        project = serializer.validated_data.get('project')
+
+        can_override_lpo_number = bool(getattr(user, 'is_superuser', False) and provided_lpo_number)
+        lpo_number = provided_lpo_number if can_override_lpo_number else self._generate_lpo_number(project)
+
+        serializer.save(lpo_number=lpo_number)
     
     @action(detail=True, methods=['post'], url_path='approve')
     def approve(self, request, pk=None):
