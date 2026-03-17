@@ -8,8 +8,9 @@
 import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout';
+import { ActivityItem } from '@/components/activity';
 import { Card, CardHeader, CardTitle, CardContent, Badge } from '@/components/ui';
-import { useAuth, useProjects } from '@/hooks';
+import { useActivity, useAuth, usePermissions, useProjects } from '@/hooks';
 import { 
   FolderKanban, 
   DollarSign, 
@@ -26,11 +27,24 @@ import { formatCompactNumber } from '@/utils/formatters';
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { hasAnyPermission } = usePermissions();
   const { projects, isLoading: isProjectsLoading } = useProjects({
     page: 1,
     page_size: 10,
     ordering: '-created_at',
   });
+
+  const canViewActivity = hasAnyPermission(['activity.view', 'view_activity']);
+  const { activities: recentActivity, isLoading: isActivityLoading } = useActivity(
+    {
+      page: 1,
+      page_size: 5,
+      ordering: '-timestamp',
+    },
+    {
+      enabled: canViewActivity,
+    }
+  );
 
   const recentProjects = useMemo(
     () =>
@@ -234,6 +248,30 @@ export default function DashboardPage() {
                   );
                 })}
               </div>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {canViewActivity ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isActivityLoading ? (
+                <p className="text-sm text-gray-500">Loading activity...</p>
+              ) : recentActivity.length === 0 ? (
+                <p className="text-sm text-gray-500">No recent activity found.</p>
+              ) : (
+                <div className="space-y-3">
+                  {recentActivity.map((activity) => (
+                    <ActivityItem key={activity.id} activity={activity} />
+                  ))}
+                  <Link href="/activity" className="inline-flex text-sm font-medium text-primary-700 hover:text-primary-900">
+                    View full activity timeline
+                  </Link>
+                </div>
+              )}
             </CardContent>
           </Card>
         ) : null}

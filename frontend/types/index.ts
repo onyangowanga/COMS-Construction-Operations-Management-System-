@@ -11,4 +11,5 @@ export * from './documents-reports';
 export * from './procurement-subcontractors';
 export * from './suppliers';
 export * from './contracts';
+export * from './activity';
 export * from './permissions';

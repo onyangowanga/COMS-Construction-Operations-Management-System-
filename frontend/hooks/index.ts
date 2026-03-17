@@ -16,3 +16,4 @@ export { useProcurement, useProcurementOrder } from './useProcurement';
 export { useSubcontractors, useSubcontractor } from './useSubcontractors';
 export { useSuppliers, useSupplier } from './useSuppliers';
 export { useContracts, useContract } from './useContracts';
+export { useActivity, useActivityItem } from './useActivity';

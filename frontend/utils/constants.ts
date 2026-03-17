@@ -85,6 +85,12 @@ export const SIDEBAR_NAVIGATION = [
     permission: ['contract.view', 'view_contract', 'contract.create'],
   },
   {
+    name: 'Activity',
+    href: '/activity',
+    icon: 'Activity',
+    permission: ['activity.view', 'view_activity'],
+  },
+  {
     name: 'Documents',
     href: '/documents',
     icon: 'FileStack',
