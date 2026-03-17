@@ -23,6 +23,9 @@ class ClientReceiptSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'issued_date', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'receipt_number': {'required': False},
+        }
 
 
 class ClientPaymentSerializer(serializers.ModelSerializer):

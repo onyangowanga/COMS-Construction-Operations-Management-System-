@@ -251,7 +251,7 @@ class SubcontractCreateSerializer(serializers.Serializer):
     """Serializer for creating new subcontracts"""
     project = serializers.UUIDField()
     subcontractor = serializers.UUIDField()
-    contract_reference = serializers.CharField(max_length=100)
+    contract_reference = serializers.CharField(max_length=100, required=False, allow_blank=True)
     scope_of_work = serializers.CharField()
     contract_value = serializers.DecimalField(max_digits=15, decimal_places=2)
     retention_percentage = serializers.DecimalField(
@@ -296,7 +296,7 @@ class SubcontractCreateSerializer(serializers.Serializer):
         subcontract = SubcontractService.create_subcontract(
             project=project,
             subcontractor=subcontractor,
-            contract_reference=validated_data['contract_reference'],
+            contract_reference=validated_data.get('contract_reference'),
             scope_of_work=validated_data['scope_of_work'],
             contract_value=validated_data['contract_value'],
             start_date=validated_data['start_date'],
@@ -397,7 +397,7 @@ class SubcontractClaimSerializer(serializers.ModelSerializer):
 class ClaimSubmitSerializer(serializers.Serializer):
     """Serializer for submitting new payment claims"""
     subcontract = serializers.UUIDField()
-    claim_number = serializers.CharField(max_length=50)
+    claim_number = serializers.CharField(max_length=50, required=False, allow_blank=True)
     period_start = serializers.DateField()
     period_end = serializers.DateField()
     claimed_amount = serializers.DecimalField(max_digits=15, decimal_places=2)
@@ -419,7 +419,7 @@ class ClaimSubmitSerializer(serializers.Serializer):
         # Submit claim
         claim = SubcontractService.submit_claim(
             subcontract=subcontract,
-            claim_number=validated_data['claim_number'],
+            claim_number=validated_data.get('claim_number'),
             period_start=validated_data['period_start'],
             period_end=validated_data['period_end'],
             claimed_amount=validated_data['claimed_amount'],

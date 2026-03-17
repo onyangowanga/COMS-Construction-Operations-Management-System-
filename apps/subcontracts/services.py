@@ -98,11 +98,51 @@ class SubcontractService:
         return subcontractor
     
     @staticmethod
+    def generate_contract_reference(project: Project) -> str:
+        """Generate subcontract reference in the format SC-{PROJECT_CODE}-{YEAR}-{SEQ}."""
+        year = timezone.now().year
+        project_code = (getattr(project, 'code', None) or str(project.id)[:6]).upper()
+        prefix = f"SC-{project_code}-{year}-"
+
+        last_contract = SubcontractAgreement.objects.select_for_update().filter(
+            project=project,
+            contract_reference__startswith=prefix,
+        ).order_by('-contract_reference').first()
+
+        sequence = 1
+        if last_contract and last_contract.contract_reference:
+            try:
+                sequence = int(last_contract.contract_reference.split('-')[-1]) + 1
+            except (ValueError, IndexError):
+                sequence = 1
+
+        return f"{prefix}{sequence:03d}"
+
+    @staticmethod
+    def generate_claim_number(subcontract: SubcontractAgreement) -> str:
+        """Generate subcontract claim number in the format {CONTRACT_REFERENCE}-C{SEQ}."""
+        prefix = f"{subcontract.contract_reference}-C"
+
+        last_claim = SubcontractClaim.objects.select_for_update().filter(
+            subcontract=subcontract,
+            claim_number__startswith=prefix,
+        ).order_by('-claim_number').first()
+
+        sequence = 1
+        if last_claim and last_claim.claim_number:
+            try:
+                sequence = int(last_claim.claim_number.split('-C')[-1]) + 1
+            except (ValueError, IndexError):
+                sequence = 1
+
+        return f"{prefix}{sequence:03d}"
+
+    @staticmethod
     @transaction.atomic
     def create_subcontract(
         project: Project,
         subcontractor: Subcontractor,
-        contract_reference: str,
+        contract_reference: Optional[str],
         scope_of_work: str,
         contract_value: Decimal,
         start_date: date,
@@ -167,6 +207,8 @@ class SubcontractService:
         if subcontractor.organization != project.organization:
             raise ValidationError("Subcontractor must belong to the same organization")
         
+        contract_reference = contract_reference or SubcontractService.generate_contract_reference(project)
+
         # Create subcontract
         subcontract = SubcontractAgreement.objects.create(
             project=project,
@@ -220,7 +262,7 @@ class SubcontractService:
     @transaction.atomic
     def submit_claim(
         subcontract: SubcontractAgreement,
-        claim_number: str,
+        claim_number: Optional[str],
         period_start: date,
         period_end: date,
         claimed_amount: Decimal,
@@ -278,6 +320,8 @@ class SubcontractService:
         
         # Calculate previous cumulative
         previous_cumulative = subcontract.total_certified
+
+        claim_number = claim_number or SubcontractService.generate_claim_number(subcontract)
         
         # Create claim
         claim = SubcontractClaim.objects.create(
