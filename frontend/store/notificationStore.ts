@@ -87,7 +87,8 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const response = await notificationService.getNotifications(params);
-      set({ notifications: response.results, isLoading: false });
+      const notifications = Array.isArray(response) ? response : response.results || [];
+      set({ notifications, isLoading: false });
     } catch (error: any) {
       set({
         error: error.message || 'Failed to fetch notifications',
