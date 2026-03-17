@@ -11,6 +11,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { 
   Activity as ActivityIcon,
+  Bell,
   ChevronLeft, 
   ChevronRight,
   LayoutDashboard,
@@ -33,6 +34,7 @@ import { SIDEBAR_NAVIGATION } from '@/utils/constants';
 // Icon mapping
 const iconMap: Record<string, LucideIcon> = {
   Activity: ActivityIcon,
+  Bell,
   LayoutDashboard,
   FolderKanban,
   FileText,

@@ -91,6 +91,12 @@ export const SIDEBAR_NAVIGATION = [
     permission: ['activity.view', 'view_activity'],
   },
   {
+    name: 'Notifications',
+    href: '/notifications',
+    icon: 'Bell',
+    permission: ['notification.view', 'view_notification'],
+  },
+  {
     name: 'Documents',
     href: '/documents',
     icon: 'FileStack',

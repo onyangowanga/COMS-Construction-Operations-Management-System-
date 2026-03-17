@@ -1,90 +1,104 @@
 // ============================================================================
 // USE NOTIFICATIONS HOOK
-// Custom hook for notification management
+// React Query-based hook for notification management
 // ============================================================================
 
 'use client';
 
-import { useEffect } from 'react';
-import { useNotificationStore } from '@/store';
 import { useApi } from './useApi';
 import { notificationService } from '@/services';
+import { useNotificationStore } from '@/store';
+import type { Notification, NotificationQueryParams, PaginatedResponse } from '@/types';
 
-export function useNotifications() {
-  const {
+interface UseNotificationsOptions {
+  enabled?: boolean;
+}
+
+function normalizeList(data: PaginatedResponse<Notification> | Notification[] | undefined) {
+  const notifications = Array.isArray(data)
+    ? data
+    : Array.isArray((data as PaginatedResponse<Notification> | undefined)?.results)
+    ? (data as PaginatedResponse<Notification>).results
+    : [];
+
+  const totalCount = Array.isArray(data)
+    ? data.length
+    : (data as PaginatedResponse<Notification> | undefined)?.count || 0;
+
+  return {
     notifications,
-    unreadCount,
-    isLoading,
-    error,
-    fetchNotifications,
-    fetchUnreadCount,
-    markAsRead,
-    markAllAsRead,
-    deleteNotification,
-  } = useNotificationStore();
+    totalCount,
+    nextPage: Array.isArray(data) ? null : (data as PaginatedResponse<Notification> | undefined)?.next || null,
+    previousPage: Array.isArray(data) ? null : (data as PaginatedResponse<Notification> | undefined)?.previous || null,
+  };
+}
 
-  const { useMutation, invalidateQueries } = useApi();
+export function useNotifications(params?: NotificationQueryParams, options?: UseNotificationsOptions) {
+  const { useQuery, useMutation, invalidateQueries } = useApi();
 
-  // Fetch unread count on mount
-  useEffect(() => {
-    fetchUnreadCount();
-    
-    // Refresh unread count every minute
-    const interval = setInterval(() => {
-      fetchUnreadCount();
-    }, 60000);
+  // Zustand store exposes unreadCount synced by the notificationStore pollers
+  const { unreadCount } = useNotificationStore();
 
-    return () => clearInterval(interval);
-  }, []);
+  const { data, isLoading, isFetching, error } = useQuery(
+    ['notifications', params],
+    () => notificationService.getNotifications(params),
+    {
+      staleTime: 30 * 1000,
+      enabled: options?.enabled ?? true,
+    }
+  );
 
-  // Mark as read mutation
+  const normalized = normalizeList(data as PaginatedResponse<Notification> | Notification[] | undefined);
+
+  // Unread count query (lightweight poll)
+  const { data: unreadData } = useQuery(
+    ['notifications-unread-count'],
+    () => notificationService.getUnreadCount(),
+    {
+      staleTime: 30 * 1000,
+      refetchInterval: 60 * 1000,
+      enabled: options?.enabled ?? true,
+    }
+  );
+
+  const resolvedUnreadCount = typeof unreadData === 'number' ? unreadData : unreadCount;
+
   const markAsReadMutation = useMutation(
     (id: string) => notificationService.markAsRead(id),
     {
-      onSuccess: (_data: any, id: string) => {
-        markAsRead(id);
-        fetchUnreadCount();
+      onSuccess: () => {
+        invalidateQueries(['notifications']);
+        invalidateQueries(['notifications-unread-count']);
       },
     }
   );
 
-  // Mark all as read mutation
   const markAllAsReadMutation = useMutation(
     () => notificationService.markAllAsRead(),
     {
       onSuccess: () => {
-        markAllAsRead();
-        fetchUnreadCount();
-      },
-    }
-  );
-
-  // Delete notification mutation
-  const deleteMutation = useMutation(
-    (id: string) => notificationService.deleteNotification(id),
-    {
-      onSuccess: (_data: any, id: string) => {
-        deleteNotification(id);
-        fetchUnreadCount();
+        invalidateQueries(['notifications']);
+        invalidateQueries(['notifications-unread-count']);
       },
     }
   );
 
   return {
-    notifications,
-    unreadCount,
+    notifications: normalized.notifications as Notification[],
+    totalCount: normalized.totalCount,
+    nextPage: normalized.nextPage,
+    previousPage: normalized.previousPage,
+    unreadCount: resolvedUnreadCount,
     isLoading,
+    isFetching,
     error,
-    
-    // Actions
-    fetchNotifications,
+
     markAsRead: markAsReadMutation.mutate,
     markAllAsRead: markAllAsReadMutation.mutate,
-    deleteNotification: deleteMutation.mutate,
-    
-    // Mutation states
     isMarkingRead: markAsReadMutation.isPending,
     isMarkingAllRead: markAllAsReadMutation.isPending,
-    isDeleting: deleteMutation.isPending,
+
+    refetchNotifications: () => invalidateQueries(['notifications']),
   };
 }
+

@@ -1,36 +1,4 @@
 // ============================================================================
-// NOTIFICATION TYPES
-// ============================================================================
-
-export interface Notification {
-  id: string;
-  recipient: number;
-  notification_type: NotificationType;
-  title: string;
-  message: string;
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  is_read: boolean;
-  read_at?: string;
-  related_object_type?: string;
-  related_object_id?: string;
-  action_url?: string;
-  created_at: string;
-  metadata?: Record<string, any>;
-}
-
-export enum NotificationType {
-  INFO = 'info',
-  SUCCESS = 'success',
-  WARNING = 'warning',
-  ERROR = 'error',
-  APPROVAL_REQUIRED = 'approval_required',
-  DOCUMENT_UPLOADED = 'document_uploaded',
-  VARIATION_CREATED = 'variation_created',
-  CLAIM_SUBMITTED = 'claim_submitted',
-  PAYMENT_APPROVED = 'payment_approved',
-}
-
-// ============================================================================
 // SYSTEM EVENT TYPES
 // ============================================================================
 

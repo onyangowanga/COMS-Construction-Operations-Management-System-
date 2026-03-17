@@ -7,20 +7,18 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Bell, User, LogOut, Settings, ChevronDown } from 'lucide-react';
+import { User, LogOut, Settings, ChevronDown } from 'lucide-react';
 import { cn } from '@/utils/helpers';
 import { useAuthStore, useUIStore } from '@/store';
-import { useAuth, useNotifications } from '@/hooks';
-import { Badge } from '../ui';
+import { useAuth } from '@/hooks';
+import { NotificationBell } from '@/components/notifications';
 import { getInitials, getAvatarColor } from '@/utils/formatters';
 
 export const Topbar: React.FC = () => {
   const { user } = useAuthStore();
   const { sidebarCollapsed } = useUIStore();
   const { logout } = useAuth();
-  const { unreadCount } = useNotifications();
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
 
   return (
     <header
@@ -37,34 +35,8 @@ export const Topbar: React.FC = () => {
 
         {/* Right side - notifications and user menu */}
         <div className="flex items-center gap-4">
-          {/* Notifications */}
-          <div className="relative">
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <Bell className="h-5 w-5" />
-              {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 h-4 w-4 bg-destructive-600 text-white text-xs rounded-full flex items-center justify-center">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </button>
-
-            {/* Notification dropdown - simplified */}
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
-                <div className="px-4 py-2 border-b border-gray-200">
-                  <h3 className="font-semibold text-gray-900">Notifications</h3>
-                </div>
-                <div className="max-h-96 overflow-y-auto">
-                  <div className="px-4 py-8 text-center text-gray-500">
-                    No new notifications
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Notifications bell */}
+          <NotificationBell />
 
           {/* User menu */}
           <div className="relative">

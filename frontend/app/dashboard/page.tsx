@@ -9,8 +9,9 @@ import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout';
 import { ActivityItem } from '@/components/activity';
+import { NotificationItem } from '@/components/notifications';
 import { Card, CardHeader, CardTitle, CardContent, Badge } from '@/components/ui';
-import { useActivity, useAuth, usePermissions, useProjects } from '@/hooks';
+import { useActivity, useAuth, usePermissions, useProjects, useNotifications } from '@/hooks';
 import { 
   FolderKanban, 
   DollarSign, 
@@ -45,6 +46,13 @@ export default function DashboardPage() {
       enabled: canViewActivity,
     }
   );
+
+  const canViewNotifications = hasAnyPermission(['notification.view', 'view_notification']);
+  const { notifications: recentNotifications, unreadCount, isLoading: isNotificationsLoading, markAsRead } =
+    useNotifications(
+      { page: 1, page_size: 5 },
+      { enabled: canViewNotifications }
+    );
 
   const recentProjects = useMemo(
     () =>
@@ -270,6 +278,37 @@ export default function DashboardPage() {
                   <Link href="/activity" className="inline-flex text-sm font-medium text-primary-700 hover:text-primary-900">
                     View full activity timeline
                   </Link>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {canViewNotifications ? (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Recent Notifications</CardTitle>
+                {unreadCount > 0 && (
+                  <Badge variant="destructive" size="sm">{unreadCount} unread</Badge>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isNotificationsLoading ? (
+                <p className="text-sm text-gray-500 px-6 py-4">Loading notifications...</p>
+              ) : recentNotifications.length === 0 ? (
+                <p className="text-sm text-gray-500 px-6 py-4">No notifications yet.</p>
+              ) : (
+                <div>
+                  {recentNotifications.map((n) => (
+                    <NotificationItem key={n.id} notification={n} onMarkAsRead={(id) => markAsRead(id)} compact />
+                  ))}
+                  <div className="px-4 py-3 border-t border-gray-100">
+                    <Link href="/notifications" className="text-sm font-medium text-primary-700 hover:text-primary-900">
+                      View all notifications
+                    </Link>
+                  </div>
                 </div>
               )}
             </CardContent>
