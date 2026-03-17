@@ -67,6 +67,13 @@ export default function DashboardPage() {
 
   const shortcuts = [
     {
+      name: 'Contracts',
+      href: '/contracts',
+      description: 'Track main legal agreements and linked module records',
+      icon: FileText,
+      visible: true,
+    },
+    {
       name: 'Documents',
       href: '/documents',
       description: 'Upload, review, and manage project files',

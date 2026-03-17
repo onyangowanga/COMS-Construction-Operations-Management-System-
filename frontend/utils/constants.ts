@@ -82,7 +82,7 @@ export const SIDEBAR_NAVIGATION = [
     name: 'Contracts',
     href: '/contracts',
     icon: 'FileText',
-    permission: 'view_contract',
+    permission: ['contract.view', 'view_contract', 'contract.create'],
   },
   {
     name: 'Documents',

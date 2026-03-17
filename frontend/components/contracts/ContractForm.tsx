@@ -1,0 +1,120 @@
+'use client';
+
+import React from 'react';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { Button, Input, Select, Textarea } from '@/components/ui';
+import { ContractStatus, type Contract, type ContractCreatePayload } from '@/types';
+
+const schema = z.object({
+  contract_number: z.string().min(1, 'Contract number is required'),
+  project_name: z.string().min(1, 'Project name is required'),
+  client: z.string().min(1, 'Client is required'),
+  contractor: z.string().optional(),
+  consultant: z.string().optional(),
+  contract_value: z.string().refine((value) => Number(value) > 0, 'Contract value must be positive'),
+  currency: z.string().min(1, 'Currency is required'),
+  start_date: z.string().min(1, 'Start date is required'),
+  end_date: z.string().optional(),
+  description: z.string().optional(),
+  status: z.enum([ContractStatus.DRAFT, ContractStatus.ACTIVE, ContractStatus.COMPLETED, ContractStatus.TERMINATED]),
+});
+
+type FormValues = z.infer<typeof schema>;
+
+interface ContractFormProps {
+  initialValues?: Partial<Contract>;
+  onSubmit: (values: ContractCreatePayload) => Promise<void>;
+  onCancel: () => void;
+  submitText?: string;
+  isSubmitting?: boolean;
+}
+
+const statusOptions = [
+  { value: ContractStatus.DRAFT, label: 'Draft' },
+  { value: ContractStatus.ACTIVE, label: 'Active' },
+  { value: ContractStatus.COMPLETED, label: 'Completed' },
+  { value: ContractStatus.TERMINATED, label: 'Terminated' },
+];
+
+const currencyOptions = [
+  { value: 'KES', label: 'KES' },
+  { value: 'USD', label: 'USD' },
+  { value: 'EUR', label: 'EUR' },
+  { value: 'GBP', label: 'GBP' },
+];
+
+export function ContractForm({
+  initialValues,
+  onSubmit,
+  onCancel,
+  submitText = 'Save Contract',
+  isSubmitting = false,
+}: ContractFormProps) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      contract_number: initialValues?.contract_number || '',
+      project_name: initialValues?.project_name || '',
+      client: initialValues?.client || '',
+      contractor: initialValues?.contractor || '',
+      consultant: initialValues?.consultant || '',
+      contract_value: String(initialValues?.contract_value || ''),
+      currency: initialValues?.currency || 'KES',
+      start_date: initialValues?.start_date || '',
+      end_date: initialValues?.end_date || '',
+      description: initialValues?.description || '',
+      status: (String(initialValues?.status || ContractStatus.DRAFT).toUpperCase() as FormValues['status']),
+    },
+  });
+
+  return (
+    <form
+      className="space-y-5"
+      onSubmit={handleSubmit((values) =>
+        onSubmit({
+          ...values,
+          contract_value: Number(values.contract_value),
+        })
+      )}
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Input label="Contract Number" error={errors.contract_number?.message} required {...register('contract_number')} />
+        <Input label="Project Name" error={errors.project_name?.message} required {...register('project_name')} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Input label="Client" error={errors.client?.message} required {...register('client')} />
+        <Input label="Contractor" error={errors.contractor?.message} {...register('contractor')} />
+        <Input label="Consultant" error={errors.consultant?.message} {...register('consultant')} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Input label="Contract Value" type="number" min="0" step="0.01" error={errors.contract_value?.message} required {...register('contract_value')} />
+        <Select label="Currency" options={currencyOptions} error={errors.currency?.message} required {...register('currency')} />
+        <Select label="Status" options={statusOptions} error={errors.status?.message} required {...register('status')} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Input label="Start Date" type="date" error={errors.start_date?.message} required {...register('start_date')} />
+        <Input label="End Date" type="date" error={errors.end_date?.message} {...register('end_date')} />
+      </div>
+
+      <Textarea label="Description" rows={4} error={errors.description?.message} {...register('description')} />
+
+      <div className="flex items-center justify-end gap-3">
+        <Button variant="outline" type="button" onClick={onCancel} disabled={isSubmitting}>
+          Cancel
+        </Button>
+        <Button type="submit" isLoading={isSubmitting}>
+          {submitText}
+        </Button>
+      </div>
+    </form>
+  );
+}

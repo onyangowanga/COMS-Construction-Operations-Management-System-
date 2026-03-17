@@ -10,4 +10,5 @@ export * from './notifications-events';
 export * from './documents-reports';
 export * from './procurement-subcontractors';
 export * from './suppliers';
+export * from './contracts';
 export * from './permissions';
