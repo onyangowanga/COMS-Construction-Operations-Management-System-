@@ -271,6 +271,14 @@ class SubcontractCreateSerializer(serializers.Serializer):
         allow_null=True
     )
     notes = serializers.CharField(required=False, allow_blank=True)
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        if attrs.get('contract_reference') and not getattr(user, 'is_superuser', False):
+            raise serializers.ValidationError({
+                'contract_reference': 'Only superusers can manually assign contract references.'
+            })
+        return attrs
     
     def create(self, validated_data):
         """Create subcontract using service layer"""
@@ -403,6 +411,14 @@ class ClaimSubmitSerializer(serializers.Serializer):
     claimed_amount = serializers.DecimalField(max_digits=15, decimal_places=2)
     description = serializers.CharField(required=False, allow_blank=True)
     notes = serializers.CharField(required=False, allow_blank=True)
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        if attrs.get('claim_number') and not getattr(user, 'is_superuser', False):
+            raise serializers.ValidationError({
+                'claim_number': 'Only superusers can manually assign claim numbers.'
+            })
+        return attrs
     
     def create(self, validated_data):
         """Submit claim using service layer"""

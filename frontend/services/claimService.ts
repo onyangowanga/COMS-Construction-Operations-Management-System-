@@ -19,6 +19,12 @@ async function withFallback<T>(primary: () => Promise<T>, fallback: () => Promis
 }
 
 export const claimService = {
+  async getNextNumber(projectId: string): Promise<{ claim_number: string; sequence: number }> {
+    return api.get<{ claim_number: string; sequence: number }>('/subcontract-claims/next-number/', {
+      params: { project_id: projectId },
+    });
+  },
+
   /**
    * Get all claims
    */

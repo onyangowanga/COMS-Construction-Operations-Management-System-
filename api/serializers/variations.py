@@ -159,11 +159,13 @@ class VariationOrderCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating variation orders"""
     
     project_id = serializers.UUIDField()
+    reference_number = serializers.CharField(required=False, allow_blank=True)
     
     class Meta:
         model = VariationOrder
         fields = [
             'project_id',
+            'reference_number',
             'title',
             'description',
             'change_type',
@@ -176,17 +178,30 @@ class VariationOrderCreateSerializer(serializers.ModelSerializer):
             'impact_on_schedule',
             'technical_notes',
         ]
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        reference_number = attrs.get('reference_number')
+
+        if reference_number and not getattr(user, 'is_superuser', False):
+            raise serializers.ValidationError({
+                'reference_number': 'Only superusers can manually assign variation reference numbers.'
+            })
+
+        return attrs
     
     def create(self, validated_data):
         """Create variation order via service layer"""
         from apps.variations.services import VariationService
         
         project_id = validated_data.pop('project_id')
+        reference_number = validated_data.pop('reference_number', '').strip() or None
         user = self.context['request'].user
         
         return VariationService.create_variation(
             project_id=str(project_id),
             created_by=user,
+            reference_number=reference_number,
             **validated_data
         )
 

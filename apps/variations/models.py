@@ -64,8 +64,10 @@ class VariationOrder(models.Model):
     
     reference_number = models.CharField(
         max_length=50,
-        unique=True,
         help_text="Unique variation order reference (e.g., VO-2026-001)"
+    )
+    sequence = models.IntegerField(
+        help_text="Sequence component used for variation reference generation"
     )
     
     title = models.CharField(
@@ -255,8 +257,15 @@ class VariationOrder(models.Model):
         indexes = [
             models.Index(fields=['project', 'status']),
             models.Index(fields=['reference_number']),
+            models.Index(fields=['project', 'sequence']),
             models.Index(fields=['status']),
             models.Index(fields=['instruction_date']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['project', 'sequence'],
+                name='unique_variation_sequence_per_project',
+            )
         ]
         verbose_name = 'Variation Order'
         verbose_name_plural = 'Variation Orders'

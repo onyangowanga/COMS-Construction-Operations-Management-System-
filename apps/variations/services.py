@@ -11,6 +11,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
+from apps.common.services import generate_variation_code
 from apps.variations.models import VariationOrder
 from apps.projects.models import Project
 from apps.authentication.models import User
@@ -21,38 +22,9 @@ class VariationService:
     
     @staticmethod
     def generate_reference_number(project: Project) -> str:
-        """
-        Generate unique variation order reference number.
-        
-        Format: VO-{PROJECT_CODE}-{YEAR}-{SEQUENCE}
-        Example: VO-PRJ001-2026-001
-        """
-        from datetime import datetime
-        
-        year = datetime.now().year
-        project_code = project.code or str(project.id)[:6]
-        
-        # Get last variation for this project in current year
-        last_variation = VariationOrder.objects.filter(
-            project=project,
-            instruction_date__year=year
-        ).order_by('-reference_number').first()
-        
-        if last_variation and last_variation.reference_number:
-            # Extract sequence number
-            parts = last_variation.reference_number.split('-')
-            if len(parts) >= 4:
-                try:
-                    last_seq = int(parts[-1])
-                    sequence = last_seq + 1
-                except (ValueError, IndexError):
-                    sequence = 1
-            else:
-                sequence = 1
-        else:
-            sequence = 1
-        
-        return f"VO-{project_code}-{year}-{sequence:03d}"
+        """Generate a project-scoped variation reference number."""
+        reference_number, _, _ = generate_variation_code(project)
+        return reference_number
     
     @staticmethod
     @transaction.atomic
@@ -63,6 +35,7 @@ class VariationService:
         estimated_value: Decimal,
         instruction_date: Any,
         created_by: User,
+        reference_number: Optional[str] = None,
         change_type: str = 'SCOPE_CHANGE',
         priority: str = 'MEDIUM',
         **kwargs
@@ -86,13 +59,17 @@ class VariationService:
         """
         project = Project.objects.select_for_update().get(id=project_id)
         
-        # Generate reference number
-        reference_number = VariationService.generate_reference_number(project)
+        # Always allocate the next project sequence; superusers may override display code.
+        generated_reference, sequence, _ = generate_variation_code(project)
+        final_reference = generated_reference
+        if reference_number and getattr(created_by, 'is_superuser', False):
+            final_reference = reference_number
         
         # Create variation order
         variation = VariationOrder.objects.create(
             project=project,
-            reference_number=reference_number,
+            reference_number=final_reference,
+            sequence=sequence,
             title=title,
             description=description,
             estimated_value=estimated_value,

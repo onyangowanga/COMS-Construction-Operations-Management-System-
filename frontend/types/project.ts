@@ -28,6 +28,7 @@ export interface Project {
 }
 
 export interface ProjectFormInput {
+  code?: string;
   name: string;
   client: string;
   contract_value: string;

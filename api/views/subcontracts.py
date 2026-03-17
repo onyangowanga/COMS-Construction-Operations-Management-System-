@@ -28,6 +28,8 @@ from apps.subcontracts.selectors import (
     ClaimSelector
 )
 from apps.subcontracts.services import SubcontractService
+from apps.common.services import generate_claim_code, generate_contract_code
+from apps.projects.models import Project
 from api.serializers.subcontracts import (
     SubcontractorSerializer,
     SubcontractorBasicSerializer,
@@ -182,6 +184,26 @@ class SubcontractViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(project_id=project_id)
         
         return queryset
+
+    @extend_schema(
+        summary="Preview next subcontract reference",
+        description="Returns the next generated subcontract contract reference for the current organization.",
+    )
+    @action(detail=False, methods=['get'], url_path='next-reference')
+    def next_reference(self, request):
+        organization = getattr(request.user, 'organization', None)
+        if organization is None:
+            return Response({'detail': 'Organization scope is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        contract_reference, sequence, year = generate_contract_code(organization)
+        return Response(
+            {
+                'contract_reference': contract_reference,
+                'sequence': sequence,
+                'year': year,
+            },
+            status=status.HTTP_200_OK,
+        )
     
     @extend_schema(
         summary="Create new subcontract",
@@ -330,6 +352,38 @@ class SubcontractClaimViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(subcontract_id=subcontract_id)
         
         return queryset
+
+    @extend_schema(
+        summary="Preview next subcontract claim number",
+        description="Returns the next generated claim number for a selected project.",
+        parameters=[
+            OpenApiParameter(
+                name='project_id',
+                type=str,
+                description='Project UUID',
+                required=True,
+            ),
+        ],
+    )
+    @action(detail=False, methods=['get'], url_path='next-number')
+    def next_number(self, request):
+        project_id = request.query_params.get('project_id')
+        if not project_id:
+            return Response({'detail': 'project_id query parameter is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            project = Project.objects.get(id=project_id, organization=request.user.organization)
+        except Project.DoesNotExist:
+            return Response({'detail': 'Project not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        claim_number, sequence, _ = generate_claim_code(project)
+        return Response(
+            {
+                'claim_number': claim_number,
+                'sequence': sequence,
+            },
+            status=status.HTTP_200_OK,
+        )
     
     @extend_schema(
         summary="Submit new claim",

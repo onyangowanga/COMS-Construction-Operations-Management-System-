@@ -7,8 +7,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db import transaction
-from django.utils import timezone
 
+from apps.common.services import generate_project_code
 from apps.projects.models import Project, ProjectStage
 from api.serializers.projects import (
     ProjectSerializer, ProjectListSerializer, ProjectStageSerializer
@@ -38,26 +38,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at', 'start_date', 'project_value', 'name']
     ordering = ['-created_at']
 
-    def _generate_project_code(self, organization) -> str:
-        """Generate a project code in the format PRJ-{YEAR}-{SEQ}."""
-        year = timezone.now().year
-        prefix = f"PRJ-{year}-"
-
-        queryset = Project.objects.filter(code__startswith=prefix)
-        if organization is not None:
-            queryset = queryset.filter(organization=organization)
-
-        last_project = queryset.select_for_update().order_by('-code').first()
-        sequence = 1
-
-        if last_project and last_project.code:
-            try:
-                sequence = int(last_project.code.split('-')[-1]) + 1
-            except (ValueError, IndexError):
-                sequence = 1
-
-        return f"{prefix}{sequence:03d}"
-
     @transaction.atomic
     def perform_create(self, serializer):
         """Auto-generate project code unless a superuser explicitly provides one."""
@@ -69,15 +49,50 @@ class ProjectViewSet(viewsets.ModelViewSet):
             organization = user.organization
 
         can_override_code = bool(getattr(user, 'is_superuser', False) and provided_code)
-        code = provided_code if can_override_code else self._generate_project_code(organization)
+        if can_override_code:
+            serializer.save(organization=organization, code=provided_code)
+            return
 
-        serializer.save(organization=organization, code=code)
+        code, sequence, year = generate_project_code(organization)
+        serializer.save(
+            organization=organization,
+            code=code,
+            sequence=sequence,
+            year=year,
+        )
     
     def get_serializer_class(self):
         """Use lightweight serializer for list view"""
         if self.action == 'list':
             return ProjectListSerializer
         return ProjectSerializer
+
+    @action(detail=False, methods=['get'], url_path='next-code')
+    def next_code(self, request):
+        """Preview next project code for the current organization scope."""
+        user = request.user
+        organization = getattr(user, 'organization', None)
+
+        org_id = request.query_params.get('organization_id')
+        if getattr(user, 'is_superuser', False) and org_id:
+            from apps.authentication.models import Organization
+            try:
+                organization = Organization.objects.get(id=org_id)
+            except Organization.DoesNotExist:
+                return Response({'detail': 'Organization not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if organization is None:
+            return Response({'detail': 'Organization scope is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        code, sequence, year = generate_project_code(organization)
+        return Response(
+            {
+                'code': code,
+                'sequence': sequence,
+                'year': year,
+            },
+            status=status.HTTP_200_OK,
+        )
     
     @action(detail=True, methods=['get'])
     def stages(self, request, pk=None):

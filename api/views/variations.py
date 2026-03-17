@@ -14,6 +14,8 @@ from drf_spectacular.types import OpenApiTypes
 from apps.variations.models import VariationOrder
 from apps.variations import selectors
 from apps.variations.services import VariationService
+from apps.projects.models import Project
+from apps.common.services import generate_variation_code
 from api.serializers.variations import (
     VariationOrderSerializer,
     VariationOrderListSerializer,
@@ -70,6 +72,40 @@ class VariationOrderViewSet(viewsets.ModelViewSet):
         elif self.action == 'create':
             return VariationOrderCreateSerializer
         return VariationOrderSerializer
+
+    @extend_schema(
+        summary="Preview next variation reference",
+        description="Returns the next generated variation reference for a project.",
+        parameters=[
+            OpenApiParameter(
+                name='project_id',
+                location=OpenApiParameter.QUERY,
+                type=OpenApiTypes.UUID,
+                required=True,
+                description='Project UUID',
+            ),
+        ],
+        responses={200: OpenApiTypes.OBJECT},
+    )
+    @action(detail=False, methods=['get'], url_path='next-reference')
+    def next_reference(self, request):
+        project_id = request.query_params.get('project_id')
+        if not project_id:
+            return Response({'detail': 'project_id query parameter is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            project = Project.objects.get(id=project_id)
+        except Project.DoesNotExist:
+            return Response({'detail': 'Project not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        reference_number, sequence, _ = generate_variation_code(project)
+        return Response(
+            {
+                'reference_number': reference_number,
+                'sequence': sequence,
+            },
+            status=status.HTTP_200_OK,
+        )
     
     @extend_schema(
         summary="Submit variation for approval",

@@ -75,8 +75,10 @@ class LocalPurchaseOrder(models.Model):
     )
     lpo_number = models.CharField(
         max_length=50,
-        unique=True,
         help_text=_("Unique LPO number")
+    )
+    sequence = models.IntegerField(
+        help_text=_("Sequence component used for LPO number generation")
     )
     issue_date = models.DateField()
     total_amount = models.DecimalField(
@@ -102,8 +104,15 @@ class LocalPurchaseOrder(models.Model):
         ordering = ['-issue_date']
         indexes = [
             models.Index(fields=['lpo_number']),
+            models.Index(fields=['project', 'sequence']),
             models.Index(fields=['supplier', 'project']),
             models.Index(fields=['status']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['project', 'sequence'],
+                name='unique_lpo_sequence_per_project',
+            )
         ]
     
     def __str__(self):

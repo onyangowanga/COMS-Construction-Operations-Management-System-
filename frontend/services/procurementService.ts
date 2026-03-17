@@ -52,6 +52,13 @@ function toPayload(data: Partial<ProcurementOrderFormInput>): Record<string, unk
 }
 
 export const procurementService = {
+  async getNextReference(projectId: string): Promise<{ lpo_number: string; sequence: number }> {
+    const data = await api.get<{ lpo_number: string; sequence: number }>('/purchase-orders/next-number/', {
+      params: { project_id: projectId },
+    });
+    return data;
+  },
+
   // List suppliers so the form can render a supplier dropdown
   async getSuppliers(): Promise<Supplier[]> {
     const data = await supplierService.getSuppliers({ page_size: 200, ordering: 'name' });

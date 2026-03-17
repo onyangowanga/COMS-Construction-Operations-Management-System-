@@ -177,6 +177,15 @@ class SubcontractAgreement(models.Model):
         related_name='subcontracts',
         help_text=_("Project this subcontract belongs to")
     )
+
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='subcontract_agreements',
+        null=True,
+        blank=True,
+        help_text=_("Organization owning this contract")
+    )
     
     subcontractor = models.ForeignKey(
         Subcontractor,
@@ -189,8 +198,13 @@ class SubcontractAgreement(models.Model):
     
     contract_reference = models.CharField(
         max_length=100,
-        unique=True,
         help_text=_("Unique contract reference number (e.g., SC-2026-001)")
+    )
+    year = models.IntegerField(
+        help_text=_("Year component used for contract code generation")
+    )
+    sequence = models.IntegerField(
+        help_text=_("Sequence component used for contract code generation")
     )
     
     scope_of_work = models.TextField(
@@ -305,12 +319,24 @@ class SubcontractAgreement(models.Model):
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['project', 'status']),
+            models.Index(fields=['organization', 'year', 'sequence']),
             models.Index(fields=['subcontractor']),
             models.Index(fields=['status']),
             models.Index(fields=['start_date', 'end_date']),
         ]
         verbose_name = _('Subcontract Agreement')
         verbose_name_plural = _('Subcontract Agreements')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['organization', 'year', 'sequence'],
+                name='unique_contract_sequence_per_org_year',
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.project_id and self.organization_id is None:
+            self.organization = self.project.organization
+        super().save(*args, **kwargs)
     
     def __str__(self):
         return f"{self.contract_reference} - {self.subcontractor.name}"
@@ -403,12 +429,24 @@ class SubcontractClaim(models.Model):
         related_name='claims',
         help_text=_("Subcontract agreement this claim belongs to")
     )
+
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name='subcontract_claims',
+        null=True,
+        blank=True,
+        help_text=_("Project this claim belongs to")
+    )
     
     # === CLAIM DETAILS ===
     
     claim_number = models.CharField(
         max_length=50,
         help_text=_("Sequential claim number (e.g., SC-001-C001)")
+    )
+    sequence = models.IntegerField(
+        help_text=_("Sequence component used for claim number generation")
     )
     
     period_start = models.DateField(
@@ -541,6 +579,7 @@ class SubcontractClaim(models.Model):
         db_table = 'subcontract_claims'
         ordering = ['-created_at']
         indexes = [
+            models.Index(fields=['project', 'sequence']),
             models.Index(fields=['subcontract', 'status']),
             models.Index(fields=['status']),
             models.Index(fields=['submitted_date']),
@@ -552,8 +591,17 @@ class SubcontractClaim(models.Model):
             models.UniqueConstraint(
                 fields=['subcontract', 'claim_number'],
                 name='unique_claim_number_per_subcontract'
+            ),
+            models.UniqueConstraint(
+                fields=['project', 'sequence'],
+                name='unique_claim_sequence_per_project'
             )
         ]
+
+    def save(self, *args, **kwargs):
+        if self.subcontract_id and self.project_id is None:
+            self.project = self.subcontract.project
+        super().save(*args, **kwargs)
     
     def __str__(self):
         return f"{self.claim_number} - {self.subcontract.contract_reference}"

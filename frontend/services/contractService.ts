@@ -30,6 +30,11 @@ function normalizeList(
 }
 
 export const contractService = {
+  async getNextNumber(): Promise<{ contract_reference: string; sequence: number; year: number }> {
+    const data = await api.get<{ contract_reference: string; sequence: number; year: number }>('/subcontracts/next-reference/');
+    return data;
+  },
+
   async getContracts(params?: ContractQueryParams): Promise<PaginatedResponse<Contract> | Contract[]> {
     const data = await api.get<PaginatedResponse<Contract> | Contract[]>('/contracts/', {
       params,

@@ -41,6 +41,8 @@ class Project(models.Model):
     )
     name = models.CharField(max_length=200, help_text=_("Project name"))
     code = models.CharField(max_length=50, help_text=_("Unique project code"))
+    year = models.IntegerField(help_text=_("Year component used for code generation"))
+    sequence = models.IntegerField(help_text=_("Sequence component used for code generation"))
     client_name = models.CharField(max_length=200, blank=True, help_text=_("Client name"))
     location = models.TextField(blank=True, help_text=_("Project location"))
     
@@ -85,9 +87,16 @@ class Project(models.Model):
         indexes = [
             models.Index(fields=['organization', 'status']),
             models.Index(fields=['code']),
+            models.Index(fields=['organization', 'year', 'sequence']),
             models.Index(fields=['client_name']),
         ]
         unique_together = [['organization', 'code']]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['organization', 'year', 'sequence'],
+                name='unique_project_sequence_per_org_year',
+            )
+        ]
     
     def __str__(self):
         return f"{self.code} - {self.name}"

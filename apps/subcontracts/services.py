@@ -19,6 +19,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
+from apps.common.services import generate_claim_code, generate_contract_code
 from apps.subcontracts.models import (
     Subcontractor,
     SubcontractAgreement,
@@ -99,43 +100,15 @@ class SubcontractService:
     
     @staticmethod
     def generate_contract_reference(project: Project) -> str:
-        """Generate subcontract reference in the format SC-{PROJECT_CODE}-{YEAR}-{SEQ}."""
-        year = timezone.now().year
-        project_code = (getattr(project, 'code', None) or str(project.id)[:6]).upper()
-        prefix = f"SC-{project_code}-{year}-"
-
-        last_contract = SubcontractAgreement.objects.select_for_update().filter(
-            project=project,
-            contract_reference__startswith=prefix,
-        ).order_by('-contract_reference').first()
-
-        sequence = 1
-        if last_contract and last_contract.contract_reference:
-            try:
-                sequence = int(last_contract.contract_reference.split('-')[-1]) + 1
-            except (ValueError, IndexError):
-                sequence = 1
-
-        return f"{prefix}{sequence:03d}"
+        """Generate an organization-scoped subcontract reference."""
+        contract_reference, _, _ = generate_contract_code(project.organization)
+        return contract_reference
 
     @staticmethod
     def generate_claim_number(subcontract: SubcontractAgreement) -> str:
-        """Generate subcontract claim number in the format {CONTRACT_REFERENCE}-C{SEQ}."""
-        prefix = f"{subcontract.contract_reference}-C"
-
-        last_claim = SubcontractClaim.objects.select_for_update().filter(
-            subcontract=subcontract,
-            claim_number__startswith=prefix,
-        ).order_by('-claim_number').first()
-
-        sequence = 1
-        if last_claim and last_claim.claim_number:
-            try:
-                sequence = int(last_claim.claim_number.split('-C')[-1]) + 1
-            except (ValueError, IndexError):
-                sequence = 1
-
-        return f"{prefix}{sequence:03d}"
+        """Generate a project-scoped claim number."""
+        claim_number, _, _ = generate_claim_code(subcontract.project)
+        return claim_number
 
     @staticmethod
     @transaction.atomic
@@ -207,13 +180,19 @@ class SubcontractService:
         if subcontractor.organization != project.organization:
             raise ValidationError("Subcontractor must belong to the same organization")
         
-        contract_reference = contract_reference or SubcontractService.generate_contract_reference(project)
+        contract_year = timezone.now().year
+        contract_sequence = 0
+        if not contract_reference:
+            contract_reference, contract_sequence, contract_year = generate_contract_code(project.organization)
 
         # Create subcontract
         subcontract = SubcontractAgreement.objects.create(
             project=project,
+            organization=project.organization,
             subcontractor=subcontractor,
             contract_reference=contract_reference,
+            year=contract_year,
+            sequence=contract_sequence,
             scope_of_work=scope_of_work,
             contract_value=contract_value,
             retention_percentage=retention_percentage,
@@ -321,12 +300,16 @@ class SubcontractService:
         # Calculate previous cumulative
         previous_cumulative = subcontract.total_certified
 
-        claim_number = claim_number or SubcontractService.generate_claim_number(subcontract)
+        claim_sequence = 0
+        if not claim_number:
+            claim_number, claim_sequence, _ = generate_claim_code(subcontract.project)
         
         # Create claim
         claim = SubcontractClaim.objects.create(
             subcontract=subcontract,
+            project=subcontract.project,
             claim_number=claim_number,
+            sequence=claim_sequence,
             period_start=period_start,
             period_end=period_end,
             claimed_amount=claimed_amount,

@@ -11,6 +11,11 @@ import type {
   VariationQueryParams,
 } from '@/types';
 
+interface NextVariationReferenceResponse {
+  reference_number: string;
+  sequence: number;
+}
+
 export const variationService = {
   /**
    * Get all variations
@@ -44,6 +49,20 @@ export const variationService = {
   async createVariation(data: VariationFormInput): Promise<VariationOrder> {
     try {
       const response = await api.post<VariationOrder>('/variations/', data);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Preview next generated variation reference number for a project.
+   */
+  async getNextReference(projectId: string): Promise<NextVariationReferenceResponse> {
+    try {
+      const response = await api.get<NextVariationReferenceResponse>('/variations/next-reference/', {
+        params: { project_id: projectId },
+      });
       return response;
     } catch (error) {
       throw error;

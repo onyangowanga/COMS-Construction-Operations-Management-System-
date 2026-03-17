@@ -13,6 +13,7 @@ export interface VariationQueryParams {
 
 export interface VariationFormInput {
   project_id: string;
+  reference_number?: string;
   title: string;
   description: string;
   estimated_value: string;

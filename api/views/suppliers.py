@@ -8,9 +8,9 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.db.models.deletion import ProtectedError
 from django.db import transaction
-from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 
+from apps.common.services import generate_lpo_number
 from apps.suppliers.models import Supplier, LocalPurchaseOrder, SupplierInvoice
 from api.serializers.suppliers import (
     SupplierSerializer, SupplierListSerializer,
@@ -151,25 +151,28 @@ class LocalPurchaseOrderViewSet(viewsets.ModelViewSet):
     ordering_fields = ['issue_date', 'total_amount', 'created_at']
     ordering = ['-issue_date']
 
-    def _generate_lpo_number(self, project) -> str:
-        """Generate LPO number in the format LPO-{PROJECT_CODE}-{YEAR}-{SEQ}."""
-        year = timezone.now().year
-        project_code = (getattr(project, 'code', None) or str(project.id)[:6]).upper()
-        prefix = f"LPO-{project_code}-{year}-"
+    @action(detail=False, methods=['get'], url_path='next-number')
+    def next_number(self, request):
+        """Preview next LPO number for a selected project."""
+        project_id = request.query_params.get('project_id')
+        if not project_id:
+            return Response({'detail': 'project_id query parameter is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        last_lpo = LocalPurchaseOrder.objects.select_for_update().filter(
-            project=project,
-            lpo_number__startswith=prefix,
-        ).order_by('-lpo_number').first()
+        from apps.projects.models import Project
 
-        sequence = 1
-        if last_lpo and last_lpo.lpo_number:
-            try:
-                sequence = int(last_lpo.lpo_number.split('-')[-1]) + 1
-            except (ValueError, IndexError):
-                sequence = 1
+        try:
+            project = Project.objects.get(id=project_id)
+        except Project.DoesNotExist:
+            return Response({'detail': 'Project not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        return f"{prefix}{sequence:03d}"
+        lpo_number, sequence, _ = generate_lpo_number(project)
+        return Response(
+            {
+                'lpo_number': lpo_number,
+                'sequence': sequence,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     @transaction.atomic
     def perform_create(self, serializer):
@@ -179,9 +182,12 @@ class LocalPurchaseOrderViewSet(viewsets.ModelViewSet):
         project = serializer.validated_data.get('project')
 
         can_override_lpo_number = bool(getattr(user, 'is_superuser', False) and provided_lpo_number)
-        lpo_number = provided_lpo_number if can_override_lpo_number else self._generate_lpo_number(project)
+        if can_override_lpo_number:
+            serializer.save(lpo_number=provided_lpo_number)
+            return
 
-        serializer.save(lpo_number=lpo_number)
+        lpo_number, sequence, _ = generate_lpo_number(project)
+        serializer.save(lpo_number=lpo_number, sequence=sequence)
     
     @action(detail=True, methods=['post'], url_path='approve')
     def approve(self, request, pk=None):

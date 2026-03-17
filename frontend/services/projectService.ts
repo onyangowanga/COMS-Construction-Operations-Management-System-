@@ -32,11 +32,9 @@ function mapProjectStatus(status: string): string {
 }
 
 function buildProjectPayload(data: ProjectFormInput) {
-  const generatedCode = `PRJ-${Date.now().toString().slice(-8)}`;
-
   return {
     name: data.name,
-    code: (data as any).code || generatedCode,
+    code: (data as any).code,
     client_name: data.client,
     project_value: data.contract_value,
     start_date: data.start_date,
@@ -63,6 +61,17 @@ function mapProjectStage(raw: any): ProjectStage {
 }
 
 export const projectService = {
+  async getNextCode(organizationId?: string): Promise<{ code: string; sequence: number; year: number }> {
+    try {
+      const response = await api.get<{ code: string; sequence: number; year: number }>('/projects/next-code/', {
+        params: organizationId ? { organization_id: organizationId } : undefined,
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   /**
    * Get all projects
    */
