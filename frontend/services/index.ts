@@ -18,3 +18,4 @@ export { contractService } from './contractService';
 export { activityService } from './activityService';
 export { notificationService } from './notificationService';
 export { eventService } from './eventService';
+export { workflowService } from './workflowService';

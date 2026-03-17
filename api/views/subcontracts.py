@@ -45,6 +45,7 @@ from api.serializers.subcontracts import (
     SubcontractSummarySerializer,
     PaymentSummarySerializer,
 )
+from apps.workflows.services import WorkflowEngineService, WorkflowEngineError
 
 
 class SubcontractorViewSet(viewsets.ModelViewSet):
@@ -236,17 +237,21 @@ class SubcontractViewSet(viewsets.ModelViewSet):
         Activate a DRAFT subcontract.
         """
         subcontract = self.get_object()
-        
-        activated = SubcontractService.activate_subcontract(
-            subcontract=subcontract,
-            activated_by=request.user
-        )
-        
-        serializer = SubcontractAgreementSerializer(
-            activated,
-            context={'request': request}
-        )
-        return Response(serializer.data)
+
+        try:
+            WorkflowEngineService.perform_transition(
+                user=request.user,
+                module='CONTRACT',
+                entity_id=str(subcontract.id),
+                action='activate',
+                comment=request.data.get('comment', ''),
+                payload={},
+            )
+            subcontract.refresh_from_db()
+            serializer = SubcontractAgreementSerializer(subcontract, context={'request': request})
+            return Response(serializer.data)
+        except WorkflowEngineError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
     
     @extend_schema(
         summary="Complete subcontract",
@@ -261,17 +266,21 @@ class SubcontractViewSet(viewsets.ModelViewSet):
         Mark subcontract as COMPLETED.
         """
         subcontract = self.get_object()
-        
-        completed = SubcontractService.complete_subcontract(
-            subcontract=subcontract,
-            completed_by=request.user
-        )
-        
-        serializer = SubcontractAgreementSerializer(
-            completed,
-            context={'request': request}
-        )
-        return Response(serializer.data)
+
+        try:
+            WorkflowEngineService.perform_transition(
+                user=request.user,
+                module='CONTRACT',
+                entity_id=str(subcontract.id),
+                action='complete',
+                comment=request.data.get('comment', ''),
+                payload={},
+            )
+            subcontract.refresh_from_db()
+            serializer = SubcontractAgreementSerializer(subcontract, context={'request': request})
+            return Response(serializer.data)
+        except WorkflowEngineError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
     
     @extend_schema(
         summary="Get payment summary",
@@ -423,20 +432,27 @@ class SubcontractClaimViewSet(viewsets.ModelViewSet):
         }
         """
         claim = self.get_object()
-        
-        serializer = ClaimCertifySerializer(
-            claim,
-            data=request.data,
-            context={'request': request}
-        )
+
+        serializer = ClaimCertifySerializer(claim, data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        certified_claim = serializer.save()
-        
-        output_serializer = SubcontractClaimSerializer(
-            certified_claim,
-            context={'request': request}
-        )
-        return Response(output_serializer.data)
+
+        try:
+            WorkflowEngineService.perform_transition(
+                user=request.user,
+                module='CLAIM',
+                entity_id=str(claim.id),
+                action='certify',
+                comment=request.data.get('notes', ''),
+                payload={
+                    'certified_amount': serializer.validated_data.get('certified_amount'),
+                    'notes': serializer.validated_data.get('notes', ''),
+                },
+            )
+            claim.refresh_from_db()
+            output_serializer = SubcontractClaimSerializer(claim, context={'request': request})
+            return Response(output_serializer.data)
+        except WorkflowEngineError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
     
     @extend_schema(
         summary="Reject payment claim",
@@ -457,20 +473,26 @@ class SubcontractClaimViewSet(viewsets.ModelViewSet):
         }
         """
         claim = self.get_object()
-        
-        serializer = ClaimRejectSerializer(
-            claim,
-            data=request.data,
-            context={'request': request}
-        )
+
+        serializer = ClaimRejectSerializer(claim, data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        rejected_claim = serializer.save()
-        
-        output_serializer = SubcontractClaimSerializer(
-            rejected_claim,
-            context={'request': request}
-        )
-        return Response(output_serializer.data)
+
+        try:
+            WorkflowEngineService.perform_transition(
+                user=request.user,
+                module='CLAIM',
+                entity_id=str(claim.id),
+                action='reject',
+                comment=serializer.validated_data.get('rejection_reason', ''),
+                payload={
+                    'rejection_reason': serializer.validated_data.get('rejection_reason', ''),
+                },
+            )
+            claim.refresh_from_db()
+            output_serializer = SubcontractClaimSerializer(claim, context={'request': request})
+            return Response(output_serializer.data)
+        except WorkflowEngineError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
     
     @extend_schema(
         summary="Mark claim as paid",
@@ -491,20 +513,26 @@ class SubcontractClaimViewSet(viewsets.ModelViewSet):
         }
         """
         claim = self.get_object()
-        
-        serializer = ClaimMarkPaidSerializer(
-            claim,
-            data=request.data,
-            context={'request': request}
-        )
+
+        serializer = ClaimMarkPaidSerializer(claim, data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        paid_claim = serializer.save()
-        
-        output_serializer = SubcontractClaimSerializer(
-            paid_claim,
-            context={'request': request}
-        )
-        return Response(output_serializer.data)
+
+        try:
+            WorkflowEngineService.perform_transition(
+                user=request.user,
+                module='CLAIM',
+                entity_id=str(claim.id),
+                action='pay',
+                comment=request.data.get('comment', ''),
+                payload={
+                    'payment_reference': serializer.validated_data.get('payment_reference', ''),
+                },
+            )
+            claim.refresh_from_db()
+            output_serializer = SubcontractClaimSerializer(claim, context={'request': request})
+            return Response(output_serializer.data)
+        except WorkflowEngineError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
     
     @extend_schema(
         summary="Get pending claims",

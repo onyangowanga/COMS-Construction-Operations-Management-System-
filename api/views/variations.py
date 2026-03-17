@@ -14,6 +14,7 @@ from drf_spectacular.types import OpenApiTypes
 from apps.variations.models import VariationOrder
 from apps.variations import selectors
 from apps.variations.services import VariationService
+from apps.workflows.services import WorkflowEngineService, WorkflowEngineError
 from apps.projects.models import Project
 from apps.common.services import generate_variation_code
 from api.serializers.variations import (
@@ -121,18 +122,20 @@ class VariationOrderViewSet(viewsets.ModelViewSet):
         Submit variation for approval.
         """
         variation = self.get_object()
-        
-        serializer = VariationSubmitSerializer(
-            data={'variation_id': pk},
-            context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        updated_variation = serializer.save()
-        
-        return Response(
-            VariationOrderSerializer(updated_variation).data,
-            status=status.HTTP_200_OK
-        )
+
+        try:
+            WorkflowEngineService.perform_transition(
+                user=request.user,
+                module='VARIATION',
+                entity_id=str(variation.id),
+                action='submit',
+                comment=request.data.get('comment', ''),
+                payload={},
+            )
+            variation.refresh_from_db()
+            return Response(VariationOrderSerializer(variation).data, status=status.HTTP_200_OK)
+        except WorkflowEngineError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
     
     @extend_schema(
         summary="Approve variation",
@@ -154,21 +157,23 @@ class VariationOrderViewSet(viewsets.ModelViewSet):
         }
         """
         variation = self.get_object()
-        
-        serializer = VariationApproveSerializer(
-            data={
-                'variation_id': pk,
-                **request.data
-            },
-            context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        updated_variation = serializer.save()
-        
-        return Response(
-            VariationOrderSerializer(updated_variation).data,
-            status=status.HTTP_200_OK
-        )
+
+        try:
+            WorkflowEngineService.perform_transition(
+                user=request.user,
+                module='VARIATION',
+                entity_id=str(variation.id),
+                action='approve',
+                comment=request.data.get('notes', ''),
+                payload={
+                    'approved_value': request.data.get('approved_value'),
+                    'notes': request.data.get('notes', ''),
+                },
+            )
+            variation.refresh_from_db()
+            return Response(VariationOrderSerializer(variation).data, status=status.HTTP_200_OK)
+        except WorkflowEngineError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
     
     @extend_schema(
         summary="Reject variation",
@@ -189,21 +194,22 @@ class VariationOrderViewSet(viewsets.ModelViewSet):
         }
         """
         variation = self.get_object()
-        
-        serializer = VariationRejectSerializer(
-            data={
-                'variation_id': pk,
-                **request.data
-            },
-            context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        updated_variation = serializer.save()
-        
-        return Response(
-            VariationOrderSerializer(updated_variation).data,
-            status=status.HTTP_200_OK
-        )
+
+        try:
+            WorkflowEngineService.perform_transition(
+                user=request.user,
+                module='VARIATION',
+                entity_id=str(variation.id),
+                action='reject',
+                comment=request.data.get('rejection_reason', ''),
+                payload={
+                    'rejection_reason': request.data.get('rejection_reason', ''),
+                },
+            )
+            variation.refresh_from_db()
+            return Response(VariationOrderSerializer(variation).data, status=status.HTTP_200_OK)
+        except WorkflowEngineError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
     
     @extend_schema(
         summary="Certify variation",
@@ -226,21 +232,23 @@ class VariationOrderViewSet(viewsets.ModelViewSet):
         }
         """
         variation = self.get_object()
-        
-        serializer = VariationCertifySerializer(
-            data={
-                'variation_id': pk,
-                **request.data
-            },
-            context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        updated_variation = serializer.save()
-        
-        return Response(
-            VariationOrderSerializer(updated_variation).data,
-            status=status.HTTP_200_OK
-        )
+
+        try:
+            WorkflowEngineService.perform_transition(
+                user=request.user,
+                module='VARIATION',
+                entity_id=str(variation.id),
+                action='certify',
+                comment=request.data.get('notes', ''),
+                payload={
+                    'certified_amount': request.data.get('certified_amount'),
+                    'notes': request.data.get('notes', ''),
+                },
+            )
+            variation.refresh_from_db()
+            return Response(VariationOrderSerializer(variation).data, status=status.HTTP_200_OK)
+        except WorkflowEngineError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
     
     @extend_schema(
         summary="Get pending variations",

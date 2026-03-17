@@ -9,11 +9,16 @@ from drf_spectacular.views import (
     SpectacularRedocView
 )
 from api.routers import router
+from api.views.workflows import WorkflowStateAPIView, WorkflowTransitionAPIView
 
 
 urlpatterns = [
     # API Router - all CRUD endpoints
     path('', include(router.urls)),
+
+    # Workflow Engine
+    path('workflows/<str:module>/<uuid:entity_id>/', WorkflowStateAPIView.as_view(), name='workflow-state'),
+    path('workflows/<str:module>/<uuid:entity_id>/transition/', WorkflowTransitionAPIView.as_view(), name='workflow-transition'),
     
     # API Documentation
     path('schema/', SpectacularAPIView.as_view(), name='schema'),

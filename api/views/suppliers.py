@@ -18,6 +18,7 @@ from api.serializers.suppliers import (
 )
 from api.selectors.supplier_selectors import get_suppliers_outstanding_payments
 from api.services.supplier_analytics import calculate_supplier_outstanding_payments
+from apps.workflows.services import WorkflowEngineService, WorkflowEngineError
 
 class SupplierViewSet(viewsets.ModelViewSet):
     """
@@ -196,18 +197,21 @@ class LocalPurchaseOrderViewSet(viewsets.ModelViewSet):
         
         Transitions: DRAFT -> APPROVED
         """
-        from api.services.procurement_workflow import approve_lpo, ProcurementWorkflowError
-        
         lpo = self.get_object()
-        
+
         try:
-            result = approve_lpo(lpo, approved_by=request.user)
-            return Response(result, status=status.HTTP_200_OK)
-        except ProcurementWorkflowError as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
+            WorkflowEngineService.perform_transition(
+                user=request.user,
+                module='PROCUREMENT',
+                entity_id=str(lpo.id),
+                action='approve',
+                comment=request.data.get('comment', ''),
+                payload={},
             )
+            lpo.refresh_from_db()
+            return Response(LocalPurchaseOrderSerializer(lpo).data, status=status.HTTP_200_OK)
+        except WorkflowEngineError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=True, methods=['post'], url_path='mark-delivered')
     def mark_delivered(self, request, pk=None):
@@ -216,18 +220,21 @@ class LocalPurchaseOrderViewSet(viewsets.ModelViewSet):
         
         Transitions: APPROVED/ISSUED -> DELIVERED
         """
-        from api.services.procurement_workflow import mark_lpo_delivered, ProcurementWorkflowError
-        
         lpo = self.get_object()
-        
+
         try:
-            result = mark_lpo_delivered(lpo, delivered_by=request.user)
-            return Response(result, status=status.HTTP_200_OK)
-        except ProcurementWorkflowError as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
+            WorkflowEngineService.perform_transition(
+                user=request.user,
+                module='PROCUREMENT',
+                entity_id=str(lpo.id),
+                action='deliver',
+                comment=request.data.get('comment', ''),
+                payload={},
             )
+            lpo.refresh_from_db()
+            return Response(LocalPurchaseOrderSerializer(lpo).data, status=status.HTTP_200_OK)
+        except WorkflowEngineError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=True, methods=['post'], url_path='mark-invoiced')
     def mark_invoiced(self, request, pk=None):
@@ -239,19 +246,22 @@ class LocalPurchaseOrderViewSet(viewsets.ModelViewSet):
         
         Transitions: DELIVERED -> INVOICED
         """
-        from api.services.procurement_workflow import mark_lpo_invoiced, ProcurementWorkflowError
-        
         lpo = self.get_object()
         invoice_number = request.data.get('invoice_number')
-        
+
         try:
-            result = mark_lpo_invoiced(lpo, invoiced_by=request.user, invoice_number=invoice_number)
-            return Response(result, status=status.HTTP_200_OK)
-        except ProcurementWorkflowError as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
+            WorkflowEngineService.perform_transition(
+                user=request.user,
+                module='PROCUREMENT',
+                entity_id=str(lpo.id),
+                action='invoice',
+                comment=request.data.get('comment', ''),
+                payload={'invoice_number': invoice_number},
             )
+            lpo.refresh_from_db()
+            return Response(LocalPurchaseOrderSerializer(lpo).data, status=status.HTTP_200_OK)
+        except WorkflowEngineError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=True, methods=['post'], url_path='mark-paid')
     def mark_paid(self, request, pk=None):
@@ -263,19 +273,22 @@ class LocalPurchaseOrderViewSet(viewsets.ModelViewSet):
         
         Transitions: INVOICED -> PAID
         """
-        from api.services.procurement_workflow import mark_lpo_paid, ProcurementWorkflowError
-        
         lpo = self.get_object()
         payment_reference = request.data.get('payment_reference')
-        
+
         try:
-            result = mark_lpo_paid(lpo, paid_by=request.user, payment_reference=payment_reference)
-            return Response(result, status=status.HTTP_200_OK)
-        except ProcurementWorkflowError as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
+            WorkflowEngineService.perform_transition(
+                user=request.user,
+                module='PROCUREMENT',
+                entity_id=str(lpo.id),
+                action='pay',
+                comment=request.data.get('comment', ''),
+                payload={'payment_reference': payment_reference},
             )
+            lpo.refresh_from_db()
+            return Response(LocalPurchaseOrderSerializer(lpo).data, status=status.HTTP_200_OK)
+        except WorkflowEngineError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SupplierInvoiceViewSet(viewsets.ModelViewSet):

@@ -14,3 +14,4 @@ export * from './contracts';
 export * from './activity';
 export * from './notifications';
 export * from './permissions';
+export * from './workflow';

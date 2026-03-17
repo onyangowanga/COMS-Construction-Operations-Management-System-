@@ -1,5 +1,13 @@
 from django.contrib import admin
-from .models import Approval, ProjectActivity
+from .models import (
+    Approval,
+    ProjectActivity,
+    WorkflowDefinition,
+    WorkflowHistory,
+    WorkflowInstance,
+    WorkflowState,
+    WorkflowTransition,
+)
 
 
 @admin.register(Approval)
@@ -53,3 +61,40 @@ class ProjectActivityAdmin(admin.ModelAdmin):
             'fields': ('created_at',)
         }),
     )
+
+
+@admin.register(WorkflowDefinition)
+class WorkflowDefinitionAdmin(admin.ModelAdmin):
+    list_display = ['module', 'name', 'is_active', 'created_at']
+    list_filter = ['module', 'is_active']
+    search_fields = ['module', 'name']
+
+
+@admin.register(WorkflowState)
+class WorkflowStateAdmin(admin.ModelAdmin):
+    list_display = ['name', 'workflow', 'is_initial', 'is_terminal', 'sort_order']
+    list_filter = ['workflow__module', 'is_initial', 'is_terminal']
+    search_fields = ['name', 'workflow__name', 'workflow__module']
+
+
+@admin.register(WorkflowTransition)
+class WorkflowTransitionAdmin(admin.ModelAdmin):
+    list_display = ['workflow', 'from_state', 'action', 'to_state']
+    list_filter = ['workflow__module', 'action']
+    search_fields = ['workflow__name', 'action', 'from_state__name', 'to_state__name']
+
+
+@admin.register(WorkflowInstance)
+class WorkflowInstanceAdmin(admin.ModelAdmin):
+    list_display = ['module', 'entity_id', 'current_state', 'last_transition_by', 'last_transition_at']
+    list_filter = ['module', 'current_state__name']
+    search_fields = ['module', 'entity_id']
+    readonly_fields = ['history', 'created_at', 'updated_at']
+
+
+@admin.register(WorkflowHistory)
+class WorkflowHistoryAdmin(admin.ModelAdmin):
+    list_display = ['instance', 'action', 'from_state', 'to_state', 'performed_by', 'timestamp']
+    list_filter = ['instance__module', 'action']
+    search_fields = ['instance__module', 'comment', 'action']
+    readonly_fields = ['timestamp']

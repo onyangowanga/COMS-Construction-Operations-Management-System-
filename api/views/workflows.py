@@ -5,16 +5,20 @@ Handles Approval and ProjectActivity API endpoints
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.workflows.models import Approval, ProjectActivity
 from api.serializers.workflows import (
     ApprovalSerializer, ApprovalListSerializer,
-    ProjectActivitySerializer, ProjectActivityListSerializer
+    ProjectActivitySerializer, ProjectActivityListSerializer,
+    WorkflowTransitionRequestSerializer,
 )
 from api.services.approval_workflow import (
     approve_request, reject_request, ApprovalWorkflowError
 )
+from apps.workflows.services import WorkflowEngineService, WorkflowEngineError
 
 
 class ApprovalViewSet(viewsets.ModelViewSet):
@@ -116,3 +120,48 @@ class ProjectActivityViewSet(viewsets.ReadOnlyModelViewSet):
         if self.action == 'list':
             return ProjectActivityListSerializer
         return ProjectActivitySerializer
+
+
+class WorkflowStateAPIView(APIView):
+    """Read workflow state and available transitions for a module entity."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, module: str, entity_id: str):
+        try:
+            snapshot = WorkflowEngineService.get_workflow_snapshot(
+                user=request.user,
+                module=module,
+                entity_id=entity_id,
+            )
+            return Response(snapshot, status=status.HTTP_200_OK)
+        except WorkflowEngineError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class WorkflowTransitionAPIView(APIView):
+    """Apply a workflow transition to a module entity."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, module: str, entity_id: str):
+        serializer = WorkflowTransitionRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            WorkflowEngineService.perform_transition(
+                user=request.user,
+                module=module,
+                entity_id=entity_id,
+                action=serializer.validated_data['action'],
+                comment=serializer.validated_data.get('comment', ''),
+                payload=serializer.validated_data.get('payload', {}),
+            )
+            snapshot = WorkflowEngineService.get_workflow_snapshot(
+                user=request.user,
+                module=module,
+                entity_id=entity_id,
+            )
+            return Response(snapshot, status=status.HTTP_200_OK)
+        except WorkflowEngineError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)

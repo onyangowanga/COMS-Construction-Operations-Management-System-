@@ -26,3 +26,4 @@ export {
 	useDashboardWidgets,
 } from './useReports';
 export { useDrilldownFilter } from './useDrilldownFilter';
+export { useWorkflow } from './useWorkflow';
