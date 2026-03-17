@@ -25,3 +25,4 @@ export {
 	useReportSchedules,
 	useDashboardWidgets,
 } from './useReports';
+export { useDrilldownFilter } from './useDrilldownFilter';

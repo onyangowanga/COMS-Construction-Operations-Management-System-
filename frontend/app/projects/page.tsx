@@ -23,15 +23,17 @@ import {
   Select,
   type Column,
 } from '@/components/ui';
-import { usePermissions, useProjects } from '@/hooks';
+import { useDrilldownFilter, usePermissions, useProjects } from '@/hooks';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import type { Project } from '@/types';
 
 export default function ProjectsPage() {
   const router = useRouter();
+  const drilldown = useDrilldownFilter();
   const { hasPermission } = usePermissions();
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
+  const [search, setSearch] = useState(drilldown.search);
+  const [status, setStatus] = useState(drilldown.status);
+  const [showDrilldownBanner, setShowDrilldownBanner] = useState(drilldown.isDrilldown);
   const [ordering, setOrdering] = useState('name');
   const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
@@ -146,6 +148,16 @@ export default function ProjectsPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {showDrilldownBanner && drilldown.reportId && (
+          <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+            <span>
+              <strong>Filtered view</strong> — showing results from a dashboard report.{' '}
+              <a href={`/reports/${drilldown.reportId}`} className="underline hover:text-blue-600">View report</a>
+            </span>
+            <button type="button" className="ml-4 text-blue-600 hover:text-blue-800" onClick={() => setShowDrilldownBanner(false)} aria-label="Dismiss">×</button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

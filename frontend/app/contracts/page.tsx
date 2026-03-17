@@ -7,14 +7,16 @@ import { DashboardLayout } from '@/components/layout';
 import { PermissionGuard } from '@/components/auth/PermissionGuard';
 import { ContractTable } from '@/components/contracts';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Select } from '@/components/ui';
-import { useContracts, usePermissions } from '@/hooks';
+import { useDrilldownFilter, useContracts, usePermissions } from '@/hooks';
 import type { Contract } from '@/types';
 
 export default function ContractsPage() {
   const router = useRouter();
+  const drilldown = useDrilldownFilter();
   const { hasAnyPermission } = usePermissions();
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
+  const [search, setSearch] = useState(drilldown.search);
+  const [status, setStatus] = useState(drilldown.status);
+  const [showDrilldownBanner, setShowDrilldownBanner] = useState(drilldown.isDrilldown);
   const [ordering, setOrdering] = useState('contract_number');
   const [page, setPage] = useState(1);
 
@@ -46,6 +48,16 @@ export default function ContractsPage() {
     <DashboardLayout>
       <PermissionGuard permission={['contract.view', 'view_contract', 'contract.create']}>
         <div className="space-y-6">
+          {showDrilldownBanner && drilldown.reportId && (
+            <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+              <span>
+                <strong>Filtered view</strong> — showing results from a dashboard report.{' '}
+                <a href={`/reports/${drilldown.reportId}`} className="underline hover:text-blue-600">View report</a>
+              </span>
+              <button type="button" className="ml-4 text-blue-600 hover:text-blue-800" onClick={() => setShowDrilldownBanner(false)} aria-label="Dismiss">×</button>
+            </div>
+          )}
+
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Contracts</h1>

@@ -7,13 +7,15 @@ import { DashboardLayout } from '@/components/layout';
 import { PermissionGuard } from '@/components/auth/PermissionGuard';
 import { ClaimTable } from '@/components/claims';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Select } from '@/components/ui';
-import { useClaims, usePermissions } from '@/hooks';
+import { useDrilldownFilter, useClaims, usePermissions } from '@/hooks';
 
 export default function ClaimsPage() {
   const router = useRouter();
+  const drilldown = useDrilldownFilter();
   const { hasPermission } = usePermissions();
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
+  const [search, setSearch] = useState(drilldown.search);
+  const [status, setStatus] = useState(drilldown.status);
+  const [showDrilldownBanner, setShowDrilldownBanner] = useState(drilldown.isDrilldown);
   const [ordering, setOrdering] = useState('-created_at');
   const [page, setPage] = useState(1);
 
@@ -32,9 +34,19 @@ export default function ClaimsPage() {
     <DashboardLayout>
       <PermissionGuard permission={['view_claim', 'view_claims', 'create_claim', 'certify_claim', 'approve_claim']}>
         <div className="space-y-6">
+          {showDrilldownBanner && drilldown.reportId && (
+            <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+              <span>
+                <strong>Filtered view</strong> — showing results from a dashboard report.{' '}
+                <a href={`/reports/${drilldown.reportId}`} className="underline hover:text-blue-600">View report</a>
+              </span>
+              <button type="button" className="ml-4 text-blue-600 hover:text-blue-800" onClick={() => setShowDrilldownBanner(false)} aria-label="Dismiss">×</button>
+            </div>
+          )}
+
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Claims & Valuations</h1>
+              <h1 className="text-3xl font-bold text-gray-900">Claims &amp; Valuations</h1>
               <p className="text-gray-600 mt-1">Claim creation, certification and payment tracking.</p>
             </div>
             {canCreate ? (
