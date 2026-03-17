@@ -78,7 +78,7 @@ export const Sidebar: React.FC = () => {
               alt="COMS Logo" 
               width={32} 
               height={32}
-              className="rounded"
+              className="rounded h-auto w-auto"
             />
             <span className="text-xl font-bold">COMS</span>
           </div>
@@ -90,7 +90,7 @@ export const Sidebar: React.FC = () => {
               alt="COMS" 
               width={24} 
               height={24}
-              className="rounded"
+              className="rounded h-auto w-auto"
             />
           </div>
         )}

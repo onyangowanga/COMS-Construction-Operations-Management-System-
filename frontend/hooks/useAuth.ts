@@ -6,12 +6,13 @@
 'use client';
 
 import { useCallback, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store';
 import { authService } from '@/services';
 
 export function useAuth() {
   const router = useRouter();
+  const pathname = usePathname();
   const {
     user,
     isAuthenticated,
@@ -31,8 +32,10 @@ export function useAuth() {
 
   // Check if user is authenticated on mount
   useEffect(() => {
+    const publicAuthRoutes = ['/login', '/forgot-password'];
+    if (publicAuthRoutes.includes(pathname)) return;
     initializeAuth();
-  }, [initializeAuth]);
+  }, [initializeAuth, pathname]);
 
   // Login handler
   const handleLogin = useCallback(

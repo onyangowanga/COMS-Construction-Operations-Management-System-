@@ -62,6 +62,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.dev
     container_name: coms_frontend
+    command: sh -c "find /app/.next -mindepth 1 -delete 2>/dev/null || true; npm run dev"
     volumes:
       - ./frontend:/app
       - /app/node_modules

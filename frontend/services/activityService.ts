@@ -68,7 +68,7 @@ function normalizeList(data: PaginatedResponse<unknown> | unknown[]): PaginatedR
 
 export const activityService = {
   async getActivities(params?: ActivityQueryParams): Promise<PaginatedResponse<Activity> | Activity[]> {
-    const data = await api.get<PaginatedResponse<unknown> | unknown[]>('/activity/', {
+    const data = await api.get<PaginatedResponse<unknown> | unknown[]>('/activities/', {
       params,
     });
 
@@ -76,7 +76,7 @@ export const activityService = {
   },
 
   async getActivity(id: string): Promise<Activity> {
-    const data = await api.get<unknown>(`/activity/${id}/`);
+    const data = await api.get<unknown>(`/activities/${id}/`);
     return normalize(data);
   },
 };

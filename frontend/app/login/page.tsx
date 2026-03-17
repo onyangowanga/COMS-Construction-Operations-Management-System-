@@ -47,7 +47,7 @@ export default function LoginPage() {
               alt="COMS Logo" 
               width={80} 
               height={80}
-              className="rounded-lg shadow-lg"
+              className="rounded-lg shadow-lg h-auto w-auto"
             />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">COMS</h1>
