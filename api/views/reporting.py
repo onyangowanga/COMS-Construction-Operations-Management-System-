@@ -77,7 +77,7 @@ class ReportViewSet(viewsets.ModelViewSet):
     @extend_schema(
         summary="Execute report",
         request=ReportExecuteSerializer,
-        responses={200: ReportExecutionSerializer}
+        responses={202: ReportExecutionSerializer}
     )
     @action(detail=True, methods=['post'], url_path='execute')
     def execute(self, request, pk=None):
@@ -111,7 +111,7 @@ class ReportViewSet(viewsets.ModelViewSet):
             execution,
             context={'request': request}
         )
-        return Response(output_serializer.data)
+        return Response(output_serializer.data, status=status.HTTP_202_ACCEPTED)
     
     @extend_schema(
         summary="Get execution history",
@@ -192,6 +192,29 @@ class ReportExecutionViewSet(viewsets.ReadOnlyModelViewSet):
         queryset = super().get_queryset()
         user = self.request.user
         return queryset.filter(report__organization=user.organization)
+
+    @extend_schema(
+        summary="Get execution progress",
+        responses={200: {'type': 'object', 'properties': {
+            'id': {'type': 'string'},
+            'status': {'type': 'string'},
+            'progress': {'type': 'integer'},
+            'attempt_count': {'type': 'integer'},
+            'max_attempts': {'type': 'integer'},
+            'error_message': {'type': 'string'},
+        }}}
+    )
+    @action(detail=True, methods=['get'], url_path='progress')
+    def progress(self, request, pk=None):
+        execution = self.get_object()
+        return Response({
+            'id': str(execution.id),
+            'status': execution.status,
+            'progress': execution.progress,
+            'attempt_count': execution.attempt_count,
+            'max_attempts': execution.max_attempts,
+            'error_message': execution.error_message,
+        })
 
 
 class ReportScheduleViewSet(viewsets.ModelViewSet):

@@ -619,6 +619,35 @@ class DashboardWidgetDataSelector:
         """
         organization = widget.organization
         params = widget.query_parameters or {}
+
+        if widget.report_id:
+            execution = ReportExecution.objects.filter(
+                report=widget.report,
+                status__in=[ReportExecution.Status.COMPLETED, ReportExecution.Status.CACHED],
+            ).order_by('-completed_at', '-created_at').first()
+
+            module_to_route = {
+                'projects': '/projects',
+                'procurement': '/procurement',
+                'contracts': '/contracts',
+                'variations': '/variations',
+                'claims': '/claims',
+                'reporting': '/reports',
+            }
+
+            return {
+                'value': execution.row_count if execution else 0,
+                'widget_type': widget.widget_type,
+                'chart_type': widget.chart_type,
+                'timestamp': timezone.now().isoformat(),
+                'source_report_id': str(widget.report_id),
+                'source_report_name': widget.report.name,
+                'drilldown': {
+                    'route': module_to_route.get(widget.report.module, '/reports'),
+                    'report_id': str(widget.report_id),
+                    'filters': params,
+                },
+            }
         
         # Implement different data sources
         data_sources = {

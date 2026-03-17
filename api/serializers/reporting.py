@@ -78,7 +78,8 @@ class ReportExecutionSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'report', 'schedule', 'status', 'export_format',
             'parameters', 'file_path', 'file_size', 'row_count',
-            'execution_time', 'error_message', 'cache_key',
+            'execution_time', 'error_message', 'cache_key', 'cache_expires_at',
+            'progress', 'queued_at', 'started_at', 'attempt_count', 'max_attempts', 'worker_id',
             'executed_by', 'created_at', 'completed_at',
             'duration', 'was_successful'
         ]

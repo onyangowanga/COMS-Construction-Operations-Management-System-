@@ -8,6 +8,7 @@ import io
 import os
 import time
 import hashlib
+import json
 import pandas as pd
 from decimal import Decimal
 from datetime import datetime, timedelta
@@ -140,81 +141,163 @@ class ReportService:
             use_cache: Whether to use cached results
         
         Returns:
-            ReportExecution: Execution record with file path
+            ReportExecution: Queued or cached execution record
         """
-        start_time = time.time()
-        
-        # Generate cache key
+        normalized_parameters = parameters or {}
+
+        # Generate scope-aware cache key
         cache_key = ReportService._generate_cache_key(
-            report, parameters, export_format
+            report=report,
+            parameters=normalized_parameters,
+            export_format=export_format,
+            executed_by=executed_by,
         )
-        
-        # Check cache if enabled
+
         if use_cache and report.cache_duration > 0:
-            cached_execution = cache.get(cache_key)
+            cached_execution = ReportService._find_valid_cached_execution(
+                report=report,
+                cache_key=cache_key,
+            )
             if cached_execution:
-                # Return cached execution
-                return cached_execution
-        
-        # Create execution record
+                return ReportService._create_cached_execution_reference(
+                    report=report,
+                    cached_execution=cached_execution,
+                    executed_by=executed_by,
+                    parameters=normalized_parameters,
+                    export_format=export_format,
+                    cache_key=cache_key,
+                )
+
+        # Queue asynchronous execution job
         execution = ReportExecution.objects.create(
             report=report,
-            status=ReportExecution.Status.PROCESSING,
+            status=ReportExecution.Status.PENDING,
+            progress=0,
             export_format=export_format,
-            parameters=parameters,
+            parameters=normalized_parameters,
             cache_key=cache_key if use_cache else '',
-            executed_by=executed_by
+            executed_by=executed_by,
+            queued_at=timezone.now(),
+            max_attempts=3,
         )
-        
-        try:
-            # Generate data based on report type
-            data = ReportService._generate_report_data(
-                report.report_type,
-                parameters
-            )
-            
-            # Export to requested format
-            file_path, file_size = ReportService._export_report(
-                report,
-                data,
-                export_format,
-                execution
-            )
-            
-            # Update execution record
-            execution.status = ReportExecution.Status.COMPLETED
-            execution.file_path = file_path
-            execution.file_size = file_size
-            execution.row_count = data.get('row_count', 0)
-            execution.execution_time = time.time() - start_time
-            execution.completed_at = timezone.now()
-            execution.save()
-            
-            # Cache result if enabled
-            if use_cache and report.cache_duration > 0:
-                cache.set(cache_key, execution, report.cache_duration)
-            
-            return execution
-            
-        except Exception as e:
-            # Mark as failed
-            execution.status = ReportExecution.Status.FAILED
-            execution.error_message = str(e)
-            import traceback
-            execution.stack_trace = traceback.format_exc()
-            execution.completed_at = timezone.now()
-            execution.save()
-            raise
+
+        from apps.reporting.tasks import execute_report_async
+        execute_report_async.delay(str(execution.id))
+
+        return execution
+
+    @staticmethod
+    @transaction.atomic
+    def execute_report_sync(execution_id):
+        """Worker-side execution with progress updates and retry metadata."""
+        execution = ReportExecution.objects.select_related('report', 'executed_by').get(id=execution_id)
+        report = execution.report
+        start_time = time.time()
+
+        execution.status = ReportExecution.Status.RUNNING
+        execution.progress = 5
+        execution.attempt_count = (execution.attempt_count or 0) + 1
+        execution.started_at = timezone.now()
+        execution.worker_id = os.environ.get('HOSTNAME', '')[:100]
+        execution.error_message = ''
+        execution.stack_trace = ''
+        execution.save(update_fields=['status', 'progress', 'attempt_count', 'started_at', 'worker_id', 'error_message', 'stack_trace'])
+
+        # Permission scope is enforced before loading expensive report data.
+        data = ReportService._generate_report_data(
+            report_type=report.report_type,
+            parameters=execution.parameters,
+            executed_by=execution.executed_by,
+            organization=report.organization,
+        )
+        execution.progress = 45
+        execution.save(update_fields=['progress'])
+
+        file_path, file_size = ReportService._export_report(
+            report=report,
+            data=data,
+            export_format=execution.export_format,
+            execution=execution,
+        )
+
+        execution.progress = 85
+        execution.save(update_fields=['progress'])
+
+        execution.status = ReportExecution.Status.COMPLETED
+        execution.file_path = file_path
+        execution.file_size = file_size
+        execution.row_count = data.get('row_count', 0)
+        execution.execution_time = time.time() - start_time
+        execution.completed_at = timezone.now()
+        execution.progress = 100
+
+        if execution.cache_key and report.cache_duration > 0:
+            execution.cache_expires_at = timezone.now() + timedelta(seconds=report.cache_duration)
+
+        execution.save()
+        cache.set(f"{ReportService.CACHE_PREFIX}{execution.id}", str(execution.id), report.cache_duration or 0)
+
+        return execution
     
     @staticmethod
-    def _generate_cache_key(report, parameters, export_format):
-        """Generate unique cache key for report execution"""
-        key_data = f"{report.id}:{export_format}:{str(parameters)}"
+    def _generate_cache_key(report, parameters, export_format, executed_by):
+        """Generate unique cache key for report execution with user scope."""
+        key_payload = {
+            'report_id': str(report.id),
+            'format': export_format,
+            'parameters': parameters or {},
+            'organization_id': str(report.organization_id),
+            'scope_user_id': str(getattr(executed_by, 'id', '')),
+            'scope_role': getattr(executed_by, 'system_role', ''),
+        }
+        key_data = json.dumps(key_payload, sort_keys=True, default=str)
         hash_value = hashlib.md5(key_data.encode()).hexdigest()
         return f"{ReportService.CACHE_PREFIX}{hash_value}"
+
+    @staticmethod
+    def _find_valid_cached_execution(report, cache_key):
+        """Find latest valid cached/completed execution for same cache key."""
+        latest = ReportExecution.objects.filter(
+            report=report,
+            cache_key=cache_key,
+            status__in=[ReportExecution.Status.COMPLETED, ReportExecution.Status.CACHED],
+            file_path__gt='',
+        ).order_by('-completed_at', '-created_at').first()
+
+        if not latest:
+            return None
+
+        if latest.cache_expires_at and latest.cache_expires_at < timezone.now():
+            return None
+
+        return latest
+
+    @staticmethod
+    def _create_cached_execution_reference(report, cached_execution, executed_by, parameters, export_format, cache_key):
+        """Create a lightweight execution row that references cached output."""
+        return ReportExecution.objects.create(
+            report=report,
+            status=ReportExecution.Status.CACHED,
+            progress=100,
+            export_format=export_format,
+            parameters=parameters,
+            cache_key=cache_key,
+            cache_expires_at=cached_execution.cache_expires_at,
+            file_path=cached_execution.file_path,
+            file_size=cached_execution.file_size,
+            row_count=cached_execution.row_count,
+            execution_time=0,
+            executed_by=executed_by,
+            queued_at=timezone.now(),
+            started_at=timezone.now(),
+            completed_at=timezone.now(),
+            attempt_count=1,
+            max_attempts=1,
+            worker_id='cache',
+        )
     
     @staticmethod
-    def _generate_report_data(report_type, parameters):
+    def _generate_report_data(report_type, parameters, executed_by, organization):
         """
         Generate report data based on type.
         
@@ -231,12 +314,33 @@ class ReportService:
         if isinstance(end_date, str):
             end_date = datetime.fromisoformat(end_date).date()
         
-        # Get project/organization objects
+        # Get project/organization objects with access scoping
         from apps.projects.models import Project
-        from apps.authentication.models import Organization
+        from apps.authentication.models import Organization, ProjectAccess
         
-        project = Project.objects.get(id=project_id) if project_id else None
-        organization = Organization.objects.get(id=organization_id) if organization_id else None
+        accessible_projects = Project.objects.filter(organization=organization)
+
+        if executed_by and not getattr(executed_by, 'is_superuser', False):
+            if getattr(executed_by, 'system_role', '') != 'super_admin':
+                allowed_project_ids = ProjectAccess.objects.filter(
+                    user=executed_by,
+                    is_active=True,
+                ).values_list('project_id', flat=True)
+                accessible_projects = accessible_projects.filter(id__in=allowed_project_ids)
+
+        if project_id:
+            project = accessible_projects.filter(id=project_id).first()
+            if not project:
+                raise ValueError('You do not have access to the requested project for reporting.')
+        else:
+            project = None
+
+        if organization_id:
+            organization = Organization.objects.filter(
+                id=organization_id,
+            ).first()
+            if not organization:
+                raise ValueError('Invalid organization scope for report execution.')
         
         # Route to appropriate generator
         generators = {
@@ -888,7 +992,10 @@ class ReportScheduleService:
                 schedule.save()
                 
                 # Deliver report (email, storage, etc.)
-                if schedule.delivery_method in [ReportSchedule.DeliveryMethod.EMAIL, ReportSchedule.DeliveryMethod.ALL]:
+                if (
+                    execution.status in [ReportExecution.Status.COMPLETED, ReportExecution.Status.CACHED]
+                    and schedule.delivery_method in [ReportSchedule.DeliveryMethod.EMAIL, ReportSchedule.DeliveryMethod.ALL]
+                ):
                     ReportScheduleService._deliver_by_email(execution, schedule)
                 
             except Exception as e:

@@ -136,7 +136,7 @@ export interface ReportExecution {
   id: string;
   report: Report;
   schedule?: string | null;
-  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CACHED';
+  status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CACHED';
   export_format: 'PDF' | 'EXCEL' | 'CSV' | 'JSON';
   parameters: Record<string, unknown>;
   file_path?: string;
@@ -145,6 +145,13 @@ export interface ReportExecution {
   execution_time?: number | null;
   error_message?: string;
   cache_key?: string;
+  cache_expires_at?: string | null;
+  progress?: number;
+  queued_at?: string | null;
+  started_at?: string | null;
+  attempt_count?: number;
+  max_attempts?: number;
+  worker_id?: string;
   executed_by?: {
     id: string;
     username: string;
@@ -155,6 +162,15 @@ export interface ReportExecution {
   completed_at?: string;
   duration?: number;
   was_successful?: boolean;
+}
+
+export interface ReportExecutionProgress {
+  id: string;
+  status: ReportExecution['status'];
+  progress: number;
+  attempt_count: number;
+  max_attempts: number;
+  error_message: string;
 }
 
 export interface ReportCreatePayload {

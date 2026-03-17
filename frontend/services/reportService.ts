@@ -11,6 +11,7 @@ import type {
   Report,
   ReportCreatePayload,
   ReportExecution,
+  ReportExecutionProgress,
   ReportSchedule,
   ReportScheduleCreatePayload,
 } from '@/types';
@@ -112,6 +113,18 @@ export const reportService = {
   async getExecutionStatus(executionId: string): Promise<ReportExecution> {
     try {
       const response = await api.get<ReportExecution>(`/report-executions/${executionId}/`);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Get report execution progress
+   */
+  async getExecutionProgress(executionId: string): Promise<ReportExecutionProgress> {
+    try {
+      const response = await api.get<ReportExecutionProgress>(`/report-executions/${executionId}/progress/`);
       return response;
     } catch (error) {
       throw error;

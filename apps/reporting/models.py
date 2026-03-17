@@ -340,7 +340,7 @@ class ReportExecution(models.Model):
     class Status(models.TextChoices):
         """Execution statuses"""
         PENDING = 'PENDING', _('Pending')
-        PROCESSING = 'PROCESSING', _('Processing')
+        RUNNING = 'RUNNING', _('Running')
         COMPLETED = 'COMPLETED', _('Completed')
         FAILED = 'FAILED', _('Failed')
         CACHED = 'CACHED', _('Cached')
@@ -372,6 +372,10 @@ class ReportExecution(models.Model):
         choices=Status.choices,
         default=Status.PENDING,
         help_text=_("Execution status")
+    )
+    progress = models.PositiveSmallIntegerField(
+        default=0,
+        help_text=_("Execution progress percentage (0-100)")
     )
     export_format = models.CharField(
         max_length=20,
@@ -425,6 +429,36 @@ class ReportExecution(models.Model):
         blank=True,
         help_text=_("Redis cache key for cached results")
     )
+    cache_expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_("When cached result expires")
+    )
+
+    # Async and retry metadata
+    queued_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_("When execution was queued")
+    )
+    started_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_("When execution started")
+    )
+    attempt_count = models.PositiveIntegerField(
+        default=0,
+        help_text=_("Number of execution attempts")
+    )
+    max_attempts = models.PositiveIntegerField(
+        default=3,
+        help_text=_("Maximum retry attempts")
+    )
+    worker_id = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text=_("Worker identity that processed execution")
+    )
     
     # Audit fields
     executed_by = models.ForeignKey(
@@ -453,6 +487,7 @@ class ReportExecution(models.Model):
             models.Index(fields=['report', 'status']),
             models.Index(fields=['created_at']),
             models.Index(fields=['cache_key']),
+            models.Index(fields=['status', 'progress']),
         ]
     
     def __str__(self):

@@ -55,7 +55,7 @@ class ReportAdmin(admin.ModelAdmin):
             status_colors = {
                 'COMPLETED': 'green',
                 'FAILED': 'red',
-                'PROCESSING': 'orange',
+                'RUNNING': 'orange',
                 'PENDING': 'grey',
                 'CACHED': 'blue'
             }
@@ -158,7 +158,7 @@ class ReportExecutionAdmin(admin.ModelAdmin):
         status_colors = {
             'COMPLETED': '#28a745',  # Green
             'FAILED': '#dc3545',     # Red
-            'PROCESSING': '#ffc107', # Yellow
+            'RUNNING': '#ffc107',    # Yellow
             'PENDING': '#6c757d',    # Grey
             'CACHED': '#17a2b8'      # Blue
         }

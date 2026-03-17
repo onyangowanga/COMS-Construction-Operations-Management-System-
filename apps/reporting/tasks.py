@@ -10,6 +10,7 @@ from datetime import timedelta
 
 from apps.reporting.services import ReportScheduleService
 from apps.reporting.models import ReportExecution
+from apps.reporting.services import ReportService
 
 
 @shared_task(name='reporting.execute_scheduled_reports')
@@ -24,6 +25,36 @@ def execute_scheduled_reports():
         return {'status': 'success', 'message': 'Scheduled reports executed'}
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
+
+
+@shared_task(
+    bind=True,
+    name='reporting.execute_report_async',
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_kwargs={'max_retries': 3},
+)
+def execute_report_async(self, execution_id):
+    """Execute report asynchronously with retries and progress updates."""
+    try:
+        execution = ReportService.execute_report_sync(execution_id)
+        return {
+            'status': 'success',
+            'execution_id': str(execution.id),
+            'final_status': execution.status,
+            'progress': execution.progress,
+        }
+    except Exception as exc:
+        try:
+            failed = ReportExecution.objects.get(id=execution_id)
+            failed.status = ReportExecution.Status.FAILED
+            failed.error_message = str(exc)
+            failed.progress = 100
+            failed.completed_at = timezone.now()
+            failed.save(update_fields=['status', 'error_message', 'progress', 'completed_at'])
+        except Exception:
+            pass
+        raise
 
 
 @shared_task(name='reporting.cleanup_old_executions')
