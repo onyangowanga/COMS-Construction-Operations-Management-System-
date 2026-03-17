@@ -41,7 +41,7 @@ export function WorkflowActions({ currentState, availableActions, isTransitionin
     <div className="space-y-3">
       <div className="flex items-center gap-3">
         <span className="text-sm text-gray-600">Current State</span>
-        <Badge variant="outline">{currentState || 'Unknown'}</Badge>
+        <Badge variant="secondary">{currentState || 'Unknown'}</Badge>
       </div>
 
       <div className="flex flex-wrap gap-2">

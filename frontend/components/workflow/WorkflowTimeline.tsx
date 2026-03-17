@@ -23,7 +23,7 @@ export function WorkflowTimeline({ history }: WorkflowTimelineProps) {
             {history.map((item) => (
               <div key={item.id} className="border-l-2 border-gray-200 pl-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline">{item.action}</Badge>
+                  <Badge variant="secondary">{item.action}</Badge>
                   <span className="text-sm text-gray-700">
                     {item.from_state || 'N/A'} → {item.to_state || 'N/A'}
                   </span>
