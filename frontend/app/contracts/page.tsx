@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Suspense } from 'react';
 import { Plus } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout';
 import { PermissionGuard } from '@/components/auth/PermissionGuard';
@@ -10,7 +11,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Input, Select } from 
 import { useDrilldownFilter, useContracts, usePermissions } from '@/hooks';
 import type { Contract } from '@/types';
 
-export default function ContractsPage() {
+function ContractsPageContent() {
   const router = useRouter();
   const drilldown = useDrilldownFilter();
   const { hasAnyPermission } = usePermissions();
@@ -153,5 +154,13 @@ export default function ContractsPage() {
         </div>
       </PermissionGuard>
     </DashboardLayout>
+  );
+}
+
+export default function ContractsPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-gray-500">Loading contracts...</div>}>
+      <ContractsPageContent />
+    </Suspense>
   );
 }

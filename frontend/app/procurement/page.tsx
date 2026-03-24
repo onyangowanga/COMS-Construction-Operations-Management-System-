@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Suspense } from 'react';
 import { Plus } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout';
 import { PermissionGuard } from '@/components/auth/PermissionGuard';
@@ -9,7 +10,7 @@ import { ProcurementTable } from '@/components/procurement';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Select } from '@/components/ui';
 import { useDrilldownFilter, usePermissions, useProcurement } from '@/hooks';
 
-export default function ProcurementPage() {
+function ProcurementPageContent() {
   const router = useRouter();
   const drilldown = useDrilldownFilter();
   const { hasAnyPermission } = usePermissions();
@@ -148,5 +149,13 @@ export default function ProcurementPage() {
         </div>
       </PermissionGuard>
     </DashboardLayout>
+  );
+}
+
+export default function ProcurementPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-gray-500">Loading procurement...</div>}>
+      <ProcurementPageContent />
+    </Suspense>
   );
 }

@@ -7,6 +7,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Suspense } from 'react';
 import { Edit, Eye, Plus, Trash2 } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/PermissionGuard';
 import { ProjectProgressBar, ProjectStatusBadge } from '@/components/projects';
@@ -27,7 +28,7 @@ import { useDrilldownFilter, usePermissions, useProjects } from '@/hooks';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import type { Project } from '@/types';
 
-export default function ProjectsPage() {
+function ProjectsPageContent() {
   const router = useRouter();
   const drilldown = useDrilldownFilter();
   const { hasPermission } = usePermissions();
@@ -272,5 +273,13 @@ export default function ProjectsPage() {
         />
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function ProjectsPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-gray-500">Loading projects...</div>}>
+      <ProjectsPageContent />
+    </Suspense>
   );
 }

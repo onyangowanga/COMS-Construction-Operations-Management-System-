@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Suspense } from 'react';
 import { Plus } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout';
 import { PermissionGuard } from '@/components/auth/PermissionGuard';
@@ -9,7 +10,7 @@ import { ClaimTable } from '@/components/claims';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Select } from '@/components/ui';
 import { useDrilldownFilter, useClaims, usePermissions } from '@/hooks';
 
-export default function ClaimsPage() {
+function ClaimsPageContent() {
   const router = useRouter();
   const drilldown = useDrilldownFilter();
   const { hasPermission } = usePermissions();
@@ -132,5 +133,13 @@ export default function ClaimsPage() {
         </div>
       </PermissionGuard>
     </DashboardLayout>
+  );
+}
+
+export default function ClaimsPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-gray-500">Loading claims...</div>}>
+      <ClaimsPageContent />
+    </Suspense>
   );
 }

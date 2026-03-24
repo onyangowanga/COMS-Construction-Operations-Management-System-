@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Suspense } from 'react';
 import { Plus } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout';
 import { PermissionGuard } from '@/components/auth/PermissionGuard';
@@ -9,7 +10,7 @@ import { VariationTable } from '@/components/variations';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Select } from '@/components/ui';
 import { useDrilldownFilter, usePermissions, useVariations } from '@/hooks';
 
-export default function VariationsPage() {
+function VariationsPageContent() {
   const router = useRouter();
   const drilldown = useDrilldownFilter();
   const { hasPermission } = usePermissions();
@@ -137,5 +138,13 @@ export default function VariationsPage() {
         </div>
       </PermissionGuard>
     </DashboardLayout>
+  );
+}
+
+export default function VariationsPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-gray-500">Loading variations...</div>}>
+      <VariationsPageContent />
+    </Suspense>
   );
 }
