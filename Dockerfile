@@ -31,7 +31,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app/
 
 # Create necessary directories
-RUN mkdir -p /app/staticfiles /app/media
+RUN mkdir -p /app/staticfiles /app/media /app/logs && chmod -R 777 /app/logs
 
 # Expose port
 EXPOSE 8000

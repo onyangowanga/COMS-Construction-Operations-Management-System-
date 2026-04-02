@@ -689,10 +689,10 @@ Once all tests pass locally, you're ready to deploy to VPS!
 
 ```powershell
 # From project directory
-.\deploy-local-to-vps.ps1
+.\deploy_to_vps.ps1
 ```
 
-See [DIRECT_DEPLOYMENT_GUIDE.md](DIRECT_DEPLOYMENT_GUIDE.md) for detailed deployment instructions.
+See [DEPLOY_FROM_LOCAL.md](DEPLOY_FROM_LOCAL.md) for detailed deployment instructions.
 
 ### Post-Deployment Verification
 
@@ -760,7 +760,7 @@ docker-compose up -d
 ### View Documentation
 - [README.md](README.md) - Project overview
 - [MODULE_STATUS_REPORT.md](MODULE_STATUS_REPORT.md) - Module implementation status
-- [DIRECT_DEPLOYMENT_GUIDE.md](DIRECT_DEPLOYMENT_GUIDE.md) - VPS deployment guide
+- [DEPLOY_FROM_LOCAL.md](DEPLOY_FROM_LOCAL.md) - VPS deployment guide
 
 ### Check Logs
 ```powershell

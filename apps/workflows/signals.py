@@ -58,8 +58,8 @@ def log_client_payment(sender, instance, created, **kwargs):
         log_activity(
             project_id=instance.project.id,
             activity_type=ProjectActivity.ActivityType.CLIENT_PAYMENT,
-            description=f"Client payment received: {instance.amount_paid}",
-            amount=instance.amount_paid,
+            description=f"Client payment received: {instance.amount}",
+            amount=instance.amount,
             performed_by=None,
             related_object_type='ClientPayment',
             related_object_id=instance.id,

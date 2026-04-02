@@ -339,7 +339,7 @@ class EventLoggingService:
         Returns:
             QuerySet of SystemEvent objects
         """
-        from apps.events.selectors import EventSelector
+        from apps.events.event_selectors import EventSelector
         
         content_type = ContentType.objects.get_for_model(entity)
         return EventSelector.get_entity_events(
@@ -361,7 +361,7 @@ class EventLoggingService:
         Returns:
             QuerySet of SystemEvent objects
         """
-        from apps.events.selectors import EventSelector
+        from apps.events.event_selectors import EventSelector
         return EventSelector.get_project_events(project, event_types, days)
     
     @staticmethod
@@ -377,7 +377,7 @@ class EventLoggingService:
         Returns:
             QuerySet of SystemEvent objects
         """
-        from apps.events.selectors import EventSelector
+        from apps.events.event_selectors import EventSelector
         return EventSelector.get_user_activity(user, days, limit)
     
     @staticmethod

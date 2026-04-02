@@ -225,6 +225,30 @@ CELERY_BROKER_URL = env('REDIS_URL', default='redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = env('REDIS_URL', default='redis://localhost:6379/0')
 
 # Logging
+import os
+
+# Configure handlers based on environment
+LOGGING_HANDLERS = {
+    'console': {
+        'level': 'DEBUG',
+        'class': 'logging.StreamHandler',
+        'formatter': 'verbose',
+    },
+}
+
+# Only add file handler if logs directory exists and is writable
+LOGS_DIR = BASE_DIR / 'logs'
+if LOGS_DIR.exists() and os.access(LOGS_DIR, os.W_OK):
+    LOGGING_HANDLERS['file'] = {
+        'level': 'INFO',
+        'class': 'logging.FileHandler',
+        'filename': LOGS_DIR / 'coms.log',
+        'formatter': 'verbose',
+    }
+    ROOT_HANDLERS = ['console', 'file']
+else:
+    ROOT_HANDLERS = ['console']
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -234,21 +258,9 @@ LOGGING = {
             'style': '{',
         },
     },
-    'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'coms.log',
-            'formatter': 'verbose',
-        },
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
-        },
-    },
+    'handlers': LOGGING_HANDLERS,
     'root': {
-        'handlers': ['console', 'file'],
+        'handlers': ROOT_HANDLERS,
         'level': 'INFO',
     },
 }

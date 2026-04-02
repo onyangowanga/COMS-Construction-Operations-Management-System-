@@ -12,7 +12,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from apps.valuations.models import Valuation, BQItemProgress
 from apps.valuations.services import ValuationService
-from apps.valuations.selectors import (
+from apps.valuations.valuation_selectors import (
     get_project_valuations,
     get_valuation_by_id,
     get_latest_valuation,
@@ -228,7 +228,7 @@ class ValuationViewSet(viewsets.ModelViewSet):
             
             # Serialize the data
             from api.serializers.projects import ProjectSerializer
-            from apps.valuations.selectors import get_valuation_items_grouped
+            from apps.valuations.valuation_selectors import get_valuation_items_grouped
             
             output = {
                 'valuation': ValuationSerializer(report_data['valuation']).data,

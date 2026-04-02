@@ -15,7 +15,7 @@ from .validators import (
     validate_phone_number,
     validate_username,
 )
-from .selectors import UserSelectors
+from .auth_selectors import UserSelectors
 
 
 class LoginSerializer(serializers.Serializer):
@@ -187,6 +187,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     """
     system_role_display = serializers.CharField(source='get_system_role_display', read_only=True)
     organization_name = serializers.CharField(source='organization.name', read_only=True, allow_null=True)
+    role = serializers.CharField(source='system_role', read_only=True)
+    organization_label = serializers.CharField(source='organization.name', read_only=True, allow_null=True)
     is_locked = serializers.SerializerMethodField()
     permissions = serializers.SerializerMethodField()
     roles = serializers.SerializerMethodField()
@@ -203,9 +205,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'job_title',
             'system_role',
             'system_role_display',
+            'role',
             'organization',
             'organization_name',
+            'organization_label',
             'profile_picture',
+            'ui_theme',
+            'ui_timezone',
+            'ui_language',
+            'ui_compact_mode',
             'is_verified',
             'is_active',
             'is_staff',
@@ -231,7 +239,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             except Exception:
                 return []
         try:
-            from apps.roles.selectors import UserRoleSelector
+            from apps.roles.roles_selectors import UserRoleSelector
             permissions = UserRoleSelector.get_user_permissions(obj)
             return list(permissions.values_list('code', flat=True))
         except Exception:
@@ -240,7 +248,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def get_roles(self, obj):
         """Return a list of role summaries assigned to the user."""
         try:
-            from apps.roles.selectors import UserRoleSelector
+            from apps.roles.roles_selectors import UserRoleSelector
             user_roles = UserRoleSelector.get_user_roles(user=obj, is_active=True)
             result = []
             for ur in user_roles:
@@ -267,6 +275,10 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     """
     phone = serializers.CharField(required=False, allow_blank=True)
     job_title = serializers.CharField(required=False, allow_blank=True)
+    ui_theme = serializers.ChoiceField(choices=['light', 'dark', 'auto'], required=False)
+    ui_timezone = serializers.CharField(required=False, allow_blank=False)
+    ui_language = serializers.CharField(required=False, allow_blank=False)
+    ui_compact_mode = serializers.BooleanField(required=False)
     
     class Meta:
         model = User
@@ -276,6 +288,10 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             'phone',
             'job_title',
             'profile_picture',
+            'ui_theme',
+            'ui_timezone',
+            'ui_language',
+            'ui_compact_mode',
         ]
     
     def validate_phone(self, value):

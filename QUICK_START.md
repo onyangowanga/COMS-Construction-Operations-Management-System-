@@ -39,10 +39,10 @@ This script will:
 
 ```powershell
 # Deploy from local to VPS (bypasses GitHub Actions)
-.\deploy-local-to-vps.ps1
+.\deploy_to_vps.ps1
 ```
 
-📖 **Detailed Guide:** [DIRECT_DEPLOYMENT_GUIDE.md](DIRECT_DEPLOYMENT_GUIDE.md)
+📖 **Detailed Guide:** [DEPLOY_FROM_LOCAL.md](DEPLOY_FROM_LOCAL.md)
 
 ---
 
@@ -89,7 +89,7 @@ docker-compose exec web python manage.py createsuperuser
 
 ```powershell
 # Full deployment
-.\deploy-local-to-vps.ps1
+.\deploy_to_vps.ps1
 
 # Check VPS status
 ssh root@156.232.88.156 "cd /root/coms && docker-compose -f docker-compose.prod.yml ps"
@@ -140,7 +140,7 @@ COMS/
 └── Documentation/
     ├── QUICK_START.md              # This file
     ├── LOCAL_TESTING_GUIDE.md      # Local development guide
-    ├── DIRECT_DEPLOYMENT_GUIDE.md  # VPS deployment guide
+    ├── DEPLOY_FROM_LOCAL.md        # VPS deployment guide
     └── MODULE_STATUS_REPORT.md     # Implementation status
 ```
 
@@ -266,7 +266,7 @@ docker-compose exec -T db pg_dump -U coms_user coms_db > backup.sql
 ### Deployment
 ```powershell
 # Deploy to VPS
-.\deploy-local-to-vps.ps1
+.\deploy_to_vps.ps1
 
 # SSH to VPS
 ssh root@156.232.88.156
@@ -325,7 +325,7 @@ docker-compose up -d frontend
 |----------|---------|
 | [QUICK_START.md](QUICK_START.md) | This file - getting started |
 | [LOCAL_TESTING_GUIDE.md](LOCAL_TESTING_GUIDE.md) | Complete local development guide |
-| [DIRECT_DEPLOYMENT_GUIDE.md](DIRECT_DEPLOYMENT_GUIDE.md) | VPS deployment instructions |
+| [DEPLOY_FROM_LOCAL.md](DEPLOY_FROM_LOCAL.md) | VPS deployment instructions |
 | [MODULE_STATUS_REPORT.md](MODULE_STATUS_REPORT.md) | Implementation status report |
 | [README.md](README.md) | Main project README |
 
@@ -347,8 +347,8 @@ docker-compose up -d frontend
 
 ### Day 3: Deployment
 1. ✅ Ensure all tests pass
-2. ✅ Read [DIRECT_DEPLOYMENT_GUIDE.md](DIRECT_DEPLOYMENT_GUIDE.md)
-3. ✅ Run `.\deploy-local-to-vps.ps1`
+2. ✅ Read [DEPLOY_FROM_LOCAL.md](DEPLOY_FROM_LOCAL.md)
+3. ✅ Run `.\deploy_to_vps.ps1`
 4. ✅ Verify deployment on VPS
 
 ### Week 2+: Feature Development
@@ -369,7 +369,7 @@ docker-compose up -d frontend
 ### After Making Changes
 1. Run tests: `docker-compose exec web pytest`
 2. Commit changes: `git commit -m "Your message"`
-3. Test deployment (if needed): `.\deploy-local-to-vps.ps1`
+3. Test deployment (if needed): `.\deploy_to_vps.ps1`
 4. Push to repository: `git push`
 
 ---
@@ -427,6 +427,6 @@ Run: `.\start-local.ps1`
 Read: [LOCAL_TESTING_GUIDE.md](LOCAL_TESTING_GUIDE.md)
 
 **→ Ready to deploy?**
-Run: `.\deploy-local-to-vps.ps1`
+Run: `.\deploy_to_vps.ps1`
 
 **Happy Building! 🏗️**

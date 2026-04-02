@@ -14,7 +14,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.contenttypes.models import ContentType
 
 from apps.events.models import SystemEvent
-from apps.events.selectors import EventSelector, EventAnalyticsSelector
+from apps.events.event_selectors import EventSelector, EventAnalyticsSelector
 from apps.projects.models import Project
 from api.serializers.events import (
     SystemEventSerializer,

@@ -5,14 +5,16 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { 
   Activity as ActivityIcon,
   Bell,
+  ChevronDown,
   ChevronLeft, 
+  ChevronUp,
   ChevronRight,
   LayoutDashboard,
   FolderKanban,
@@ -52,6 +54,7 @@ export const Sidebar: React.FC = () => {
   const pathname = usePathname();
   const { sidebarCollapsed, toggleSidebarCollapse } = useUIStore();
   const { hasPermission, hasAnyPermission } = useAuthStore();
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
 
   // Filter navigation items based on permissions
   const visibleNavItems = SIDEBAR_NAVIGATION.filter((item) => {
@@ -62,10 +65,17 @@ export const Sidebar: React.FC = () => {
     return hasPermission(item.permission);
   });
 
+  const toggleMenu = (href: string) => {
+    setExpandedMenus((previous: Record<string, boolean>) => ({
+      ...previous,
+      [href]: !previous[href],
+    }));
+  };
+
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 h-screen bg-gray-900 text-white transition-all duration-300 z-30',
+        'fixed left-0 top-0 h-screen bg-gray-900 text-white transition-all duration-300 z-30 flex flex-col',
         sidebarCollapsed ? 'w-16' : 'w-64'
       )}
     >
@@ -74,11 +84,11 @@ export const Sidebar: React.FC = () => {
         {!sidebarCollapsed && (
           <div className="flex items-center gap-2">
             <Image 
-              src="/logo.png" 
+              src="/logo_edited.png"
               alt="COMS Logo" 
               width={32} 
               height={32}
-              className="rounded h-auto w-auto"
+              className="rounded  object-contain"
             />
             <span className="text-xl font-bold">COMS</span>
           </div>
@@ -110,32 +120,53 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4">
+      <nav className="min-h-0 flex-1 overflow-y-auto py-2">
         {visibleNavItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+          const hasSubsections = Boolean(item.subsections?.length);
+          const isExpanded = Boolean(
+            expandedMenus[item.href] ?? pathname.startsWith(item.href)
+          );
           const Icon = iconMap[item.icon] || LayoutDashboard;
 
           return (
             <div key={item.href}>
-              <Link
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors',
-                  'hover:bg-gray-800',
-                  isActive ? 'bg-primary-600 text-white' : 'text-gray-300',
-                  sidebarCollapsed && 'justify-center'
+              <div className="mx-2 flex items-center gap-1">
+                <Link
+                  href={item.href}
+                  className={cn(
+                    'flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+                    'hover:bg-gray-800',
+                    isActive ? 'bg-primary-600 text-white' : 'text-gray-300',
+                    sidebarCollapsed && 'justify-center px-2'
+                  )}
+                  title={sidebarCollapsed ? item.name : undefined}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {!sidebarCollapsed && (
+                    <span className="truncate font-medium">{item.name}</span>
+                  )}
+                </Link>
+
+                {!sidebarCollapsed && hasSubsections && (
+                  <button
+                    type="button"
+                    onClick={() => toggleMenu(item.href)}
+                    className="rounded-md p-1.5 text-gray-300 transition-colors hover:bg-gray-800 hover:text-white"
+                    aria-label={`Toggle ${item.name} submenu`}
+                  >
+                    {isExpanded ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
                 )}
-                title={sidebarCollapsed ? item.name : undefined}
-              >
-                <Icon className="h-5 w-5 shrink-0" />
-                {!sidebarCollapsed && (
-                  <span className="font-medium">{item.name}</span>
-                )}
-              </Link>
+              </div>
 
               {/* Subsections */}
-              {!sidebarCollapsed && item.subsections && isActive && (
-                <div className="ml-8 mt-1 space-y-1">
+              {!sidebarCollapsed && item.subsections && isExpanded && (
+                <div className="ml-8 mt-1 max-h-48 space-y-1 overflow-y-auto pr-2">
                   {item.subsections.map((sub) => {
                     const isSubActive = pathname === sub.href;
                     return (
@@ -143,7 +174,7 @@ export const Sidebar: React.FC = () => {
                         key={sub.href}
                         href={sub.href}
                         className={cn(
-                          'block px-4 py-2 text-sm rounded-lg transition-colors',
+                          'block rounded-lg px-3 py-1.5 text-xs transition-colors',
                           isSubActive
                             ? 'text-white bg-gray-800'
                             : 'text-gray-400 hover:text-white hover:bg-gray-800'

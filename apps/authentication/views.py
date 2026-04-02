@@ -10,9 +10,11 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from django.contrib.auth import authenticate, login, logout
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import get_object_or_404
 
 from .serializers import (
     LoginSerializer,
@@ -25,7 +27,7 @@ from .serializers import (
     PasswordResetConfirmSerializer,
 )
 from .services import SecurityService, OrganizationService
-from .selectors import UserSelectors
+from .auth_selectors import UserSelectors
 from .jwt import (
     get_tokens_for_user,
     set_jwt_cookies,
@@ -366,6 +368,212 @@ class UserProfileView(APIView):
             UserProfileSerializer(request.user).data,
             status=status.HTTP_200_OK
         )
+
+
+class UIPreferencesView(APIView):
+    """Get/update UI preferences for current user."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response(
+            {
+                'theme': user.ui_theme,
+                'timezone': user.ui_timezone,
+                'language': user.ui_language,
+                'compact_mode': user.ui_compact_mode,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def patch(self, request):
+        user = request.user
+        data = request.data
+
+        if 'theme' in data:
+            user.ui_theme = data['theme']
+        if 'timezone' in data:
+            user.ui_timezone = data['timezone']
+        if 'language' in data:
+            user.ui_language = data['language']
+        if 'compact_mode' in data:
+            user.ui_compact_mode = bool(data['compact_mode'])
+
+        user.save(update_fields=['ui_theme', 'ui_timezone', 'ui_language', 'ui_compact_mode', 'updated_at'])
+
+        return self.get(request)
+
+
+class OrganizationSettingsView(APIView):
+    """Get/update current user's organization settings."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        org = request.user.organization
+        if not org:
+            return Response({'detail': 'User has no organization assigned.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {
+                'name': org.name,
+                'code': org.registration_number or org.name[:4].upper(),
+                'logo': org.logo.url if org.logo else None,
+                'default_currency': org.default_currency or 'KES',
+                'fiscal_year_start': org.fiscal_year_start or 'January 1',
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def patch(self, request):
+        org = request.user.organization
+        if not org:
+            return Response({'detail': 'User has no organization assigned.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        data = request.data
+        if 'name' in data:
+            org.name = data['name']
+        if 'code' in data:
+            org.registration_number = data['code']
+        if 'default_currency' in data:
+            org.default_currency = str(data['default_currency']).upper()
+        if 'fiscal_year_start' in data:
+            org.fiscal_year_start = data['fiscal_year_start']
+
+        org.save(update_fields=['name', 'registration_number', 'default_currency', 'fiscal_year_start', 'updated_at'])
+        return self.get(request)
+
+
+class UserManagementView(APIView):
+    """List and create users for admin/system-admin pages."""
+    permission_classes = [IsAuthenticated]
+
+    def _check_admin(self, request):
+        return request.user.is_staff or request.user.is_superuser
+
+    def get(self, request):
+        if not self._check_admin(request):
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        queryset = User.objects.select_related('organization').all().order_by('-date_joined')
+
+        search = request.query_params.get('search')
+        is_active = request.query_params.get('is_active')
+
+        if search:
+            queryset = queryset.filter(
+                Q(username__icontains=search)
+                | Q(email__icontains=search)
+                | Q(first_name__icontains=search)
+                | Q(last_name__icontains=search)
+            )
+
+        if is_active in ['true', 'false']:
+            queryset = queryset.filter(is_active=(is_active == 'true'))
+
+        results = [
+            {
+                'id': str(user.id),
+                'email': user.email,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'is_active': user.is_active,
+                'organization': user.organization.name if user.organization else '',
+                'date_joined': user.date_joined,
+                'roles': [user.system_role],
+            }
+            for user in queryset
+        ]
+
+        return Response(results, status=status.HTTP_200_OK)
+
+    @transaction.atomic
+    def post(self, request):
+        if not self._check_admin(request):
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        payload = request.data.copy()
+        payload.pop('organization', None)
+        if payload.get('password') and not payload.get('password_confirm'):
+            payload['password_confirm'] = payload.get('password')
+
+        serializer = RegisterSerializer(data=payload)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+        data.pop('password_confirm', None)
+        organization_id = data.pop('organization_id', None)
+        password = data.pop('password')
+        user = User.objects.create_user(password=password, **data)
+
+        if organization_id:
+            try:
+                from .auth_selectors import OrganizationSelectors
+                org = OrganizationSelectors.get_by_id(organization_id)
+                if org:
+                    user.organization = org
+                    user.save(update_fields=['organization'])
+            except Exception:
+                pass
+
+        return Response(UserProfileSerializer(user).data, status=status.HTTP_201_CREATED)
+
+
+class UserDetailManagementView(APIView):
+    """Update user details from system-admin page."""
+    permission_classes = [IsAuthenticated]
+
+    def _check_admin(self, request):
+        return request.user.is_staff or request.user.is_superuser
+
+    @transaction.atomic
+    def patch(self, request, user_id):
+        if not self._check_admin(request):
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        user = get_object_or_404(User, id=user_id)
+        allowed_fields = ['first_name', 'last_name', 'email', 'username', 'phone', 'system_role']
+        updated = []
+
+        for field in allowed_fields:
+            if field in request.data:
+                setattr(user, field, request.data[field])
+                updated.append(field)
+
+        if 'is_active' in request.data:
+            user.is_active = bool(request.data['is_active'])
+            updated.append('is_active')
+
+        if updated:
+            user.save(update_fields=list(set(updated + ['updated_at'])))
+
+        return Response(UserProfileSerializer(user).data, status=status.HTTP_200_OK)
+
+
+class UserActivationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        if not (request.user.is_staff or request.user.is_superuser):
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        user = get_object_or_404(User, id=user_id)
+        user.is_active = True
+        user.save(update_fields=['is_active', 'updated_at'])
+        return Response({'message': 'User activated'}, status=status.HTTP_200_OK)
+
+
+class UserDeactivationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        if not (request.user.is_staff or request.user.is_superuser):
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        user = get_object_or_404(User, id=user_id)
+        user.is_active = False
+        user.save(update_fields=['is_active', 'updated_at'])
+        return Response({'message': 'User deactivated'}, status=status.HTTP_200_OK)
 
 
 class ChangePasswordView(APIView):

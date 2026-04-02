@@ -1,27 +1,16 @@
 #!/bin/bash
 
-# COMS Deployment Script for VPS
-# This script handles the deployment process on the VPS
+set -euo pipefail
 
-set -e  # Exit on error
+PROJECT_DIR="${PROJECT_DIR:-/root/coms}"
+COMPOSE_FILE="docker-compose.prod.yml"
+declare -a COMPOSE_BIN=()
 
-echo "================================"
-echo "COMS Deployment Script"
-echo "================================"
-echo ""
-
-# Configuration
-PROJECT_DIR="/root/coms"
-REPO_URL="https://github.com/onyangowanga/COMS-Construction-Operations-Management-System-.git"
-BRANCH="main"
-
-# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Function to print colored output
 print_status() {
     echo -e "${GREEN}[INFO]${NC} $1"
 }
@@ -31,133 +20,197 @@ print_error() {
 }
 
 print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+    echo -e "${YELLOW}[WARN]${NC} $1"
 }
 
-# Check if running as root
-if [ "$EUID" -ne 0 ]; then 
+resolve_compose() {
+    if docker compose version >/dev/null 2>&1; then
+        COMPOSE_BIN=(docker compose)
+    elif command -v docker-compose >/dev/null 2>&1; then
+        COMPOSE_BIN=(docker-compose)
+    else
+        print_error "Docker Compose is not installed on the VPS."
+        exit 1
+    fi
+}
+
+compose() {
+    "${COMPOSE_BIN[@]}" --env-file .env.production -f "$COMPOSE_FILE" "$@"
+}
+
+show_diagnostics() {
+    if [ "${#COMPOSE_BIN[@]}" -eq 0 ]; then
+        return 0
+    fi
+
+    print_warning "Container status at failure time:"
+    compose ps || true
+
+    print_warning "Last 80 lines from web container:"
+    compose logs --tail=80 web || true
+
+    print_warning "Last 80 lines from db container:"
+    compose logs --tail=80 db || true
+}
+
+on_error() {
+    local line_no="$1"
+    local failed_command="$2"
+
+    print_error "Deployment step failed on line ${line_no}: ${failed_command}"
+    show_diagnostics
+}
+
+trap 'on_error ${LINENO} "$BASH_COMMAND"' ERR
+
+escape_env_dollars() {
+    local value="$1"
+
+    # Preserve already escaped dollars, then escape any remaining single dollar.
+    value="${value//\$\$/__COMS_ESC_DOLLAR__}"
+    value="${value//\$/\$\$}"
+    value="${value//__COMS_ESC_DOLLAR__/\$\$}"
+
+    printf '%s' "$value"
+}
+
+sanitize_env_file_for_compose() {
+    local env_file="$PROJECT_DIR/.env.production"
+    local temp_file
+    local changed=0
+
+    [ -f "$env_file" ] || return 0
+
+    temp_file="$(mktemp)"
+
+    while IFS= read -r line || [ -n "$line" ]; do
+        if [[ -z "$line" || "$line" =~ ^[[:space:]]*# || "$line" != *=* ]]; then
+            printf '%s\n' "$line" >> "$temp_file"
+            continue
+        fi
+
+        local key="${line%%=*}"
+        local value="${line#*=}"
+        local escaped_value
+
+        escaped_value="$(escape_env_dollars "$value")"
+        if [ "$escaped_value" != "$value" ]; then
+            changed=1
+        fi
+
+        printf '%s=%s\n' "$key" "$escaped_value" >> "$temp_file"
+    done < "$env_file"
+
+    if [ "$changed" -eq 1 ]; then
+        cp "$env_file" "$env_file.before-compose-escape-$(date +%Y%m%d_%H%M%S)"
+        mv "$temp_file" "$env_file"
+        print_warning "Detected unescaped '$' in .env.production and auto-escaped it for Docker Compose compatibility."
+    else
+        rm -f "$temp_file"
+    fi
+}
+
+normalize_line_endings() {
+    find "$PROJECT_DIR" -type f \( -name "*.sh" -o -name ".env*" \) -exec sed -i 's/\r$//' {} + 2>/dev/null || true
+}
+
+wait_for_database() {
+    print_status "Waiting for database to become ready..."
+
+    for attempt in $(seq 1 30); do
+        if compose exec -T db sh -lc 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"' >/dev/null 2>&1; then
+            print_status "Database is ready."
+            return 0
+        fi
+
+        sleep 2
+    done
+
+    print_error "Database never became ready."
+    return 1
+}
+
+run_health_check() {
+    print_status "Checking application health..."
+    sleep 5
+
+    if command -v curl >/dev/null 2>&1; then
+        status_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/health/ || true)
+    elif command -v wget >/dev/null 2>&1; then
+        wget -q --spider http://localhost/health/ && status_code="200" || status_code="000"
+    else
+        print_warning "curl and wget are both unavailable; skipping HTTP health check."
+        return 0
+    fi
+
+    if [ "$status_code" != "200" ]; then
+        print_error "Health check failed with status $status_code"
+        return 1
+    fi
+
+    print_status "Application health check passed."
+}
+
+echo "================================"
+echo "COMS Deployment Script"
+echo "================================"
+echo ""
+
+if [ "$EUID" -ne 0 ]; then
     print_error "Please run as root"
     exit 1
 fi
 
-# Navigate to project directory
-print_status "Navigating to project directory..."
-cd $PROJECT_DIR || {
-    print_error "Project directory not found. Please run setup script first."
+cd "$PROJECT_DIR"
+
+if [ ! -f "$COMPOSE_FILE" ]; then
+    print_error "${PROJECT_DIR}/${COMPOSE_FILE} not found"
     exit 1
-}
+fi
 
-# Pull latest changes from GitHub
-print_status "Pulling latest changes from GitHub..."
-git fetch origin
-git reset --hard origin/$BRANCH
-git pull origin $BRANCH
+resolve_compose
+normalize_line_endings
 
-# Check if .env.production exists
 if [ ! -f .env.production ]; then
-    print_warning ".env.production not found. Please create it before continuing."
-    exit 1
+    print_warning ".env.production not found. Compose will likely fail because docker-compose.prod.yml expects it."
 fi
 
-# Load environment variables
-print_status "Loading environment variables..."
-set -a
-source .env.production
-set +a
+sanitize_env_file_for_compose
 
-# Stop existing containers more aggressively
 print_status "Stopping existing containers..."
+compose down --remove-orphans || true
 
-# First, try normal docker-compose down
-docker-compose -f docker-compose.prod.yml down --remove-orphans || true
-
-# Also stop any containers with coms in the name (in case they're orphaned)
-print_status "Cleaning up any orphaned containers..."
-docker ps -a --filter "name=coms" --format "{{.Names}}" | xargs -r docker rm -f 2>/dev/null || true
-
-# Remove any networks with coms in the name
-print_status "Cleaning up orphaned networks..."
-docker network ls --filter "name=coms" --format "{{.Name}}" | xargs -r docker network rm 2>/dev/null || true
-
-# Remove old images (optional, comment out to keep)
-print_status "Removing old images..."
-docker image prune -f
-
-# Build new images
 print_status "Building Docker images..."
-print_status "Building backend..."
-docker-compose -f docker-compose.prod.yml build --no-cache web
-print_status "Building frontend..."
-docker-compose -f docker-compose.prod.yml build --no-cache frontend
-print_status "Building nginx..."
-docker-compose -f docker-compose.prod.yml build --no-cache nginx
+compose build --pull web frontend nginx
 
-# Start containers
 print_status "Starting containers..."
-docker-compose -f docker-compose.prod.yml up -d
+compose up -d
 
-# Wait for services to be healthy
-print_status "Waiting for services to start..."
-sleep 10
+wait_for_database
 
-# NOTE: Database reset is disabled for production deployments to preserve data
-# If you need to reset the database, run these commands manually:
-# source .env.production
-# docker-compose -f docker-compose.prod.yml exec -T db psql -U ${POSTGRES_USER} -d postgres -c "DROP DATABASE IF EXISTS ${POSTGRES_DB};"
-# docker-compose -f docker-compose.prod.yml exec -T db psql -U ${POSTGRES_USER} -d postgres -c "CREATE DATABASE ${POSTGRES_DB};"
-
-# Run database migrations
 print_status "Running database migrations..."
-docker-compose -f docker-compose.prod.yml exec -T web python manage.py migrate --noinput
-
-# Collect static files
-print_status "Collecting static files..."
-docker-compose -f docker-compose.prod.yml exec -T web python manage.py collectstatic --noinput
-
-# Verify frontend is running
-print_status "Verifying frontend container..."
-FRONTEND_STATUS=$(docker inspect -f '{{.State.Status}}' coms_frontend_prod 2>/dev/null || echo "not found")
-if [ "$FRONTEND_STATUS" != "running" ]; then
-    print_warning "Frontend container is not running. Status: $FRONTEND_STATUS"
-    print_status "Checking frontend logs..."
-    docker-compose -f docker-compose.prod.yml logs --tail=20 frontend
-else
-    print_status "Frontend container is running successfully."
-fi
-
-# Create superuser if needed (optional)
-# docker-compose -f docker-compose.prod.yml exec -T web python manage.py createsuperuser --noinput || true
-
-# Check container status
-print_status "Checking container status..."
-docker-compose -f docker-compose.prod.yml ps
-
-# Test application health
-print_status "Testing application health..."
-sleep 5
-HEALTH_CHECK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/health/ || echo "000")
-
-if [ "$HEALTH_CHECK" = "200" ]; then
-    print_status "Deployment successful! Application is healthy."
-else
-    print_error "Health check failed. Status code: $HEALTH_CHECK"
-    print_status "Checking logs..."
-    docker-compose -f docker-compose.prod.yml logs --tail=50 web
+if ! compose exec -T web python manage.py migrate --noinput; then
+    print_error "Database migration failed."
+    print_warning "Django migration state:"
+    compose exec -T web python manage.py showmigrations --plan || true
+    print_warning "Recent web logs after migration failure:"
+    compose logs --tail=120 web || true
     exit 1
 fi
 
-# Show running containers
-print_status "Running containers:"
-docker ps --filter "name=coms"
+print_status "Collecting static files..."
+if ! compose exec -T web python manage.py collectstatic --noinput; then
+    print_error "collectstatic failed."
+    print_warning "Recent web logs after collectstatic failure:"
+    compose logs --tail=120 web || true
+    exit 1
+fi
 
-echo ""
+print_status "Current container status:"
+compose ps
+
+run_health_check
+
 echo "================================"
 echo "Deployment completed successfully!"
 echo "================================"
-echo ""
-echo "Access your application at:"
-echo "  http://156.232.88.156"
-echo ""
-echo "To view logs, run:"
-echo "  docker-compose -f docker-compose.prod.yml logs -f"
-echo ""

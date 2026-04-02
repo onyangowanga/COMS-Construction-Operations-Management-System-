@@ -50,17 +50,63 @@ export default function ProjectDetailPage() {
           </div>
         );
       case 'documents':
+        return (
+          <div className="p-6 border border-dashed border-gray-300 rounded-lg bg-gray-50">
+            <p className="text-gray-700 font-medium">Documents</p>
+            <p className="text-sm text-gray-500 mt-2">Open all documents scoped to this project.</p>
+            <Link href={`/documents?project=${projectId}`} className="inline-flex mt-3 text-sm font-medium text-primary-700 hover:text-primary-900">
+              Open Documents Module
+            </Link>
+          </div>
+        );
       case 'variations':
+        return (
+          <div className="p-6 border border-dashed border-gray-300 rounded-lg bg-gray-50">
+            <p className="text-gray-700 font-medium">Variations</p>
+            <p className="text-sm text-gray-500 mt-2">View and manage variation orders for this project.</p>
+            <Link href={`/variations?project=${projectId}`} className="inline-flex mt-3 text-sm font-medium text-primary-700 hover:text-primary-900">
+              Open Variations Module
+            </Link>
+          </div>
+        );
       case 'claims':
+        return (
+          <div className="p-6 border border-dashed border-gray-300 rounded-lg bg-gray-50">
+            <p className="text-gray-700 font-medium">Claims</p>
+            <p className="text-sm text-gray-500 mt-2">Review subcontract claims associated with this project.</p>
+            <Link href={`/claims?project=${projectId}`} className="inline-flex mt-3 text-sm font-medium text-primary-700 hover:text-primary-900">
+              Open Claims Module
+            </Link>
+          </div>
+        );
       case 'procurement':
+        return (
+          <div className="p-6 border border-dashed border-gray-300 rounded-lg bg-gray-50">
+            <p className="text-gray-700 font-medium">Procurement</p>
+            <p className="text-sm text-gray-500 mt-2">Open procurement and purchase order records for this project.</p>
+            <Link href={`/procurement?project=${projectId}`} className="inline-flex mt-3 text-sm font-medium text-primary-700 hover:text-primary-900">
+              Open Procurement Module
+            </Link>
+          </div>
+        );
       case 'reports':
+        return (
+          <div className="p-6 border border-dashed border-gray-300 rounded-lg bg-gray-50">
+            <p className="text-gray-700 font-medium">Reports</p>
+            <p className="text-sm text-gray-500 mt-2">Generate reports focused on this project.</p>
+            <Link href={`/reports?project=${projectId}`} className="inline-flex mt-3 text-sm font-medium text-primary-700 hover:text-primary-900">
+              Open Reports Module
+            </Link>
+          </div>
+        );
       case 'activity':
         return (
           <div className="p-6 border border-dashed border-gray-300 rounded-lg bg-gray-50">
-            <p className="text-gray-700 font-medium">{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Module Placeholder</p>
-            <p className="text-sm text-gray-500 mt-2">
-              This section will be connected to the {activeTab} module in the next milestone.
-            </p>
+            <p className="text-gray-700 font-medium">Activity</p>
+            <p className="text-sm text-gray-500 mt-2">Open project activity timeline.</p>
+            <Link href={`/activity?project=${projectId}`} className="inline-flex mt-3 text-sm font-medium text-primary-700 hover:text-primary-900">
+              Open Activity Module
+            </Link>
           </div>
         );
       default:

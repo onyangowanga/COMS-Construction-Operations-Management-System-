@@ -33,6 +33,7 @@ FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
 ENV DJANGO_SETTINGS_MODULE=config.settings
 
 WORKDIR /app
@@ -53,15 +54,17 @@ COPY . /app/
 # Create necessary directories
 RUN mkdir -p /app/staticfiles /app/media /app/logs
 
-# Create non-root user
+# Create non-root user and set permissions
 RUN useradd -m -u 1000 coms && \
-    chown -R coms:coms /app
+    chown -R coms:coms /app && \
+    chmod -R 755 /app/staticfiles /app/media && \
+    chmod -R 777 /app/logs
 
 # Switch to non-root user
 USER coms
 
-# Collect static files
-RUN python manage.py collectstatic --noinput || true
+# Note: collectstatic is run by deploy.sh after containers start
+# We don't run it here because the database may not be available during build
 
 EXPOSE 8000
 

@@ -22,7 +22,7 @@ from apps.roles.serializers import (
     UserPermissionsSerializer
 )
 from apps.roles.services import RoleService, PermissionService, UserRoleService
-from apps.roles.selectors import RoleSelector, PermissionSelector, UserRoleSelector
+from apps.roles.roles_selectors import RoleSelector, PermissionSelector, UserRoleSelector
 
 User = get_user_model()
 

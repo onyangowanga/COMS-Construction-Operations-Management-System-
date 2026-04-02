@@ -7,7 +7,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 
 from apps.projects.models import Project
-from . import selectors
+from . import dashboard_selectors as selectors
 
 
 @login_required
@@ -275,7 +275,7 @@ def portfolio_summary_partial(request):
     
     URL: /portfolio/partials/summary/
     """
-    from apps.portfolio import selectors as portfolio_selectors
+    from apps.portfolio import portfolio_selectors
     
     summary = portfolio_selectors.get_portfolio_summary()
     
@@ -294,7 +294,7 @@ def portfolio_projects_table_partial(request):
     
     URL: /portfolio/partials/projects-table/
     """
-    from apps.portfolio import selectors as portfolio_selectors
+    from apps.portfolio import portfolio_selectors
     
     # Get filter parameters
     risk_level = request.GET.get('risk_level', '').upper()
@@ -329,7 +329,7 @@ def portfolio_risk_distribution_partial(request):
     
     URL: /portfolio/partials/risk-distribution/
     """
-    from apps.portfolio import selectors as portfolio_selectors
+    from apps.portfolio import portfolio_selectors
     
     distribution = portfolio_selectors.get_portfolio_risk_distribution()
     
@@ -348,7 +348,7 @@ def portfolio_high_risk_projects_partial(request):
     
     URL: /portfolio/partials/high-risk-projects/
     """
-    from apps.portfolio import selectors as portfolio_selectors
+    from apps.portfolio import portfolio_selectors
     
     high_risk_projects = portfolio_selectors.get_high_risk_projects()
     
@@ -391,7 +391,7 @@ def cashflow_summary_partial(request):
     
     Displays portfolio cash flow summary metrics.
     """
-    from apps.cashflow import selectors as cashflow_selectors
+    from apps.cashflow import cashflow_selectors
     
     summary = cashflow_selectors.get_portfolio_forecast_summary()
     
@@ -412,7 +412,7 @@ def cashflow_chart_data_partial(request):
     
     Returns JSON data for cash flow charts.
     """
-    from apps.cashflow import selectors as cashflow_selectors
+    from apps.cashflow import cashflow_selectors
     
     months = int(request.GET.get('months', 6))
     
@@ -438,7 +438,7 @@ def cashflow_negative_projects_partial(request):
     
     Displays list of projects with negative cash flow.
     """
-    from apps.cashflow import selectors as cashflow_selectors
+    from apps.cashflow import cashflow_selectors
     
     negative_projects = cashflow_selectors.get_projects_with_negative_cash_flow()
     
@@ -459,7 +459,7 @@ def cashflow_alerts_partial(request):
     
     Displays critical cash flow warnings and alerts.
     """
-    from apps.cashflow import selectors as cashflow_selectors
+    from apps.cashflow import cashflow_selectors
     
     alerts = cashflow_selectors.get_critical_cash_flow_alerts()
     
@@ -510,7 +510,7 @@ def project_variations_dashboard(request, project_id):
     
     Shows all variation orders for a project with summary metrics.
     """
-    from apps.variations import selectors as variation_selectors
+    from apps.variations import variation_selectors
     from apps.projects.models import Project
     
     project = Project.objects.select_related('organization').get(id=project_id)

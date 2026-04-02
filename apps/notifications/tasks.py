@@ -20,7 +20,7 @@ from .services import (
     NotificationDeliveryService,
     NotificationPreferenceService
 )
-from .selectors import (
+from .notification_selectors import (
     NotificationSelector,
     NotificationBatchSelector
 )

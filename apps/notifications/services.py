@@ -25,7 +25,7 @@ from .models import (
     NotificationType,
     NotificationPriority
 )
-from .selectors import (
+from .notification_selectors import (
     NotificationSelector,
     NotificationPreferenceSelector,
     NotificationTemplateSelector

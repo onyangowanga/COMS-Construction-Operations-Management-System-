@@ -21,7 +21,7 @@ from apps.site_operations.models import (
     SiteIssue
 )
 from apps.site_operations.services import SiteOperationsService
-from apps.site_operations.selectors import (
+from apps.site_operations.statOperatios_selectors import (
     get_project_site_reports,
     get_site_report_by_id,
     get_project_material_deliveries,

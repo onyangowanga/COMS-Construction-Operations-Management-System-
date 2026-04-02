@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 
-from apps.cashflow import selectors
+from apps.cashflow import cashflow_selectors as selectors
 from apps.cashflow.services import CashFlowService
 from apps.cashflow.models import CashFlowForecast, PortfolioCashFlowSummary
 from api.serializers.cashflow import (

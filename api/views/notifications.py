@@ -28,7 +28,7 @@ from apps.notifications.services import (
     NotificationTemplateService,
     NotificationDeliveryService
 )
-from apps.notifications.selectors import (
+from apps.notifications.notification_selectors import (
     NotificationSelector,
     NotificationPreferenceSelector,
     NotificationTemplateSelector,

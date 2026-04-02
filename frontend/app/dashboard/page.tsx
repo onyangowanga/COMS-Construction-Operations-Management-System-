@@ -147,8 +147,9 @@ export default function DashboardPage() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card hover>
-            <CardContent className="pt-6">
+          <Link href="/projects">
+            <Card hover>
+              <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Active Projects</p>
@@ -164,11 +165,13 @@ export default function DashboardPage() {
                   <FolderKanban className="h-6 w-6 text-primary-600" />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Link>
 
-          <Card hover>
-            <CardContent className="pt-6">
+          <Link href="/reports/dashboard">
+            <Card hover>
+              <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Total Budget</p>
@@ -184,11 +187,13 @@ export default function DashboardPage() {
                   <DollarSign className="h-6 w-6 text-success-600" />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Link>
 
-          <Card hover>
-            <CardContent className="pt-6">
+          <Link href="/projects?status=APPROVAL">
+            <Card hover>
+              <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Pending Approvals</p>
@@ -203,11 +208,13 @@ export default function DashboardPage() {
                   <FileText className="h-6 w-6 text-warning-600" />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Link>
 
-          <Card hover>
-            <CardContent className="pt-6">
+          <Link href="/activity">
+            <Card hover>
+              <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Critical Issues</p>
@@ -223,8 +230,9 @@ export default function DashboardPage() {
                   <AlertTriangle className="h-6 w-6 text-destructive-600" />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
 
         {shortcuts.length > 0 ? (

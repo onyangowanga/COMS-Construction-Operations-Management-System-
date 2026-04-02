@@ -20,7 +20,7 @@ from apps.subcontracts.models import (
     SubcontractClaim
 )
 from apps.subcontracts.services import SubcontractService
-from apps.subcontracts.selectors import ClaimSelector
+from apps.subcontracts.subcontractor_selectors import ClaimSelector
 
 
 class UserBasicSerializer(serializers.Serializer):

@@ -85,6 +85,18 @@ class Organization(models.Model):
         blank=True,
         help_text=_("Tax identification number")
     )
+
+    default_currency = models.CharField(
+        max_length=3,
+        default='KES',
+        help_text=_("Default organization currency (ISO 4217)")
+    )
+
+    fiscal_year_start = models.CharField(
+        max_length=20,
+        default='January 1',
+        help_text=_("Fiscal year start label")
+    )
     
     owner = models.ForeignKey(
         'User',
@@ -182,6 +194,30 @@ class User(AbstractUser):
         blank=True,
         null=True,
         validators=[validate_profile_picture]
+    )
+
+    ui_theme = models.CharField(
+        max_length=10,
+        default='light',
+        choices=[('light', 'Light'), ('dark', 'Dark'), ('auto', 'Auto')],
+        help_text=_("Preferred UI theme")
+    )
+
+    ui_timezone = models.CharField(
+        max_length=64,
+        default='Africa/Nairobi',
+        help_text=_("Preferred UI timezone")
+    )
+
+    ui_language = models.CharField(
+        max_length=8,
+        default='en',
+        help_text=_("Preferred UI language")
+    )
+
+    ui_compact_mode = models.BooleanField(
+        default=False,
+        help_text=_("Use compact UI layout")
     )
     
     # Security tracking

@@ -10,7 +10,7 @@ from django.utils import timezone
 from datetime import date
 
 from apps.valuations.models import Valuation, BQItemProgress
-from apps.valuations.selectors import (
+from apps.valuations.valuation_selectors import (
     get_next_valuation_number,
     get_previous_bq_progress,
     get_project_valuations
@@ -384,7 +384,7 @@ class ValuationService:
         Returns:
             Dictionary with all report data
         """
-        from .selectors import get_valuation_by_id, get_valuation_items_grouped
+        from ..valuation_selectors import get_valuation_by_id, get_valuation_items_grouped
         
         valuation = get_valuation_by_id(valuation_id)
         if not valuation:

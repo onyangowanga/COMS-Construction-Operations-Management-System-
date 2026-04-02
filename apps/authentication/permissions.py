@@ -4,7 +4,7 @@ Django REST Framework permission classes for COMS.
 """
 from rest_framework import permissions
 
-from .selectors import ProjectAccessSelectors
+from .auth_selectors import ProjectAccessSelectors
 from .models import SystemRole
 
 

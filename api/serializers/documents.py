@@ -13,7 +13,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from apps.documents.models import Document
 from apps.documents.services import DocumentService
-from apps.documents.selectors import DocumentSelector
+from apps.documents.doc_selectors import DocumentSelector
 
 
 class UserBasicSerializer(serializers.Serializer):
@@ -248,6 +248,8 @@ class DocumentUploadSerializer(serializers.Serializer):
         if validated_data.get('project'):
             try:
                 project = Project.objects.get(id=validated_data['project'])
+                if organization is None:
+                    organization = project.organization
             except Project.DoesNotExist:
                 raise serializers.ValidationError("Project not found")
         

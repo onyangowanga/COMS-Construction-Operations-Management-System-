@@ -11,7 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from apps.reporting.models import Report, ReportSchedule, ReportExecution, ReportWidget
-from apps.reporting.selectors import ReportSelector, ReportExecutionSelector, DashboardWidgetDataSelector
+from apps.reporting.reporting_selectors import ReportSelector, ReportExecutionSelector, DashboardWidgetDataSelector
 from api.serializers.reporting import (
     ReportSerializer,
     ReportCreateSerializer,

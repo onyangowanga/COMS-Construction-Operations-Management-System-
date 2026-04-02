@@ -10,6 +10,7 @@ from drf_spectacular.views import (
 )
 from api.routers import router
 from api.views.workflows import WorkflowStateAPIView, WorkflowTransitionAPIView
+from api.views.exchange_rates import ExchangeRateView
 
 
 urlpatterns = [
@@ -19,6 +20,7 @@ urlpatterns = [
     # Workflow Engine
     path('workflows/<str:module>/<uuid:entity_id>/', WorkflowStateAPIView.as_view(), name='workflow-state'),
     path('workflows/<str:module>/<uuid:entity_id>/transition/', WorkflowTransitionAPIView.as_view(), name='workflow-transition'),
+    path('exchange-rates/', ExchangeRateView.as_view(), name='exchange-rates'),
     
     # API Documentation
     path('schema/', SpectacularAPIView.as_view(), name='schema'),

@@ -6,7 +6,7 @@ This module provides middleware for enforcing permissions on API endpoints.
 
 from django.http import JsonResponse
 from django.utils.deprecation import MiddlewareMixin
-from apps.roles.selectors import UserRoleSelector
+from apps.roles.roles_selectors import UserRoleSelector
 import re
 
 

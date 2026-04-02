@@ -10,7 +10,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 
 from apps.roles.models import Role, Permission, UserRole
-from apps.roles.selectors import RoleSelector, PermissionSelector, UserRoleSelector
+from apps.roles.roles_selectors import RoleSelector, PermissionSelector, UserRoleSelector
 
 
 class RoleService:

@@ -9,9 +9,9 @@ Your COMS Construction Management System is now ready for local testing and VPS 
 ### 1. Direct VPS Deployment (Bypassing GitHub Actions)
 
 **Files Created:**
-- ✅ `deploy-local-to-vps.ps1` - PowerShell deployment script
-- ✅ `deploy-local-to-vps.sh` - Bash deployment script
-- ✅ `DIRECT_DEPLOYMENT_GUIDE.md` - Complete deployment documentation
+- ✅ `deploy_to_vps.ps1` - Canonical PowerShell deployment script
+- ✅ `deploy.sh` - VPS rollout script
+- ✅ `DEPLOY_FROM_LOCAL.md` - Complete deployment documentation
 
 **What It Does:**
 - Packages your local code
@@ -81,7 +81,7 @@ cd "C:\programing\Realtime projects\COMS\COMS PROJECT IMPLEMENTATTION\COMS"
 
 ```powershell
 # After successful local testing
-.\deploy-local-to-vps.ps1
+.\deploy_to_vps.ps1
 ```
 
 **This will:**
@@ -101,7 +101,7 @@ cd "C:\programing\Realtime projects\COMS\COMS PROJECT IMPLEMENTATTION\COMS"
 ### For First-Time Setup
 1. **Start Here:** [QUICK_START.md](QUICK_START.md)
 2. **Local Testing:** [LOCAL_TESTING_GUIDE.md](LOCAL_TESTING_GUIDE.md)
-3. **Then Deploy:** [DIRECT_DEPLOYMENT_GUIDE.md](DIRECT_DEPLOYMENT_GUIDE.md)
+3. **Then Deploy:** [DEPLOY_FROM_LOCAL.md](DEPLOY_FROM_LOCAL.md)
 
 ### For Development
 - **Module Status:** [MODULE_STATUS_REPORT.md](MODULE_STATUS_REPORT.md)
@@ -109,7 +109,7 @@ cd "C:\programing\Realtime projects\COMS\COMS PROJECT IMPLEMENTATTION\COMS"
 - **Project README:** [README.md](README.md)
 
 ### For Deployment
-- **Direct Deployment:** [DIRECT_DEPLOYMENT_GUIDE.md](DIRECT_DEPLOYMENT_GUIDE.md)
+- **Direct Deployment:** [DEPLOY_FROM_LOCAL.md](DEPLOY_FROM_LOCAL.md)
 - **VPS Guide:** [VPS_DEPLOYMENT_GUIDE.md](VPS_DEPLOYMENT_GUIDE.md)
 
 ---
@@ -142,7 +142,7 @@ docker-compose down
 
 ```powershell
 # Deploy to VPS
-.\deploy-local-to-vps.ps1
+.\deploy_to_vps.ps1
 
 # SSH to VPS
 ssh root@156.232.88.156
@@ -165,10 +165,10 @@ ssh root@156.232.88.156 "cd /root/coms && docker-compose -f docker-compose.prod.
 # ✅ Correct workflow:
 .\start-local.ps1          # Test locally
 docker-compose exec web pytest  # Run tests
-.\deploy-local-to-vps.ps1  # Then deploy
+.\deploy_to_vps.ps1        # Then deploy
 
 # ❌ Wrong workflow:
-.\deploy-local-to-vps.ps1  # Don't deploy untested code!
+.\deploy_to_vps.ps1        # Don't deploy untested code!
 ```
 
 ### 2. Environment Files
@@ -189,7 +189,7 @@ docker-compose exec web pytest  # Run tests
 Your new workflow:
 1. Make changes locally
 2. Test with `docker-compose`
-3. Deploy with `.\deploy-local-to-vps.ps1`
+3. Deploy with `.\deploy_to_vps.ps1`
 
 Git is still used for:
 - Version control (commit and push as usual)
@@ -296,7 +296,7 @@ Before you start developing, verify:
 - [ ] All tests passing
 - [ ] `.env.production` configured on VPS
 - [ ] SSH access works: `ssh root@156.232.88.156`
-- [ ] Can run: `.\deploy-local-to-vps.ps1`
+- [ ] Can run: `.\deploy_to_vps.ps1`
 - [ ] Can access: http://156.232.88.156
 
 ---
@@ -359,7 +359,7 @@ start http://localhost:8000/admin
 docker-compose exec web pytest
 
 # 6. Deploy to VPS
-.\deploy-local-to-vps.ps1
+.\deploy_to_vps.ps1
 
 # 7. Verify production
 start http://156.232.88.156
@@ -372,7 +372,7 @@ start http://156.232.88.156
 ### Documentation
 - 📘 [QUICK_START.md](QUICK_START.md) - Getting started
 - 🧪 [LOCAL_TESTING_GUIDE.md](LOCAL_TESTING_GUIDE.md) - Local development
-- 🚀 [DIRECT_DEPLOYMENT_GUIDE.md](DIRECT_DEPLOYMENT_GUIDE.md) - VPS deployment
+- 🚀 [DEPLOY_FROM_LOCAL.md](DEPLOY_FROM_LOCAL.md) - VPS deployment
 - 📊 [MODULE_STATUS_REPORT.md](MODULE_STATUS_REPORT.md) - Implementation status
 
 ### Quick Help
@@ -402,7 +402,7 @@ Local Changes → Git Push → GitHub Actions (quota exceeded!) → Failed Deplo
 
 ### New Workflow (Working!)
 ```
-Local Changes → Test Locally → deploy-local-to-vps.ps1 → VPS Deployed! ✅
+Local Changes → Test Locally → deploy_to_vps.ps1 → VPS Deployed! ✅
       ↓
    Git Push (for version control only, not deployment)
 ```

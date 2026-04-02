@@ -255,7 +255,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         Returns:
             - List of valuations with financial details
         """
-        from apps.valuations.selectors import get_project_valuations
+        from apps.valuations.valuation_selectors import get_project_valuations
         from api.serializers.valuations import ValuationListSerializer
         
         valuations = get_project_valuations(str(pk))
@@ -275,7 +275,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             - Retention held
             - Latest valuation details
         """
-        from apps.valuations.selectors import get_valuation_summary
+        from apps.valuations.valuation_selectors import get_valuation_summary
         from api.serializers.valuations import ValuationSummarySerializer
         
         summary = get_valuation_summary(str(pk))
@@ -293,7 +293,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             - Remaining value
             - Percentage complete
         """
-        from apps.valuations.selectors import get_bq_progress_summary
+        from apps.valuations.valuation_selectors import get_bq_progress_summary
         
         progress = get_bq_progress_summary(str(pk))
         return Response(progress)
@@ -306,7 +306,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         Returns:
             - List of site reports ordered by date
         """
-        from apps.site_operations.selectors import get_project_site_reports
+        from apps.site_operations.statOperatios_selectors import get_project_site_reports
         from api.serializers.site_operations import DailySiteReportListSerializer
         
         reports = get_project_site_reports(str(pk))
@@ -325,7 +325,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         Returns:
             - List of site issues
         """
-        from apps.site_operations.selectors import get_project_site_issues
+        from apps.site_operations.statOperatios_selectors import get_project_site_issues
         from api.serializers.site_operations import SiteIssueListSerializer
         
         status_filter = request.query_params.get('status')
@@ -350,7 +350,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         Returns:
             - List of material deliveries
         """
-        from apps.site_operations.selectors import get_project_material_deliveries
+        from apps.site_operations.statOperatios_selectors import get_project_material_deliveries
         from api.serializers.site_operations import MaterialDeliveryListSerializer
         
         status_filter = request.query_params.get('status')
@@ -374,7 +374,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             - Issues breakdown by severity
             - Latest report, delivery, and issue
         """
-        from apps.site_operations.selectors import get_site_operations_summary
+        from apps.site_operations.statOperatios_selectors import get_site_operations_summary
         from api.serializers.site_operations import SiteOperationsSummarySerializer
         
         summary = get_site_operations_summary(str(pk))

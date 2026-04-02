@@ -111,7 +111,7 @@ if ($allGood) {
     Write-Host "  1. Create superuser (if not done):" -ForegroundColor White
     Write-Host "     docker-compose exec web python manage.py createsuperuser"
     Write-Host "  2. Start developing!"
-    Write-Host "  3. When ready, deploy: .\deploy-local-to-vps.ps1"
+    Write-Host "  3. When ready, deploy: .\deploy_to_vps.ps1"
     Write-Host ""
 } else {
     Write-Host "   Some checks failed " -ForegroundColor Red

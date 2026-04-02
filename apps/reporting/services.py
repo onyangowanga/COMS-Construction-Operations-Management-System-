@@ -43,7 +43,7 @@ except ImportError:
 
 from apps.reporting.models import Report, ReportSchedule, ReportExecution
 from apps.common.services.code_generator import generate_report_code
-from apps.reporting.selectors import (
+from apps.reporting.reporting_selectors import (
     ProjectFinancialDataSelector,
     CashFlowDataSelector,
     VariationImpactDataSelector,

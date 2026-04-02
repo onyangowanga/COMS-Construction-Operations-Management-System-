@@ -9,7 +9,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 
 from apps.portfolio.models import ProjectMetrics
-from apps.portfolio import selectors
+from apps.portfolio import portfolio_selectors as selectors
 from apps.portfolio.services import PortfolioAnalyticsService
 from api.serializers.portfolio import (
     ProjectMetricsSerializer,

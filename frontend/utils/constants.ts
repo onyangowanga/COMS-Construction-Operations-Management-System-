@@ -140,13 +140,16 @@ export const SIDEBAR_NAVIGATION = [
   },
   {
     name: 'Administration',
-    href: '/admin',
+    href: '/system-admin',
     icon: 'Settings',
     permission: 'manage_users',
     subsections: [
-      { name: 'Users', href: '/admin/users', permission: 'manage_users' },
-      { name: 'Roles', href: '/admin/roles', permission: 'manage_roles' },
-      { name: 'Organizations', href: '/admin/organizations', permission: 'manage_organizations' },
+      { name: 'Users', href: '/system-admin/users', permission: 'manage_users' },
+      { name: 'Roles', href: '/system-admin/roles', permission: 'manage_roles' },
+      { name: 'Permissions', href: '/system-admin/permissions', permission: 'manage_roles' },
+      { name: 'Workflows', href: '/system-admin/workflows', permission: 'manage_roles' },
+      { name: 'Organizations', href: '/system-admin/organizations', permission: 'manage_organizations' },
+      { name: 'Notifications', href: '/system-admin/notifications', permission: 'manage_users' },
     ],
   },
   {
@@ -154,6 +157,13 @@ export const SIDEBAR_NAVIGATION = [
     href: '/settings',
     icon: 'Settings2',
     permission: null,
+    subsections: [
+      { name: 'Profile', href: '/settings/profile' },
+      { name: 'Notifications', href: '/settings/notifications' },
+      { name: 'Preferences', href: '/settings/preferences' },
+      { name: 'Organization', href: '/settings/organization' },
+      { name: 'Security', href: '/settings/security' },
+    ],
   },
 ];
 

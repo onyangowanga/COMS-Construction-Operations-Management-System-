@@ -328,7 +328,7 @@ def get_project_valuation_summary(project_id: str) -> Dict[str, Any]:
         - pending_payment: Amount approved but not paid
         - retention_held: Total retention amount
     """
-    from apps.valuations.selectors import get_valuation_summary
+    from apps.valuations.valuation_selectors import get_valuation_summary
     
     return get_valuation_summary(project_id)
 
@@ -347,6 +347,6 @@ def get_project_site_operations_summary(project_id: str) -> Dict[str, Any]:
         - latest_issue: Latest issue object
         - pending_deliveries: Count of pending deliveries
     """
-    from apps.site_operations.selectors import get_site_operations_summary
+    from apps.site_operations.statOperatios_selectors import get_site_operations_summary
     
     return get_site_operations_summary(project_id)

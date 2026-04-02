@@ -12,7 +12,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 
 from apps.variations.models import VariationOrder
-from apps.variations import selectors
+from apps.variations import variation_selectors as selectors
 from apps.variations.services import VariationService
 from apps.workflows.services import WorkflowEngineService, WorkflowEngineError
 from apps.projects.models import Project

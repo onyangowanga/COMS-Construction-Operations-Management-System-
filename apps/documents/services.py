@@ -91,8 +91,8 @@ class DocumentService:
             tags=tags,
             is_confidential=is_confidential,
             reference_number=reference_number,
-            expiry_date=ex,
-            visibility=visibility or Document.Visibility.PROJECT_TEAMpiry_date,
+            expiry_date=expiry_date,
+            visibility=visibility or Document.Visibility.PROJECT_TEAM,
             version=1,
             is_latest=True
         )

@@ -18,7 +18,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
 
 from apps.documents.models import Document
-from apps.documents.selectors import DocumentSelector
+from apps.documents.doc_selectors import DocumentSelector
 from apps.documents.services import DocumentService
 from api.serializers.documents import (
     DocumentSerializer,

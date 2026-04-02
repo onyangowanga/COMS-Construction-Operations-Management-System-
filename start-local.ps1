@@ -197,7 +197,7 @@ Write-Host "Documentation:" -ForegroundColor Cyan
 Write-Host "   Local Testing:   " -NoNewline
 Write-Host "LOCAL_TESTING_GUIDE.md" -ForegroundColor White
 Write-Host "   VPS Deployment:  " -NoNewline
-Write-Host "DIRECT_DEPLOYMENT_GUIDE.md" -ForegroundColor White
+Write-Host "DEPLOY_FROM_LOCAL.md" -ForegroundColor White
 Write-Host "   Module Status:   " -NoNewline
 Write-Host "MODULE_STATUS_REPORT.md" -ForegroundColor White
 Write-Host ""
@@ -205,5 +205,5 @@ Write-Host "Next Steps:" -ForegroundColor Cyan
 Write-Host "   1. Open http://localhost:3000 in your browser"
 Write-Host "   2. Test the application functionality"
 Write-Host "   3. Make your code changes"
-Write-Host "   4. When ready, deploy with: .\deploy-local-to-vps.ps1"
+Write-Host "   4. When ready, deploy with: .\deploy_to_vps.ps1"
 Write-Host ""

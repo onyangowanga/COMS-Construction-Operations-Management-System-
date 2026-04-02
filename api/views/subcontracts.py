@@ -22,7 +22,7 @@ from apps.subcontracts.models import (
     SubcontractAgreement,
     SubcontractClaim
 )
-from apps.subcontracts.selectors import (
+from apps.subcontracts.subcontractor_selectors import (
     SubcontractorSelector,
     SubcontractSelector,
     ClaimSelector

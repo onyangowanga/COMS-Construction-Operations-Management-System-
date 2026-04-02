@@ -24,7 +24,7 @@ class OrganizationAdmin(admin.ModelAdmin):
             'fields': ('name', 'org_type', 'owner', 'is_active')
         }),
         (_('Registration Information'), {
-            'fields': ('registration_number', 'tax_id'),
+            'fields': ('registration_number', 'tax_id', 'default_currency', 'fiscal_year_start'),
             'classes': ('collapse',)
         }),
         (_('Contact Information'), {
@@ -62,6 +62,7 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'phone', 'job_title', 'organization', 'profile_picture')}),
+        (_('UI Preferences'), {'fields': ('ui_theme', 'ui_timezone', 'ui_language', 'ui_compact_mode'), 'classes': ('collapse',)}),
         (_('Role & Permissions'), {'fields': ('system_role', 'is_verified', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         (_('Security'), {'fields': ('last_login_ip', 'failed_login_attempts', 'locked_until'), 'classes': ('collapse',)}),
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
